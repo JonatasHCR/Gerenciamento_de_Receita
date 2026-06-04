@@ -1,0 +1,77 @@
+# === Rails ===
+*.rbc
+capybara-*.html
+/db/*.sqlite3
+/db/*.sqlite3-journal
+/db/*.sqlite3-[0-9]*
+/public/system
+/public/packs
+/public/packs-test
+/public/assets
+/coverage/
+/spec/tmp
+*.orig
+rerun.txt
+pickle-email-*.html
+
+# Logs and temp files
+/log/*
+/tmp/*
+!/log/.keep
+!/tmp/.keep
+
+# Secrets and credentials
+config/initializers/secret_token.rb
+config/master.key
+config/credentials/*.key
+.kamal/secrets
+
+# Environment variables (keep .env.example tracked)
+.env
+.env*.local
+
+# Bundler
+/.bundle
+/vendor/bundle
+
+# Storage (uploaded files)
+/storage/*
+!/storage/.keep
+/public/uploads
+
+# === Ruby ===
+*.gem
+/.config
+/InstalledFiles
+/pkg/
+/spec/reports/
+/spec/examples.txt
+/spec/tmp/
+/test/tmp/
+/test/version_tmp/
+/.yardoc/
+/_yardoc/
+/doc/
+/rdoc/
+/lib/bundler/man/
+.rvmrc
+.byebug_history
+
+# Node (not used — importmap + standalone Tailwind binary)
+node_modules/
+
+# === Project-specific ===
+
+# Real client data — never commit spreadsheets with company information
+*.xlsx
+*.xls
+
+# Bootstrap artifacts — one-time Docker bootstrap, not part of the project
+Dockerfile.bootstrap
+docker-compose.bootstrap.yml
+
+# Windows artifacts
+nul
+Thumbs.db
+ehthumbs.db
+Desktop.ini
