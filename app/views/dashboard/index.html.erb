@@ -2,7 +2,7 @@
 
 <div class="space-y-6">
   <%# Month filter %>
-  <div class="flex items-center justify-between">
+  <div class="flex flex-wrap items-center justify-between gap-3">
     <h1 class="text-xl font-semibold text-gray-900">Dashboard</h1>
     <%= turbo_frame_tag "dashboard_filter" do %>
       <%= form_with url: root_path, method: :get, data: { turbo_frame: "_top" }, class: "flex items-center gap-2" do |f| %>
@@ -12,6 +12,24 @@
       <% end %>
     <% end %>
   </div>
+
+  <% if current_user.admin_or_financeiro? %>
+    <%# Exportar relatório em PDF %>
+    <%= form_with url: monthly_report_path, method: :get,
+          data: { turbo: false },
+          class: "bg-white rounded-xl border border-gray-200 p-4 flex flex-wrap items-end gap-3" do |f| %>
+      <div>
+        <label class="block text-xs text-gray-500 mb-1">Mês do relatório</label>
+        <%= f.month_field :month, value: @month.strftime("%Y-%m"),
+              class: "rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:ring-2 focus:ring-red-500" %>
+      </div>
+      <%= f.submit "📄 Exportar Relatório (PDF)",
+            class: "rounded-lg bg-orange-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-orange-700 cursor-pointer" %>
+      <span class="text-xs text-gray-400 self-center">
+        Previsto · Faturado no mês e mês anterior · Recebido · Faturas em aberto, por cliente e CC.
+      </span>
+    <% end %>
+  <% end %>
 
   <% if current_user.admin_or_financeiro? %>
     <%# KPI Cards %>
