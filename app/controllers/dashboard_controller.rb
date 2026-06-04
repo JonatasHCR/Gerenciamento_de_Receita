@@ -35,6 +35,45 @@ class DashboardController < ApplicationController
         .group_by_month(:payment_date, format: "%m/%Y", range: chart_range)
         .sum(:value)
         .transform_keys { |k| pt_month_label(k) }
+
+      # ── Faturado × Recebido por cliente/CC ─────────────────────────────────
+      bdata = Hash.new { |h, k| h[k] = {} }
+
+      Invoice.for_month(@month).group(:cost_center_id).sum(:value)
+             .each { |id, v| bdata[id][:inv_cur] = v }
+      Receipt.joins(:invoice).for_month(@month)
+             .group("invoices.cost_center_id").sum("receipts.value")
+             .each { |id, v| bdata[id][:rec_cur] = v }
+
+      Invoice.where("issued_at < ?", @month).group(:cost_center_id).sum(:value)
+             .each { |id, v| bdata[id][:inv_pre] = v }
+      Receipt.joins(:invoice).where("receipts.payment_date < ?", @month)
+             .group("invoices.cost_center_id").sum("receipts.value")
+             .each { |id, v| bdata[id][:rec_pre] = v }
+
+      @billing_by_client = {}
+      CostCenter.includes(:client)
+                .where(id: bdata.keys)
+                .joins(:client)
+                .order("clients.name", "cost_centers.cr_code")
+                .each do |cc|
+        d       = bdata[cc.id]
+        inv_cur = d[:inv_cur] || 0
+        inv_pre = d[:inv_pre] || 0
+        rec_cur = d[:rec_cur] || 0
+        rec_pre = d[:rec_pre] || 0
+        @billing_by_client[cc.client] ||= []
+        @billing_by_client[cc.client] << {
+          cc:        cc,
+          inv_cur:   inv_cur,
+          rec_cur:   rec_cur,
+          inv_pre:   inv_pre,
+          rec_pre:   rec_pre,
+          inv_total: inv_cur + inv_pre,
+          rec_total: rec_cur + rec_pre,
+          open:      inv_cur + inv_pre - rec_cur - rec_pre
+        }
+      end
     end
 
     @forecast_summary = Forecasts::SummaryQuery.new(
