@@ -29,12 +29,30 @@
               color: "green",
               icon: "✅" %>
 
-        <%= render "kpi_card",
-              label: "Em Aberto",
-              value: brl(@open_balance),
-              color: "orange",
-              icon: "⏳",
-              sub: "#{@open_invoices_count} notas" %>
+        <%# Em Aberto card with breakdown by month %>
+        <div class="bg-white rounded-xl border border-gray-200 p-5">
+          <div class="flex items-center justify-between mb-3">
+            <span class="text-xs font-medium text-gray-500 uppercase tracking-wide">Em Aberto</span>
+            <span class="text-2xl">⏳</span>
+          </div>
+          <p class="text-2xl font-bold text-gray-900"><%= brl(@open_balance) %></p>
+          <div class="mt-2 space-y-1 text-xs text-gray-500">
+            <div class="flex items-center justify-between">
+              <span>Mês atual:</span>
+              <span class="font-medium text-orange-600">
+                <%= brl(@open_balance_current_month) %>
+                <span class="text-gray-400">(<%= @open_invoices_current_month_count %> NF<%= @open_invoices_current_month_count == 1 ? "" : "s" %>)</span>
+              </span>
+            </div>
+            <div class="flex items-center justify-between">
+              <span>Meses ant.:</span>
+              <span class="font-medium text-red-500">
+                <%= brl(@open_balance_previous_months) %>
+                <span class="text-gray-400">(<%= @open_invoices_previous_months_count %> NF<%= @open_invoices_previous_months_count == 1 ? "" : "s" %>)</span>
+              </span>
+            </div>
+          </div>
+        </div>
 
         <%= render "kpi_card",
               label: "Previsto no Mês",
