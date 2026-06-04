@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_04_102828) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_04_163600) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -66,6 +66,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_04_102828) do
     t.decimal "value", precision: 15, scale: 2, null: false
     t.index ["cost_center_id", "number"], name: "index_invoices_on_cost_center_id_and_number", unique: true
     t.index ["cost_center_id"], name: "index_invoices_on_cost_center_id"
+    t.index ["issued_at", "cost_center_id"], name: "index_invoices_on_issued_at_and_cost_center_id"
     t.index ["issued_at"], name: "index_invoices_on_issued_at"
   end
 
@@ -76,6 +77,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_04_102828) do
     t.date "payment_date", null: false
     t.datetime "updated_at", null: false
     t.decimal "value", precision: 15, scale: 2, null: false
+    t.index ["invoice_id", "value"], name: "index_receipts_on_invoice_id_and_value"
     t.index ["invoice_id"], name: "index_receipts_on_invoice_id"
     t.index ["payment_date"], name: "index_receipts_on_payment_date"
   end
@@ -105,6 +107,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_04_102828) do
     t.datetime "updated_at", null: false
     t.index ["email"], name: "index_users_on_email", unique: true
     t.index ["reset_password_token"], name: "index_users_on_reset_password_token", unique: true
+    t.index ["role"], name: "index_users_on_role"
     t.index ["unlock_token"], name: "index_users_on_unlock_token", unique: true
   end
 
@@ -117,6 +120,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_04_102828) do
     t.jsonb "object_changes"
     t.string "whodunnit"
     t.index ["created_at"], name: "index_versions_on_created_at"
+    t.index ["event"], name: "index_versions_on_event"
     t.index ["item_type", "item_id"], name: "index_versions_on_item_type_and_item_id"
     t.index ["whodunnit"], name: "index_versions_on_whodunnit"
   end
