@@ -48,6 +48,27 @@ RSpec.describe "ForecastEntries", type: :request do
     end
   end
 
+  # ── GET /forecast_entries/new ─────────────────────────────────────────────
+  describe "GET /forecast_entries/new" do
+    it "returns 200 for admin" do
+      sign_in admin
+      get new_forecast_entry_path
+      expect(response).to have_http_status(:ok)
+    end
+
+    it "returns 200 for coordenador (uses new? policy)" do
+      sign_in coordenador
+      get new_forecast_entry_path
+      expect(response).to have_http_status(:ok)
+    end
+
+    it "returns 200 for gestor" do
+      sign_in gestor
+      get new_forecast_entry_path
+      expect(response).to have_http_status(:ok)
+    end
+  end
+
   # ── POST /forecast_entries ────────────────────────────────────────────────
   describe "POST /forecast_entries" do
     it "admin creates and redirects" do

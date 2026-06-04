@@ -12,9 +12,48 @@ RSpec.describe "Receipts", type: :request do
 
   # ── Authentication ────────────────────────────────────────────────────────
   describe "unauthenticated" do
+    it "GET /receipts redirects to sign in" do
+      get receipts_path
+      expect(response).to redirect_to new_user_session_path
+    end
+
     it "GET new redirects to sign in" do
       get new_invoice_receipt_path(invoice)
       expect(response).to redirect_to new_user_session_path
+    end
+  end
+
+  # ── GET /receipts ─────────────────────────────────────────────────────────
+  describe "GET /receipts" do
+    it "returns 200 for financeiro" do
+      sign_in financeiro
+      get receipts_path
+      expect(response).to have_http_status(:ok)
+    end
+
+    it "returns 200 for admin" do
+      sign_in admin
+      get receipts_path
+      expect(response).to have_http_status(:ok)
+    end
+
+    it "blocks gestor" do
+      sign_in gestor
+      get receipts_path
+      expect(response).to redirect_to root_path
+      expect(flash[:alert]).to be_present
+    end
+
+    it "filters by month" do
+      sign_in financeiro
+      get receipts_path, params: { month: receipt.payment_date.strftime("%Y-%m") }
+      expect(response).to have_http_status(:ok)
+    end
+
+    it "filters by cost_center_id" do
+      sign_in financeiro
+      get receipts_path, params: { cost_center_id: invoice.cost_center_id }
+      expect(response).to have_http_status(:ok)
     end
   end
 
@@ -95,11 +134,11 @@ RSpec.describe "Receipts", type: :request do
       expect(response).to redirect_to invoice_path(invoice)
     end
 
-    it "financeiro cannot destroy" do
+    it "financeiro can destroy" do
       sign_in financeiro
       delete receipt_path(receipt)
-      expect(response).to redirect_to root_path
-      expect(flash[:alert]).to be_present
+      expect(response).to redirect_to invoice_path(invoice)
+      expect(flash[:notice]).to be_present
     end
   end
 end
