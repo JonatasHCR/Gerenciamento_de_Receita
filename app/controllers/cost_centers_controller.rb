@@ -63,7 +63,7 @@ class CostCentersController < ApplicationController
 
   def set_coordinator_options
     return if current_user.coordenador?
-    user_names = User.where(role: :coordenador).order(:name).pluck(:name)
+    user_names = User.where(role: [:coordenador, :gestor]).order(:name).pluck(:name)
     existing   = CostCenter.where.not(coordinator: [nil, ""]).distinct.pluck(:coordinator)
     @coordinator_options = (user_names + existing).uniq.sort
   end
