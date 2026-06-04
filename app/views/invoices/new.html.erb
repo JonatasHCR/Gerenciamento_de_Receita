@@ -1,0 +1,12 @@
+<% content_for :title, "Nova Nota Fiscal" %>
+
+<div class="max-w-2xl">
+  <div class="flex items-center gap-3 mb-6">
+    <%= link_to "← Voltar", invoices_path, class: "text-sm text-gray-500 hover:text-gray-700" %>
+    <h1 class="text-xl font-semibold text-gray-900">Nova Nota Fiscal</h1>
+  </div>
+
+  <div class="bg-white rounded-xl border border-gray-200 p-6">
+    <%= render "form", invoice: @invoice %>
+  </div>
+</div>

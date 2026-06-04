@@ -1,0 +1,77 @@
+<% content_for :title, "Faturamento" %>
+
+<div class="space-y-4">
+  <div class="flex items-center justify-between">
+    <h1 class="text-xl font-semibold text-gray-900">Faturamento</h1>
+    <% if policy(:invoice).create? %>
+      <%= link_to "Nova NF", new_invoice_path,
+            class: "rounded-lg bg-red-700 px-4 py-2 text-sm font-medium text-white hover:bg-red-800" %>
+    <% end %>
+  </div>
+
+  <%# Filters %>
+  <%= form_with url: invoices_path, method: :get, class: "bg-white rounded-xl border border-gray-200 p-4 flex flex-wrap gap-3" do |f| %>
+    <div>
+      <%= f.label :month, "Mês", class: "block text-xs text-gray-500 mb-1" %>
+      <%= f.month_field :month, value: params[:month],
+            class: "rounded-lg border border-gray-300 px-3 py-1.5 text-sm" %>
+    </div>
+    <div>
+      <%= f.label :cost_center_id, "Centro de Custo", class: "block text-xs text-gray-500 mb-1" %>
+      <%= f.select :cost_center_id,
+            CostCenter.order(:cr_code).map { |cc| ["#{cc.cr_code} — #{cc.description}", cc.id] },
+            { include_blank: "Todos" },
+            class: "rounded-lg border border-gray-300 px-3 py-1.5 text-sm" %>
+    </div>
+    <div class="flex items-end">
+      <%= f.submit "Filtrar", class: "rounded-lg bg-red-800 px-4 py-1.5 text-sm text-white hover:bg-red-900 cursor-pointer" %>
+      <%= link_to "Limpar", invoices_path, class: "ml-2 text-sm text-gray-500 hover:underline self-center" %>
+    </div>
+  <% end %>
+
+  <%= turbo_frame_tag "invoices_list" do %>
+    <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <% if @invoices.any? %>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50 text-xs text-gray-500 uppercase tracking-wide">
+              <tr>
+                <th class="px-4 py-3 text-left">NF</th>
+                <th class="px-4 py-3 text-left">Centro de Custo</th>
+                <th class="px-4 py-3 text-left">Cliente</th>
+                <th class="px-4 py-3 text-left">Emissão</th>
+                <th class="px-4 py-3 text-right">Valor</th>
+                <th class="px-4 py-3 text-right">Recebido</th>
+                <th class="px-4 py-3 text-center">Status</th>
+                <th class="px-4 py-3"></th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+              <% @invoices.each do |invoice| %>
+                <tr class="hover:bg-gray-50">
+                  <td class="px-4 py-3 font-medium text-gray-900"><%= invoice.number %></td>
+                  <td class="px-4 py-3 text-gray-600"><%= invoice.cost_center&.cr_code %></td>
+                  <td class="px-4 py-3 text-gray-600 max-w-xs truncate"><%= invoice.client_name %></td>
+                  <td class="px-4 py-3 text-gray-500"><%= invoice.issued_at&.strftime("%d/%m/%Y") %></td>
+                  <td class="px-4 py-3 text-right font-medium text-gray-900"><%= brl(invoice.value) %></td>
+                  <td class="px-4 py-3 text-right text-gray-600"><%= brl(invoice.received_amount) %></td>
+                  <td class="px-4 py-3 text-center"><%= payment_status_badge(invoice) %></td>
+                  <td class="px-4 py-3 text-right">
+                    <%= link_to "Ver", invoice_path(invoice), class: "text-red-600 hover:underline" %>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+
+        <div class="px-4 py-3 border-t border-gray-100 flex items-center justify-between text-sm text-gray-500">
+          <span>Total: <strong class="text-gray-900"><%= brl(@invoices.sum(&:value)) %></strong></span>
+          <%== @pagy.series_nav if @pagy.pages > 1 %>
+        </div>
+      <% else %>
+        <p class="py-12 text-center text-sm text-gray-400">Nenhuma nota fiscal encontrada.</p>
+      <% end %>
+    </div>
+  <% end %>
+</div>
