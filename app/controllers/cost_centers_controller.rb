@@ -1,5 +1,6 @@
 class CostCentersController < ApplicationController
   before_action :set_cost_center, only: [:show, :edit, :update, :destroy]
+  before_action :set_coordinator_options, only: [:new, :create, :edit, :update]
 
   def index
     scope = policy_scope(CostCenter).includes(:client)
@@ -15,6 +16,7 @@ class CostCentersController < ApplicationController
   def new
     authorize CostCenter
     @cost_center = CostCenter.new
+    @cost_center.coordinator = current_user.name if current_user.coordenador?
   end
 
   def create
@@ -57,5 +59,12 @@ class CostCentersController < ApplicationController
 
   def cost_center_params
     params.require(:cost_center).permit(:cr_code, :description, :object_text, :participation, :coordinator, :end_date, :client_id)
+  end
+
+  def set_coordinator_options
+    return if current_user.coordenador?
+    user_names = User.where(role: :coordenador).order(:name).pluck(:name)
+    existing   = CostCenter.where.not(coordinator: [nil, ""]).distinct.pluck(:coordinator)
+    @coordinator_options = (user_names + existing).uniq.sort
   end
 end
