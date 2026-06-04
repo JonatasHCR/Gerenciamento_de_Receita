@@ -1,0 +1,4 @@
+#!/usr/bin/env ruby
+
+system("bin/rails db:prepare") || abort("db:prepare failed")
+exec "bundle", "exec", "foreman", "start", "-f", "Procfile.dev", *ARGV
