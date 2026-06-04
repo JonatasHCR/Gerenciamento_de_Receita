@@ -1,0 +1,204 @@
+"pt-BR":
+  # ── Botões de formulário ────────────────────────────────────────────────────
+  helpers:
+    submit:
+      create: "Criar %{model}"
+      update: "Atualizar %{model}"
+      cost_center:
+        create: "Criar Centro de Custo"
+        update: "Atualizar Centro de Custo"
+      invoice:
+        create: "Criar Nota Fiscal"
+        update: "Atualizar Nota Fiscal"
+      receipt:
+        create: "Registrar Recebimento"
+        update: "Atualizar Recebimento"
+      forecast_entry:
+        create: "Criar Previsão"
+        update: "Atualizar Previsão"
+      client:
+        create: "Criar Cliente"
+        update: "Atualizar Cliente"
+      user:
+        create: "Criar Usuário"
+        update: "Atualizar Usuário"
+
+  # ── ActiveRecord ────────────────────────────────────────────────────────────
+  activerecord:
+    models:
+      cost_center:
+        one: "Centro de Custo"
+        other: "Centros de Custo"
+      invoice:
+        one: "Nota Fiscal"
+        other: "Notas Fiscais"
+      receipt:
+        one: "Recebimento"
+        other: "Recebimentos"
+      forecast_entry:
+        one: "Previsão"
+        other: "Previsões"
+      client:
+        one: "Cliente"
+        other: "Clientes"
+      user:
+        one: "Usuário"
+        other: "Usuários"
+    attributes:
+      cost_center:
+        cr_code: "Código CR"
+        description: "Descrição"
+        object_text: "Objeto do Contrato"
+        coordinator: "Coordenador"
+        participation: "Participação UFC"
+        end_date: "Data Final"
+        client_id: "Cliente"
+      invoice:
+        number: "Número da NF"
+        client_name: "Cliente"
+        issued_at: "Data de Emissão"
+        value: "Valor"
+        observations: "Observações"
+        cost_center_id: "Centro de Custo"
+      receipt:
+        payment_date: "Data de Recebimento"
+        value: "Valor"
+        observations: "Observações"
+        invoice_id: "Nota Fiscal"
+      forecast_entry:
+        month_year: "Mês/Ano"
+        forecasted_total: "Previsto Total"
+        forecasted_pct_ufc: "% UFC Previsto"
+        realized_total: "Realizado Total"
+        realized_pct_ufc: "% UFC Realizado"
+        cost_center_id: "Centro de Custo"
+        observations: "Observações"
+      client:
+        name: "Nome"
+        full_name: "Nome Completo"
+      user:
+        name: "Nome"
+        email: "E-mail"
+        role: "Perfil de Acesso"
+        password: "Senha"
+        password_confirmation: "Confirmação de Senha"
+    errors:
+      messages:
+        record_invalid: "A validação falhou: %{errors}"
+        restrict_dependent_destroy:
+          has_one: "Não é possível excluir porque existe um %{record} associado"
+          has_many: "Não é possível excluir porque existem %{record} associados"
+
+  # ── Mensagens de validação ──────────────────────────────────────────────────
+  errors:
+    format: "%{attribute} %{message}"
+    messages:
+      accepted: "deve ser aceito"
+      blank: "não pode ficar em branco"
+      confirmation: "não é igual a %{attribute}"
+      empty: "não pode ficar vazio"
+      equal_to: "deve ser igual a %{count}"
+      even: "deve ser par"
+      exclusion: "não está disponível"
+      greater_than: "deve ser maior que %{count}"
+      greater_than_or_equal_to: "deve ser maior ou igual a %{count}"
+      inclusion: "não está incluído na lista"
+      invalid: "não é válido"
+      less_than: "deve ser menor que %{count}"
+      less_than_or_equal_to: "deve ser menor ou igual a %{count}"
+      model_invalid: "A validação falhou: %{errors}"
+      not_a_number: "não é um número"
+      not_an_integer: "deve ser um número inteiro"
+      not_saved:
+        one: "1 erro impediu que este %{resource} fosse salvo:"
+        other: "%{count} erros impediram que este %{resource} fosse salvo:"
+      odd: "deve ser ímpar"
+      other_than: "deve ser diferente de %{count}"
+      present: "deve ficar em branco"
+      required: "é obrigatório"
+      taken: "já está em uso"
+      too_long:
+        one: "é muito longo (máximo: 1 caractere)"
+        other: "é muito longo (máximo: %{count} caracteres)"
+      too_short:
+        one: "é muito curto (mínimo: 1 caractere)"
+        other: "é muito curto (mínimo: %{count} caracteres)"
+      wrong_length:
+        one: "não possui o tamanho esperado (1 caractere)"
+        other: "não possui o tamanho esperado (%{count} caracteres)"
+
+  # ── Pagy paginação ──────────────────────────────────────────────────────────
+  pagy:
+    p11n: "OneOther"
+    aria_label:
+      nav:
+        one: "Página"
+        other: "Páginas"
+      previous: "Anterior"
+      next: "Próxima"
+    previous: "&laquo;"
+    next: "&raquo;"
+    gap: "&hellip;"
+    item_name:
+      one: "item"
+      other: "itens"
+
+  # ── Datas ───────────────────────────────────────────────────────────────────
+  date:
+    formats:
+      default: "%d/%m/%Y"
+      short: "%d/%m"
+      long: "%d de %B de %Y"
+    day_names:
+      - Domingo
+      - Segunda-feira
+      - Terça-feira
+      - Quarta-feira
+      - Quinta-feira
+      - Sexta-feira
+      - Sábado
+    abbr_day_names:
+      - Dom
+      - Seg
+      - Ter
+      - Qua
+      - Qui
+      - Sex
+      - "Sáb"
+    month_names:
+      - ~
+      - Janeiro
+      - Fevereiro
+      - "Março"
+      - Abril
+      - Maio
+      - Junho
+      - Julho
+      - Agosto
+      - Setembro
+      - Outubro
+      - Novembro
+      - Dezembro
+    abbr_month_names:
+      - ~
+      - Jan
+      - Fev
+      - Mar
+      - Abr
+      - Mai
+      - Jun
+      - Jul
+      - Ago
+      - Set
+      - Out
+      - Nov
+      - Dez
+    order:
+      - day
+      - month
+      - year
+  time:
+    formats:
+      default: "%d/%m/%Y %H:%M"
+      short: "%d/%m %H:%M"
+      long: "%d de %B de %Y, %H:%M"
