@@ -36,10 +36,7 @@ class ForecastEntriesController < ApplicationController
   def update
     authorize @entry
     if @entry.update(entry_params)
-      respond_to do |format|
-        format.turbo_stream
-        format.html { redirect_to forecast_entries_path, notice: "Previsão atualizada." }
-      end
+      redirect_to forecast_entries_path, notice: "Previsão atualizada."
     else
       render :edit, status: :unprocessable_entity
     end
@@ -58,9 +55,13 @@ class ForecastEntriesController < ApplicationController
   end
 
   def entry_params
-    params.require(:forecast_entry).permit(
+    permitted = params.require(:forecast_entry).permit(
       :month_year, :forecasted_total, :forecasted_pct_ufc,
       :realized_total, :realized_pct_ufc, :observations, :cost_center_id
     )
+    if permitted[:month_year].present? && permitted[:month_year].match?(/\A\d{4}-\d{2}\z/)
+      permitted[:month_year] = pt_month_year(Date.parse("#{permitted[:month_year]}-01"))
+    end
+    permitted
   end
 end
