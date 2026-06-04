@@ -1,0 +1,59 @@
+<%= form_with model: cost_center, class: "space-y-4" do |f| %>
+  <% if cost_center.errors.any? %>
+    <div class="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-red-700 text-sm">
+      <ul class="list-disc list-inside space-y-1">
+        <% cost_center.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <div>
+      <%= f.label :cr_code, "Código CR", class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <%= f.text_field :cr_code, class: "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-red-500" %>
+    </div>
+
+    <div>
+      <%= f.label :client_id, "Cliente", class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <%= f.collection_select :client_id, Client.order(:name), :id, :name,
+            { include_blank: "Selecione..." },
+            class: "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-red-500" %>
+    </div>
+
+    <div class="sm:col-span-2">
+      <%= f.label :description, "Descrição", class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <%= f.text_field :description, class: "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-red-500" %>
+    </div>
+
+    <div class="sm:col-span-2">
+      <%= f.label :object_text, "Objeto do Contrato", class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <%= f.text_area :object_text, rows: 3,
+            class: "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-red-500" %>
+    </div>
+
+    <div>
+      <%= f.label :coordinator, "Coordenador", class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <%= f.text_field :coordinator, class: "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-red-500" %>
+    </div>
+
+    <div>
+      <%= f.label :participation, "Participação UFC (%)", class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <%= f.number_field :participation, step: "0.01", min: "0", max: "1",
+            placeholder: "Ex: 1.0 para 100%, 0.5 para 50%",
+            class: "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-red-500" %>
+    </div>
+
+    <div>
+      <%= f.label :end_date, "Data Final", class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <%= f.date_field :end_date, class: "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-red-500" %>
+    </div>
+  </div>
+
+  <div class="flex gap-3 pt-2">
+    <%= f.submit class: "rounded-lg bg-red-700 px-5 py-2 text-sm font-medium text-white hover:bg-red-800 cursor-pointer" %>
+    <%= link_to "Cancelar", cost_centers_path,
+          class: "rounded-lg border border-gray-300 px-5 py-2 text-sm text-gray-700 hover:bg-gray-50" %>
+  </div>
+<% end %>

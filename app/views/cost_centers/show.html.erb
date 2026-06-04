@@ -1,0 +1,90 @@
+<% content_for :title, "CC #{@cost_center.cr_code}" %>
+
+<div class="space-y-6">
+  <div class="flex items-center gap-3">
+    <%= link_to "← Voltar", cost_centers_path, class: "text-sm text-gray-500 hover:text-gray-700" %>
+    <h1 class="text-xl font-semibold text-gray-900">
+      <%= @cost_center.cr_code %> — <%= @cost_center.description %>
+    </h1>
+  </div>
+
+  <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+    <%# Details %>
+    <div class="lg:col-span-2 bg-white rounded-xl border border-gray-200 p-6 space-y-4">
+      <div class="grid grid-cols-2 gap-4 text-sm">
+        <div>
+          <p class="text-xs text-gray-500 uppercase tracking-wide">Cliente</p>
+          <p class="mt-1 font-medium text-gray-900"><%= @cost_center.client&.name %></p>
+        </div>
+        <div>
+          <p class="text-xs text-gray-500 uppercase tracking-wide">Coordenador</p>
+          <p class="mt-1 font-medium text-gray-900"><%= @cost_center.coordinator %></p>
+        </div>
+        <div>
+          <p class="text-xs text-gray-500 uppercase tracking-wide">Participação UFC</p>
+          <p class="mt-1 font-medium text-gray-900">
+            <%= number_to_percentage((@cost_center.participation || 0) * 100, precision: 0) %>
+          </p>
+        </div>
+        <div>
+          <p class="text-xs text-gray-500 uppercase tracking-wide">Data Final</p>
+          <p class="mt-1 font-medium text-gray-900"><%= @cost_center.end_date&.strftime("%d/%m/%Y") %></p>
+        </div>
+        <% if @cost_center.object_text.present? %>
+          <div class="col-span-2">
+            <p class="text-xs text-gray-500 uppercase tracking-wide">Objeto</p>
+            <p class="mt-1 text-gray-700 leading-relaxed"><%= @cost_center.object_text %></p>
+          </div>
+        <% end %>
+      </div>
+
+      <% if policy(@cost_center).update? %>
+        <div class="flex gap-3 pt-2 border-t border-gray-100">
+          <%= link_to "Editar", edit_cost_center_path(@cost_center),
+                class: "rounded-lg border border-gray-300 px-4 py-2 text-sm hover:bg-gray-50" %>
+          <% if policy(@cost_center).destroy? %>
+            <%= button_to "Excluir", cost_center_path(@cost_center), method: :delete,
+                  data: { turbo_confirm: "Confirma a exclusão deste centro de custo?" },
+                  class: "rounded-lg border border-red-300 px-4 py-2 text-sm text-red-600 hover:bg-red-50" %>
+          <% end %>
+        </div>
+      <% end %>
+    </div>
+  </div>
+
+  <%# Recent Invoices %>
+  <div class="bg-white rounded-xl border border-gray-200">
+    <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+      <h2 class="font-semibold text-gray-700 text-sm">Notas Fiscais</h2>
+      <%= link_to "Ver todas →", invoices_path(cost_center_id: @cost_center.id),
+            class: "text-sm text-red-600 hover:underline" %>
+    </div>
+    <% recent_invoices = @cost_center.invoices.ordered.limit(10) %>
+    <% if recent_invoices.any? %>
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 text-xs text-gray-500 uppercase tracking-wide">
+          <tr>
+            <th class="px-5 py-3 text-left">NF</th>
+            <th class="px-5 py-3 text-left">Emissão</th>
+            <th class="px-5 py-3 text-right">Valor</th>
+            <th class="px-5 py-3 text-center">Status</th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          <% recent_invoices.each do |inv| %>
+            <tr class="hover:bg-gray-50">
+              <td class="px-5 py-3">
+                <%= link_to inv.number, invoice_path(inv), class: "text-red-600 hover:underline" %>
+              </td>
+              <td class="px-5 py-3 text-gray-500"><%= inv.issued_at&.strftime("%d/%m/%Y") %></td>
+              <td class="px-5 py-3 text-right font-medium text-gray-900"><%= brl(inv.value) %></td>
+              <td class="px-5 py-3 text-center"><%= payment_status_badge(inv) %></td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% else %>
+      <p class="py-8 text-center text-sm text-gray-400">Nenhuma nota fiscal para este CC.</p>
+    <% end %>
+  </div>
+</div>

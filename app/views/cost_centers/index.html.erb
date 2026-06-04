@@ -1,0 +1,66 @@
+<% content_for :title, "Centros de Custo" %>
+
+<div class="space-y-4">
+  <div class="flex items-center justify-between">
+    <h1 class="text-xl font-semibold text-gray-900">Centros de Custo</h1>
+    <% if policy(CostCenter).create? %>
+      <%= link_to "Novo CC", new_cost_center_path,
+            class: "rounded-lg bg-red-700 px-4 py-2 text-sm font-medium text-white hover:bg-red-800" %>
+    <% end %>
+  </div>
+
+  <div data-controller="search" data-search-url-value="<%= cost_centers_path %>">
+    <div class="relative mb-4">
+      <input type="text" placeholder="Buscar por código, descrição ou cliente..."
+             data-search-target="input"
+             data-action="input->search#search"
+             value="<%= params[:q] %>"
+             class="w-full rounded-xl border border-gray-300 pl-10 pr-4 py-2.5 text-sm focus:ring-2 focus:ring-red-500 bg-white">
+      <span class="absolute left-3 top-2.5 text-gray-400 text-sm">🔍</span>
+    </div>
+
+    <%= turbo_frame_tag "cost_centers_list", data: { "search-target": "frame" } do %>
+      <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+        <% if @cost_centers.any? %>
+          <div class="overflow-x-auto">
+            <table class="w-full text-sm">
+              <thead class="bg-gray-50 text-xs text-gray-500 uppercase tracking-wide">
+                <tr>
+                  <th class="px-4 py-3 text-left">Código (CR)</th>
+                  <th class="px-4 py-3 text-left">Descrição</th>
+                  <th class="px-4 py-3 text-left">Cliente</th>
+                  <th class="px-4 py-3 text-left">Coordenador</th>
+                  <th class="px-4 py-3 text-center">Participação</th>
+                  <th class="px-4 py-3 text-left">Vencimento</th>
+                  <th class="px-4 py-3"></th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100">
+                <% @cost_centers.each do |cc| %>
+                  <tr class="hover:bg-gray-50">
+                    <td class="px-4 py-3 font-mono font-medium text-gray-900"><%= cc.cr_code %></td>
+                    <td class="px-4 py-3 text-gray-700 max-w-xs truncate"><%= cc.description %></td>
+                    <td class="px-4 py-3 text-gray-600"><%= cc.client&.name %></td>
+                    <td class="px-4 py-3 text-gray-600"><%= cc.coordinator %></td>
+                    <td class="px-4 py-3 text-center text-gray-600">
+                      <%= number_to_percentage(cc.participation * 100, precision: 0) %>
+                    </td>
+                    <td class="px-4 py-3 text-gray-500"><%= cc.end_date&.strftime("%d/%m/%Y") %></td>
+                    <td class="px-4 py-3 text-right">
+                      <%= link_to "Ver", cost_center_path(cc), class: "text-red-600 hover:underline" %>
+                    </td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+          <div class="px-4 py-3 border-t border-gray-100 text-sm text-gray-500">
+            <%= @cost_centers.count %> centros de custo
+          </div>
+        <% else %>
+          <p class="py-12 text-center text-sm text-gray-400">Nenhum centro de custo encontrado.</p>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+</div>

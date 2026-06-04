@@ -1,0 +1,68 @@
+<% content_for :title, "Auditoria — Detalhe" %>
+
+<div class="max-w-3xl space-y-6">
+  <div class="flex items-center gap-3">
+    <%= link_to "← Voltar", audit_logs_path, class: "text-sm text-gray-500 hover:text-gray-700" %>
+    <h1 class="text-xl font-semibold text-gray-900">Detalhe do Registro</h1>
+  </div>
+
+  <div class="bg-white rounded-xl border border-gray-200 p-6 space-y-4 text-sm">
+    <div class="grid grid-cols-2 gap-4">
+      <div>
+        <p class="text-xs text-gray-500 uppercase tracking-wide">Data/Hora</p>
+        <p class="mt-1 font-medium text-gray-900"><%= @version.created_at.strftime("%d/%m/%Y às %H:%M:%S") %></p>
+      </div>
+      <div>
+        <p class="text-xs text-gray-500 uppercase tracking-wide">Usuário</p>
+        <% actor = User.find_by(id: @version.whodunnit) %>
+        <p class="mt-1 font-medium text-gray-900"><%= actor&.name || "Sistema" %></p>
+      </div>
+      <div>
+        <p class="text-xs text-gray-500 uppercase tracking-wide">Recurso</p>
+        <p class="mt-1 font-medium text-gray-900"><%= @version.item_type %> #<%= @version.item_id %></p>
+      </div>
+      <div>
+        <p class="text-xs text-gray-500 uppercase tracking-wide">Evento</p>
+        <span class="mt-1 inline-block px-2 py-0.5 rounded-full text-xs font-medium
+          <%= @version.event == 'create' ? 'bg-green-100 text-green-700' :
+              @version.event == 'destroy' ? 'bg-red-100 text-red-700' :
+              'bg-orange-100 text-orange-700' %>">
+          <%= { "create" => "Criação", "update" => "Atualização", "destroy" => "Exclusão" }[@version.event] %>
+        </span>
+      </div>
+    </div>
+
+    <% if @version.object_changes.present? %>
+      <div class="border-t border-gray-100 pt-4">
+        <p class="text-xs text-gray-500 uppercase tracking-wide mb-3">Alterações</p>
+        <div class="rounded-lg border border-gray-200 overflow-hidden">
+          <table class="w-full text-xs">
+            <thead class="bg-gray-50">
+              <tr>
+                <th class="px-4 py-2 text-left text-gray-500">Campo</th>
+                <th class="px-4 py-2 text-left text-gray-500">Valor Anterior</th>
+                <th class="px-4 py-2 text-left text-gray-500">Novo Valor</th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+              <% changes = @version.object_changes.is_a?(String) ? JSON.parse(@version.object_changes) : @version.object_changes rescue {} %>
+              <% changes.each do |field, values| %>
+                <% next if field.in?(%w[updated_at created_at encrypted_password]) %>
+                <tr>
+                  <td class="px-4 py-2 font-medium text-gray-700"><%= field %></td>
+                  <td class="px-4 py-2 text-red-600"><%= values[0].inspect %></td>
+                  <td class="px-4 py-2 text-green-700"><%= values[1].inspect %></td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    <% elsif @version.object.present? %>
+      <div class="border-t border-gray-100 pt-4">
+        <p class="text-xs text-gray-500 uppercase tracking-wide mb-2">Estado Anterior</p>
+        <pre class="rounded-lg bg-gray-50 border border-gray-200 p-4 text-xs text-gray-700 overflow-auto"><%= JSON.pretty_generate(@version.object.is_a?(String) ? JSON.parse(@version.object) : @version.object) rescue @version.object.inspect %></pre>
+      </div>
+    <% end %>
+  </div>
+</div>

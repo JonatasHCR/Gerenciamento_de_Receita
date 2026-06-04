@@ -1,0 +1,86 @@
+<% content_for :title, "Auditoria" %>
+
+<div class="space-y-4">
+  <h1 class="text-xl font-semibold text-gray-900">Log de Auditoria</h1>
+
+  <%# Filters %>
+  <%= form_with url: audit_logs_path, method: :get,
+        class: "bg-white rounded-xl border border-gray-200 p-4 flex flex-wrap gap-3" do |f| %>
+    <div>
+      <%= f.label :item_type, "Recurso", class: "block text-xs text-gray-500 mb-1" %>
+      <%= f.select :item_type,
+            [["Todos", ""], "Invoice", "Receipt", "CostCenter", "ForecastEntry", "Client", "User"],
+            { selected: params[:item_type] },
+            class: "rounded-lg border border-gray-300 px-3 py-1.5 text-sm" %>
+    </div>
+    <div>
+      <%= f.label :event, "Evento", class: "block text-xs text-gray-500 mb-1" %>
+      <%= f.select :event,
+            [["Todos", ""], ["Criação", "create"], ["Atualização", "update"], ["Exclusão", "destroy"]],
+            { selected: params[:event] },
+            class: "rounded-lg border border-gray-300 px-3 py-1.5 text-sm" %>
+    </div>
+    <div>
+      <%= f.label :user_id, "Usuário", class: "block text-xs text-gray-500 mb-1" %>
+      <%= f.select :user_id,
+            @users.map { |u| [u.name, u.id] },
+            { include_blank: "Todos", selected: params[:user_id] },
+            class: "rounded-lg border border-gray-300 px-3 py-1.5 text-sm" %>
+    </div>
+    <div class="flex items-end">
+      <%= f.submit "Filtrar", class: "rounded-lg bg-red-800 px-4 py-1.5 text-sm text-white hover:bg-red-900 cursor-pointer" %>
+      <%= link_to "Limpar", audit_logs_path, class: "ml-2 text-sm text-gray-500 hover:underline self-center" %>
+    </div>
+  <% end %>
+
+  <%= turbo_frame_tag "audit_list" do %>
+    <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+      <% if @versions.any? %>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50 text-xs text-gray-500 uppercase tracking-wide">
+              <tr>
+                <th class="px-4 py-3 text-left">Data/Hora</th>
+                <th class="px-4 py-3 text-left">Usuário</th>
+                <th class="px-4 py-3 text-left">Recurso</th>
+                <th class="px-4 py-3 text-center">Evento</th>
+                <th class="px-4 py-3"></th>
+              </tr>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+              <% @versions.each do |version| %>
+                <tr class="hover:bg-gray-50">
+                  <td class="px-4 py-3 text-gray-500 whitespace-nowrap">
+                    <%= version.created_at.strftime("%d/%m/%Y %H:%M") %>
+                  </td>
+                  <td class="px-4 py-3 text-gray-700">
+                    <%= @users_by_id[version.whodunnit]&.name || "Sistema" %>
+                  </td>
+                  <td class="px-4 py-3 text-gray-700">
+                    <%= version.item_type %> #<%= version.item_id %>
+                  </td>
+                  <td class="px-4 py-3 text-center">
+                    <span class="px-2 py-0.5 rounded-full text-xs font-medium
+                      <%= version.event == 'create' ? 'bg-green-100 text-green-700' :
+                          version.event == 'destroy' ? 'bg-red-100 text-red-700' :
+                          'bg-orange-100 text-orange-700' %>">
+                      <%= { "create" => "Criação", "update" => "Atualização", "destroy" => "Exclusão" }[version.event] || version.event %>
+                    </span>
+                  </td>
+                  <td class="px-4 py-3 text-right">
+                    <%= link_to "Detalhes", audit_log_path(version), class: "text-red-600 hover:underline" %>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+        <div class="px-4 py-3 border-t border-gray-100">
+          <%== @pagy.series_nav if @pagy.pages > 1 %>
+        </div>
+      <% else %>
+        <p class="py-12 text-center text-sm text-gray-400">Nenhum registro encontrado.</p>
+      <% end %>
+    </div>
+  <% end %>
+</div>

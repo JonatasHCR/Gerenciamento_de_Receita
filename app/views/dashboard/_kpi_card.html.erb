@@ -1,0 +1,17 @@
+<% color_map = {
+  "primary" => "bg-red-50 border-red-200 text-red-700",
+  "orange"  => "bg-orange-50 border-orange-200 text-orange-700",
+  "green"   => "bg-green-50 border-green-200 text-green-700",
+  "neutral" => "bg-gray-50 border-gray-200 text-gray-700"
+} %>
+
+<div class="bg-white rounded-xl border border-gray-200 p-5">
+  <div class="flex items-center justify-between mb-3">
+    <span class="text-xs font-medium text-gray-500 uppercase tracking-wide"><%= label %></span>
+    <span class="text-2xl"><%= icon %></span>
+  </div>
+  <p class="text-2xl font-bold text-gray-900"><%= value %></p>
+  <% if defined?(sub) && sub.present? %>
+    <p class="mt-1 text-xs text-gray-400"><%= sub %></p>
+  <% end %>
+</div>

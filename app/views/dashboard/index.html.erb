@@ -1,0 +1,117 @@
+<% content_for :title, "Dashboard — UFC Engenharia" %>
+
+<div class="space-y-6">
+  <%# Month filter %>
+  <div class="flex items-center justify-between">
+    <h1 class="text-xl font-semibold text-gray-900">Dashboard</h1>
+    <%= turbo_frame_tag "dashboard_filter" do %>
+      <%= form_with url: root_path, method: :get, data: { turbo_frame: "_top" }, class: "flex items-center gap-2" do |f| %>
+        <%= f.month_field :month, value: @month.strftime("%Y-%m"),
+              class: "rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:ring-2 focus:ring-red-500" %>
+        <%= f.submit "Filtrar", class: "rounded-lg bg-red-700 px-3 py-1.5 text-sm text-white hover:bg-red-800 cursor-pointer" %>
+      <% end %>
+    <% end %>
+  </div>
+
+  <% if current_user.admin_or_financeiro? %>
+    <%# KPI Cards %>
+    <%= turbo_frame_tag "kpi_cards" do %>
+      <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+        <%= render "kpi_card",
+              label: "Faturado no Mês",
+              value: brl(@total_invoiced),
+              color: "primary",
+              icon: "📄" %>
+
+        <%= render "kpi_card",
+              label: "Recebido no Mês",
+              value: brl(@total_received),
+              color: "green",
+              icon: "✅" %>
+
+        <%= render "kpi_card",
+              label: "Em Aberto",
+              value: brl(@open_balance),
+              color: "orange",
+              icon: "⏳",
+              sub: "#{@open_invoices_count} notas" %>
+
+        <%= render "kpi_card",
+              label: "Previsto no Mês",
+              value: brl(@forecast_summary.sum { |_, entries| entries.sum(&:forecasted_total) }),
+              color: "neutral",
+              icon: "📊" %>
+      </div>
+    <% end %>
+
+    <%# Charts %>
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+      <div class="bg-white rounded-xl border border-gray-200 p-5">
+        <h2 class="text-sm font-semibold text-gray-700 mb-4">Faturamento vs Recebimentos (6 meses)</h2>
+        <%= bar_chart(
+              [
+                { name: "Faturado", data: @invoices_by_month },
+                { name: "Recebido", data: @receipts_by_month }
+              ],
+              colors: ["#b91c1c", "#22c55e"],
+              thousands: ".",
+              decimal: ",",
+              prefix: "R$ ",
+              height: "220px"
+            ) %>
+      </div>
+
+      <div class="bg-white rounded-xl border border-gray-200 p-5">
+        <h2 class="text-sm font-semibold text-gray-700 mb-4">Recebimentos Acumulados</h2>
+        <%= line_chart @receipts_by_month,
+              color: "#22c55e",
+              thousands: ".",
+              decimal: ",",
+              prefix: "R$ ",
+              height: "220px" %>
+      </div>
+    </div>
+  <% end %>
+
+  <%# Previsto x Realizado Summary %>
+  <div class="bg-white rounded-xl border border-gray-200">
+    <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+      <h2 class="text-sm font-semibold text-gray-700">
+        Previsto × Realizado — <%= pt_month_year(@month).capitalize %>
+      </h2>
+      <%= link_to "Ver completo →", forecast_entries_path, class: "text-sm text-red-600 hover:underline" %>
+    </div>
+
+    <% if @forecast_summary.empty? %>
+      <p class="px-5 py-8 text-center text-sm text-gray-400">Nenhuma previsão cadastrada para este mês.</p>
+    <% else %>
+      <div class="overflow-x-auto">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50 text-xs text-gray-500 uppercase tracking-wide">
+            <tr>
+              <th class="px-5 py-3 text-left">Cliente</th>
+              <th class="px-5 py-3 text-right">Previsto</th>
+              <th class="px-5 py-3 text-right">Realizado</th>
+              <th class="px-5 py-3 text-right">Diferença</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            <% @forecast_summary.each do |client, entries| %>
+              <% total_forecasted = entries.sum(&:forecasted_total) %>
+              <% total_realized = entries.sum(&:realized_total) %>
+              <tr class="hover:bg-gray-50">
+                <td class="px-5 py-3 font-medium text-gray-900"><%= client&.name || "—" %></td>
+                <td class="px-5 py-3 text-right text-gray-600"><%= brl(total_forecasted) %></td>
+                <td class="px-5 py-3 text-right text-gray-600"><%= brl(total_realized) %></td>
+                <td class="px-5 py-3 text-right font-medium
+                  <%= total_realized >= total_forecasted ? 'text-green-600' : 'text-red-500' %>">
+                  <%= brl(total_realized - total_forecasted) %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% end %>
+  </div>
+</div>
