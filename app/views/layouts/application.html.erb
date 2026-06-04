@@ -10,179 +10,217 @@
     <%= javascript_importmap_tags %>
     <script>if(localStorage.getItem('theme')==='dark')document.documentElement.classList.add('dark')</script>
   </head>
-  <body class="font-sans antialiased bg-gray-50 <%= user_signed_in? ? 'flex h-screen overflow-hidden' : 'min-h-screen' %>">
+  <body class="font-sans antialiased bg-gray-50 <%= user_signed_in? ? '' : 'min-h-screen' %>">
 
     <% if user_signed_in? %>
-      <aside class="w-60 flex-shrink-0 flex flex-col bg-white border-r border-gray-200 h-screen transition-all duration-200 overflow-hidden"
-             data-controller="sidebar">
+      <div class="flex h-screen overflow-hidden" data-controller="sidebar">
 
-        <%# Logo + toggle %>
-        <div class="flex items-center justify-between h-16 px-3 border-b border-gray-100 flex-shrink-0"
-             data-sidebar-target="headerEl">
-          <%= link_to root_path,
-                class: "flex items-center gap-2.5 min-w-0 flex-1 py-2",
-                data: { "sidebar-target": "logoLink" } do %>
-            <div class="w-8 h-8 rounded-lg bg-red-700 flex items-center justify-center flex-shrink-0">
-              <span class="text-white text-xs font-bold leading-none">UFC</span>
-            </div>
-            <span class="font-bold text-red-700 text-sm truncate" data-sidebar-target="label">UFC Engenharia</span>
-          <% end %>
-          <div class="flex items-center gap-1 flex-shrink-0">
-            <button data-controller="theme"
-                    data-action="click->theme#toggle"
-                    data-sidebar-target="label"
-                    title="Alternar tema"
-                    class="p-1.5 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors text-sm leading-none">
-              <span data-theme-target="icon">🌙</span>
-            </button>
-            <button data-action="click->sidebar#toggle"
-                    title="Recolher menu"
-                    class="p-1.5 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors flex-shrink-0">
-              <svg data-sidebar-target="icon" class="w-4 h-4 transition-transform duration-200"
-                   fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/>
-              </svg>
-            </button>
-          </div>
+        <%# Backdrop mobile %>
+        <div id="sidebar-backdrop"
+             class="hidden fixed inset-0 z-30 bg-black/50 lg:hidden"
+             data-sidebar-target="backdrop"
+             data-action="click->sidebar#mobileClose">
         </div>
 
-        <%# Navigation %>
-        <nav class="flex-1 p-2 space-y-0.5 overflow-y-auto">
+        <%# Sidebar — fixo no mobile, relativo no desktop %>
+        <aside class="-translate-x-full lg:translate-x-0
+                      fixed lg:relative inset-y-0 left-0 z-40
+                      w-64 lg:w-60
+                      flex-shrink-0 flex flex-col bg-white border-r border-gray-200
+                      h-screen transition-all duration-300 overflow-hidden"
+               data-sidebar-target="sidebar">
 
-          <%= link_to root_path, title: "Dashboard", class: sidebar_nav_class(root_path) do %>
-            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
-            </svg>
-            <span class="truncate" data-sidebar-target="label">Dashboard</span>
-          <% end %>
-
-          <% if current_user.admin? || current_user.financeiro? %>
-            <%= link_to invoices_path, title: "Faturamento", class: sidebar_nav_class(invoices_path) do %>
-              <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-              </svg>
-              <span class="truncate" data-sidebar-target="label">Faturamento</span>
+          <%# Logo + toggle %>
+          <div class="flex items-center justify-between h-16 px-3 border-b border-gray-100 flex-shrink-0"
+               data-sidebar-target="headerEl">
+            <%= link_to root_path,
+                  class: "flex items-center gap-2.5 min-w-0 flex-1 py-2",
+                  data: { "sidebar-target": "logoLink" } do %>
+              <div class="w-8 h-8 rounded-lg bg-red-700 flex items-center justify-center flex-shrink-0">
+                <span class="text-white text-xs font-bold leading-none">UFC</span>
+              </div>
+              <span class="font-bold text-red-700 text-sm truncate" data-sidebar-target="label">UFC Engenharia</span>
             <% end %>
-
-            <%= link_to receipts_path, title: "Recebimentos", class: sidebar_nav_class(receipts_path) do %>
-              <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
-              </svg>
-              <span class="truncate" data-sidebar-target="label">Recebimentos</span>
-            <% end %>
-          <% end %>
-
-          <%= link_to forecast_entries_path, title: "Previsão", class: sidebar_nav_class(forecast_entries_path) do %>
-            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
-            </svg>
-            <span class="truncate" data-sidebar-target="label">Previsão</span>
-          <% end %>
-
-          <%= link_to clients_path, title: "Clientes", class: sidebar_nav_class(clients_path) do %>
-            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
-            </svg>
-            <span class="truncate" data-sidebar-target="label">Clientes</span>
-          <% end %>
-
-          <%= link_to cost_centers_path, title: "Centros de Custo", class: sidebar_nav_class(cost_centers_path) do %>
-            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
-            </svg>
-            <span class="truncate" data-sidebar-target="label">Centros de Custo</span>
-          <% end %>
-
-          <% if current_user.admin? %>
-            <%= link_to users_path, title: "Usuários", class: sidebar_nav_class(users_path) do %>
-              <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
-              </svg>
-              <span class="truncate" data-sidebar-target="label">Usuários</span>
-            <% end %>
-
-            <%= link_to audit_logs_path, title: "Auditoria", class: sidebar_nav_class(audit_logs_path) do %>
-              <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
-              </svg>
-              <span class="truncate" data-sidebar-target="label">Auditoria</span>
-            <% end %>
-          <% end %>
-
-          <% if current_user.admin? || current_user.financeiro? %>
-            <%= link_to new_import_path, title: "Importar", class: sidebar_nav_class(new_import_path) do %>
-              <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                      d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
-              </svg>
-              <span class="truncate" data-sidebar-target="label">Importar</span>
-            <% end %>
-          <% end %>
-
-        </nav>
-
-        <%# User section at bottom %>
-        <div class="p-2 border-t border-gray-100 flex-shrink-0 space-y-0.5">
-          <%= link_to edit_profile_path,
-                title: current_user.name,
-                class: "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 hover:bg-red-50 hover:text-red-700 transition-colors w-full" do %>
-            <div class="w-7 h-7 rounded-full bg-red-100 text-red-700 flex items-center justify-center font-semibold text-xs flex-shrink-0">
-              <%= current_user.name[0].upcase %>
+            <div class="flex items-center gap-1 flex-shrink-0">
+              <button data-controller="theme"
+                      data-action="click->theme#toggle"
+                      data-sidebar-target="label"
+                      title="Alternar tema"
+                      class="hidden lg:flex p-1.5 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors text-sm leading-none">
+                <span data-theme-target="icon">🌙</span>
+              </button>
+              <button data-action="click->sidebar#toggle"
+                      title="Recolher menu"
+                      class="hidden lg:flex p-1.5 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors flex-shrink-0">
+                <svg data-sidebar-target="icon" class="w-4 h-4 transition-transform duration-200"
+                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/>
+                </svg>
+              </button>
             </div>
-            <div class="min-w-0 flex-1" data-sidebar-target="label">
-              <p class="text-sm font-medium text-gray-800 truncate leading-tight"><%= current_user.name %></p>
-              <p class="mt-0.5">
-                <span class="text-xs px-1.5 py-0.5 rounded-full font-medium <%= role_badge_class(current_user.role) %>">
-                  <%= current_user.role.capitalize %>
-                </span>
-              </p>
-            </div>
-          <% end %>
+          </div>
 
-          <%= link_to destroy_user_session_path,
-                data: { turbo_method: :delete },
-                title: "Sair",
-                class: "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-500 hover:bg-red-50 hover:text-red-600 transition-colors w-full" do %>
-            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
-            </svg>
-            <span data-sidebar-target="label">Sair</span>
-          <% end %>
+          <%# Navigation %>
+          <nav class="flex-1 p-2 space-y-0.5 overflow-y-auto">
+
+            <%= link_to root_path, title: "Dashboard", class: sidebar_nav_class(root_path) do %>
+              <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6"/>
+              </svg>
+              <span class="truncate" data-sidebar-target="label">Dashboard</span>
+            <% end %>
+
+            <% if current_user.admin? || current_user.financeiro? %>
+              <%= link_to invoices_path, title: "Faturamento", class: sidebar_nav_class(invoices_path) do %>
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                </svg>
+                <span class="truncate" data-sidebar-target="label">Faturamento</span>
+              <% end %>
+
+              <%= link_to receipts_path, title: "Recebimentos", class: sidebar_nav_class(receipts_path) do %>
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+                </svg>
+                <span class="truncate" data-sidebar-target="label">Recebimentos</span>
+              <% end %>
+            <% end %>
+
+            <%= link_to forecast_entries_path, title: "Previsão", class: sidebar_nav_class(forecast_entries_path) do %>
+              <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+              </svg>
+              <span class="truncate" data-sidebar-target="label">Previsão</span>
+            <% end %>
+
+            <%= link_to clients_path, title: "Clientes", class: sidebar_nav_class(clients_path) do %>
+              <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+              </svg>
+              <span class="truncate" data-sidebar-target="label">Clientes</span>
+            <% end %>
+
+            <%= link_to cost_centers_path, title: "Centros de Custo", class: sidebar_nav_class(cost_centers_path) do %>
+              <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+              </svg>
+              <span class="truncate" data-sidebar-target="label">Centros de Custo</span>
+            <% end %>
+
+            <% if current_user.admin? %>
+              <%= link_to users_path, title: "Usuários", class: sidebar_nav_class(users_path) do %>
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z"/>
+                </svg>
+                <span class="truncate" data-sidebar-target="label">Usuários</span>
+              <% end %>
+
+              <%= link_to audit_logs_path, title: "Auditoria", class: sidebar_nav_class(audit_logs_path) do %>
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                </svg>
+                <span class="truncate" data-sidebar-target="label">Auditoria</span>
+              <% end %>
+            <% end %>
+
+            <% if current_user.admin? || current_user.financeiro? %>
+              <%= link_to new_import_path, title: "Importar", class: sidebar_nav_class(new_import_path) do %>
+                <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                        d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-8l-4-4m0 0L8 8m4-4v12"/>
+                </svg>
+                <span class="truncate" data-sidebar-target="label">Importar</span>
+              <% end %>
+            <% end %>
+
+          </nav>
+
+          <%# User section at bottom %>
+          <div class="p-2 border-t border-gray-100 flex-shrink-0 space-y-0.5">
+            <%= link_to edit_profile_path,
+                  title: current_user.name,
+                  class: "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-700 hover:bg-red-50 hover:text-red-700 transition-colors w-full" do %>
+              <div class="w-7 h-7 rounded-full bg-red-100 text-red-700 flex items-center justify-center font-semibold text-xs flex-shrink-0">
+                <%= current_user.name[0].upcase %>
+              </div>
+              <div class="min-w-0 flex-1" data-sidebar-target="label">
+                <p class="text-sm font-medium text-gray-800 truncate leading-tight"><%= current_user.name %></p>
+                <p class="mt-0.5">
+                  <span class="text-xs px-1.5 py-0.5 rounded-full font-medium <%= role_badge_class(current_user.role) %>">
+                    <%= current_user.role.capitalize %>
+                  </span>
+                </p>
+              </div>
+            <% end %>
+
+            <%= link_to destroy_user_session_path,
+                  data: { turbo_method: :delete },
+                  title: "Sair",
+                  class: "flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm font-medium text-gray-500 hover:bg-red-50 hover:text-red-600 transition-colors w-full" do %>
+              <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M17 16l4-4m0 0l-4-4m4 4H7m6 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h4a3 3 0 013 3v1"/>
+              </svg>
+              <span data-sidebar-target="label">Sair</span>
+            <% end %>
+          </div>
+
+        </aside>
+
+        <%# Main area %>
+        <div class="flex-1 flex flex-col min-w-0 overflow-hidden">
+
+          <%# Mobile top bar %>
+          <div class="lg:hidden flex items-center justify-between h-14 px-4 bg-white border-b border-gray-200 flex-shrink-0">
+            <button data-action="click->sidebar#mobileToggle"
+                    title="Abrir menu"
+                    class="p-2 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors">
+              <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M4 6h16M4 12h16M4 18h16"/>
+              </svg>
+            </button>
+            <span class="font-bold text-red-700 text-sm">UFC Engenharia</span>
+            <div class="w-9 h-9"></div><%# spacer para centralizar o título %>
+          </div>
+
+          <%# Flash + conteúdo %>
+          <div class="flex-1 overflow-y-auto min-w-0">
+            <div id="flash">
+              <% if notice.present? %>
+                <div class="mx-4 sm:mx-6 mt-4 rounded-lg bg-green-50 border border-green-200 px-4 py-3 text-green-800 text-sm"
+                     data-controller="flash">
+                  <%= notice %>
+                </div>
+              <% end %>
+              <% if alert.present? %>
+                <div class="mx-4 sm:mx-6 mt-4 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-red-800 text-sm">
+                  <%= alert %>
+                </div>
+              <% end %>
+            </div>
+
+            <main class="max-w-7xl mx-auto px-4 sm:px-6 py-4 sm:py-6">
+              <%= yield %>
+            </main>
+          </div>
+
         </div>
-
-      </aside>
-    <% end %>
-
-    <%# Main area %>
-    <div class="flex-1 overflow-y-auto min-w-0">
-      <div id="flash">
-        <% if notice.present? %>
-          <div class="mx-6 mt-4 rounded-lg bg-green-50 border border-green-200 px-4 py-3 text-green-800 text-sm"
-               data-controller="flash">
-            <%= notice %>
-          </div>
-        <% end %>
-        <% if alert.present? %>
-          <div class="mx-6 mt-4 rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-red-800 text-sm">
-            <%= alert %>
-          </div>
-        <% end %>
       </div>
-
-      <main class="max-w-7xl mx-auto px-6 py-6">
+    <% else %>
+      <main>
         <%= yield %>
       </main>
-    </div>
+    <% end %>
 
   </body>
 </html>
