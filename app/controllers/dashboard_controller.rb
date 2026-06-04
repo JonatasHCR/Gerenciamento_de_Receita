@@ -6,15 +6,28 @@ class DashboardController < ApplicationController
     if current_user.admin_or_financeiro?
       @total_invoiced   = Invoice.for_month(@month).sum(:value)
       @total_received   = Receipt.for_month(@month).sum(:value)
-      open_current_month  = Invoice.with_open_balance.for_month(@month)
-      open_prev_months    = Invoice.with_open_balance.where("issued_at < ?", @month)
+      # Uma única query com agregação condicional no lugar de 6 separadas
+      conn   = ActiveRecord::Base.connection
+      m_from = conn.quote(@month.beginning_of_month)
+      m_to   = conn.quote(@month.end_of_month)
+      m_prev = conn.quote(@month)
+      balance_expr = "invoices.value - COALESCE(r.received, 0)"
 
-      @open_balance                     = Invoice.with_open_balance.sum("invoices.value - COALESCE(r.received, 0)")
-      @open_invoices_count              = Invoice.with_open_balance.count
-      @open_balance_current_month       = open_current_month.sum("invoices.value - COALESCE(r.received, 0)")
-      @open_invoices_current_month_count = open_current_month.count
-      @open_balance_previous_months     = open_prev_months.sum("invoices.value - COALESCE(r.received, 0)")
-      @open_invoices_previous_months_count = open_prev_months.count
+      stats = Invoice.with_open_balance.pick(
+        Arel.sql("SUM(#{balance_expr})"),
+        Arel.sql("COUNT(*)"),
+        Arel.sql("SUM(CASE WHEN invoices.issued_at BETWEEN #{m_from} AND #{m_to} THEN #{balance_expr} ELSE 0 END)"),
+        Arel.sql("COUNT(CASE WHEN invoices.issued_at BETWEEN #{m_from} AND #{m_to} THEN 1 END)"),
+        Arel.sql("SUM(CASE WHEN invoices.issued_at < #{m_prev} THEN #{balance_expr} ELSE 0 END)"),
+        Arel.sql("COUNT(CASE WHEN invoices.issued_at < #{m_prev} THEN 1 END)")
+      ).map { |v| v || 0 }
+
+      @open_balance,
+      @open_invoices_count,
+      @open_balance_current_month,
+      @open_invoices_current_month_count,
+      @open_balance_previous_months,
+      @open_invoices_previous_months_count = stats
 
       chart_start = Date.new(@month.year, 1, 1)
       chart_end   = @month.end_of_month

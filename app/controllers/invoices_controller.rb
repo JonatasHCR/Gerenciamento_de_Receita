@@ -3,7 +3,10 @@ class InvoicesController < ApplicationController
 
   def index
     authorize Invoice
-    scope = policy_scope(Invoice).includes(:cost_center, :receipts)
+    scope = policy_scope(Invoice)
+              .preload(:cost_center)
+              .select("invoices.*, COALESCE(r.received, 0) AS preloaded_received")
+              .joins("LEFT JOIN (SELECT invoice_id, SUM(value) AS received FROM receipts GROUP BY invoice_id) r ON r.invoice_id = invoices.id")
     scope = apply_filters(scope)
     @pagy, @invoices = pagy(scope.ordered)
   end
