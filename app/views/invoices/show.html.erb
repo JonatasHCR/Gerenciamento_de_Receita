@@ -4,7 +4,7 @@
   <div class="flex items-center gap-3">
     <%= link_to "← Voltar", invoices_path, class: "text-sm text-gray-500 hover:text-gray-700" %>
     <h1 class="text-xl font-semibold text-gray-900">NF <%= @invoice.number %></h1>
-    <%= payment_status_badge(@invoice) %>
+    <span id="invoice_status_badge_<%= @invoice.id %>"><%= payment_status_badge(@invoice) %></span>
   </div>
 
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
@@ -31,11 +31,11 @@
           <p class="text-xs text-gray-500 uppercase tracking-wide">Valor da NF</p>
           <p class="mt-1 text-2xl font-bold text-gray-900"><%= brl(@invoice.value) %></p>
         </div>
-        <div>
+        <div id="invoice_received_amount_<%= @invoice.id %>">
           <p class="text-xs text-gray-500 uppercase tracking-wide">Total Recebido</p>
           <p class="mt-1 font-medium text-green-700"><%= brl(@invoice.received_amount) %></p>
         </div>
-        <div>
+        <div id="invoice_balance_<%= @invoice.id %>">
           <p class="text-xs text-gray-500 uppercase tracking-wide">Saldo em Aberto</p>
           <p class="mt-1 font-medium <%= @invoice.balance > 0 ? 'text-red-600' : 'text-green-600' %>">
             <%= brl(@invoice.balance) %>
@@ -62,14 +62,16 @@
       <% end %>
     </div>
 
-    <%# Open balance card %>
-    <% if @invoice.partially_paid? %>
-      <div class="bg-orange-50 border border-orange-200 rounded-xl p-5 text-sm h-fit">
-        <p class="font-semibold text-orange-800 mb-1">⚠️ Pagamento Parcial</p>
-        <p class="text-orange-700">Esta nota foi parcialmente paga. Saldo restante:</p>
-        <p class="text-2xl font-bold text-orange-900 mt-2"><%= brl(@invoice.balance) %></p>
-      </div>
-    <% end %>
+    <%# Open balance card — always render wrapper so turbo stream can target it %>
+    <div id="invoice_partial_card_<%= @invoice.id %>">
+      <% if @invoice.partially_paid? %>
+        <div class="bg-orange-50 border border-orange-200 rounded-xl p-5 text-sm h-fit">
+          <p class="font-semibold text-orange-800 mb-1">⚠️ Pagamento Parcial</p>
+          <p class="text-orange-700">Esta nota foi parcialmente paga. Saldo restante:</p>
+          <p class="text-2xl font-bold text-orange-900 mt-2"><%= brl(@invoice.balance) %></p>
+        </div>
+      <% end %>
+    </div>
   </div>
 
   <%# Receipts section %>
@@ -95,21 +97,7 @@
         <tbody id="receipts_body_<%= @invoice.id %>" class="divide-y divide-gray-100">
           <% if @receipts.any? %>
             <% @receipts.each do |receipt| %>
-              <%= tag.tr id: dom_id(receipt) do %>
-                <td class="px-5 py-3 text-gray-700"><%= receipt.payment_date&.strftime("%d/%m/%Y") %></td>
-                <td class="px-5 py-3 text-right font-medium text-green-700"><%= brl(receipt.value) %></td>
-                <td class="px-5 py-3 text-gray-500"><%= receipt.observations %></td>
-                <td class="px-5 py-3 text-right flex justify-end gap-3">
-                  <% if policy(receipt).update? %>
-                    <%= link_to "Editar", edit_receipt_path(receipt), class: "text-red-600 hover:underline" %>
-                  <% end %>
-                  <% if policy(receipt).destroy? %>
-                    <%= button_to "Excluir", receipt_path(receipt), method: :delete,
-                          data: { turbo_confirm: "Excluir este recebimento?" },
-                          class: "text-red-500 hover:underline bg-transparent border-0 p-0 cursor-pointer" %>
-                  <% end %>
-                </td>
-              <% end %>
+              <%= render "receipts/receipt_row", receipt: receipt %>
             <% end %>
           <% else %>
             <tr id="empty_receipts_<%= @invoice.id %>">

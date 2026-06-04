@@ -8,8 +8,8 @@
     <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
     <%= stylesheet_link_tag "application", "data-turbo-track": "reload" %>
     <%= javascript_importmap_tags %>
+    <script>if(localStorage.getItem('theme')==='dark')document.documentElement.classList.add('dark')</script>
   </head>
-
   <body class="font-sans antialiased bg-gray-50 <%= user_signed_in? ? 'flex h-screen overflow-hidden' : 'min-h-screen' %>">
 
     <% if user_signed_in? %>
@@ -24,15 +24,22 @@
             </div>
             <span class="font-bold text-red-700 text-sm truncate" data-sidebar-target="label">UFC Engenharia</span>
           <% end %>
-          <button data-action="click->sidebar#toggle"
-                  title="Recolher menu"
-                  class="p-1.5 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors flex-shrink-0">
-            <svg data-sidebar-target="icon" class="w-4 h-4 transition-transform duration-200"
-                 fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
-                    d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/>
-            </svg>
-          </button>
+          <div class="flex items-center gap-1 flex-shrink-0" data-controller="theme">
+            <button data-action="click->theme#toggle"
+                    title="Alternar tema"
+                    class="p-1.5 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors text-sm leading-none">
+              <span data-theme-target="icon">🌙</span>
+            </button>
+            <button data-action="click->sidebar#toggle"
+                    title="Recolher menu"
+                    class="p-1.5 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors flex-shrink-0">
+              <svg data-sidebar-target="icon" class="w-4 h-4 transition-transform duration-200"
+                   fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M11 19l-7-7 7-7m8 14l-7-7 7-7"/>
+              </svg>
+            </button>
+          </div>
         </div>
 
         <%# Navigation %>
@@ -54,6 +61,14 @@
               </svg>
               <span class="truncate" data-sidebar-target="label">Faturamento</span>
             <% end %>
+
+            <%= link_to receipts_path, title: "Recebimentos", class: sidebar_nav_class(receipts_path) do %>
+              <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M17 9V7a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2m2 4h10a2 2 0 002-2v-6a2 2 0 00-2-2H9a2 2 0 00-2 2v6a2 2 0 002 2zm7-5a2 2 0 11-4 0 2 2 0 014 0z"/>
+              </svg>
+              <span class="truncate" data-sidebar-target="label">Recebimentos</span>
+            <% end %>
           <% end %>
 
           <%= link_to forecast_entries_path, title: "Previsão", class: sidebar_nav_class(forecast_entries_path) do %>
@@ -62,6 +77,14 @@
                     d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
             </svg>
             <span class="truncate" data-sidebar-target="label">Previsão</span>
+          <% end %>
+
+          <%= link_to clients_path, title: "Clientes", class: sidebar_nav_class(clients_path) do %>
+            <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                    d="M17 20h5v-2a3 3 0 00-5.356-1.857M17 20H7m10 0v-2c0-.656-.126-1.283-.356-1.857M7 20H2v-2a3 3 0 015.356-1.857M7 20v-2c0-.656.126-1.283.356-1.857m0 0a5.002 5.002 0 019.288 0M15 7a3 3 0 11-6 0 3 3 0 016 0z"/>
+            </svg>
+            <span class="truncate" data-sidebar-target="label">Clientes</span>
           <% end %>
 
           <%= link_to cost_centers_path, title: "Centros de Custo", class: sidebar_nav_class(cost_centers_path) do %>

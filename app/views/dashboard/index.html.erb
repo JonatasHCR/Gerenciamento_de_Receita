@@ -47,7 +47,10 @@
     <%# Charts %>
     <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
       <div class="bg-white rounded-xl border border-gray-200 p-5">
-        <h2 class="text-sm font-semibold text-gray-700 mb-4">Faturamento vs Recebimentos (6 meses)</h2>
+        <h2 class="text-sm font-semibold text-gray-700 mb-4">
+          Faturamento vs Recebimentos — Jan a <%= pt_month_year(@month) %>
+          (<%= @chart_months %> <%= @chart_months == 1 ? "mês" : "meses" %>)
+        </h2>
         <%= bar_chart(
               [
                 { name: "Faturado", data: @invoices_by_month },
@@ -62,7 +65,10 @@
       </div>
 
       <div class="bg-white rounded-xl border border-gray-200 p-5">
-        <h2 class="text-sm font-semibold text-gray-700 mb-4">Recebimentos Acumulados</h2>
+        <h2 class="text-sm font-semibold text-gray-700 mb-4">
+          Recebimentos Acumulados — <%= @chart_year %>
+          (<%= @chart_months %> <%= @chart_months == 1 ? "mês" : "meses" %>)
+        </h2>
         <%= line_chart @receipts_by_month,
               color: "#22c55e",
               thousands: ".",

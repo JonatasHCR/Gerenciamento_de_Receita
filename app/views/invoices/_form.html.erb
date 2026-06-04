@@ -1,4 +1,11 @@
-<%= form_with model: invoice, class: "space-y-4" do |f| %>
+<%
+  cc_client_map = CostCenter.includes(:client).each_with_object({}) do |cc, h|
+    h[cc.id.to_s] = cc.client&.name.to_s
+  end
+%>
+<%= form_with model: invoice, class: "space-y-4",
+      data: { controller: "cost-center-client",
+              "cost-center-client-map-value": cc_client_map.to_json } do |f| %>
   <% if invoice.errors.any? %>
     <div class="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-red-700 text-sm">
       <ul class="list-disc list-inside space-y-1">
@@ -20,12 +27,15 @@
       <%= f.collection_select :cost_center_id,
             CostCenter.order(:cr_code), :id, ->(cc) { "#{cc.cr_code} — #{cc.description}" },
             { include_blank: "Selecione..." },
-            class: "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-red-500" %>
+            class: "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-red-500",
+            data: { "cost-center-client-target": "costCenter", action: "change->cost-center-client#fill" } %>
     </div>
 
     <div>
       <%= f.label :client_name, "Cliente", class: "block text-sm font-medium text-gray-700 mb-1" %>
-      <%= f.text_field :client_name, class: "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-red-500" %>
+      <%= f.text_field :client_name,
+            class: "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-red-500",
+            data: { "cost-center-client-target": "clientName" } %>
     </div>
 
     <div>

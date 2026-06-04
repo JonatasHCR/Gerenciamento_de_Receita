@@ -10,12 +10,16 @@
   </div>
 
   <%# Month filter %>
-  <%= form_with url: forecast_entries_path, method: :get, class: "flex items-center gap-3" do |f| %>
-    <%= f.label :month_year, "Mês/Ano:", class: "text-sm font-medium text-gray-700" %>
-    <%= f.text_field :month_year, value: @month_year, placeholder: "JUNHO/2026",
-          class: "rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:ring-2 focus:ring-red-500 uppercase",
-          style: "text-transform: uppercase" %>
-    <%= f.submit "Filtrar", class: "rounded-lg bg-red-800 px-3 py-1.5 text-sm text-white hover:bg-red-900 cursor-pointer" %>
+  <%= form_with url: forecast_entries_path, method: :get, class: "bg-white rounded-xl border border-gray-200 p-4 flex flex-wrap gap-3" do |f| %>
+    <div>
+      <%= f.label :month, "Mês/Ano", class: "block text-xs text-gray-500 mb-1" %>
+      <%= f.month_field :month, value: month_year_to_input(@month_year),
+            class: "rounded-lg border border-gray-300 px-3 py-1.5 text-sm" %>
+    </div>
+    <div class="flex items-end gap-2">
+      <%= f.submit "Filtrar", class: "rounded-lg bg-red-800 px-4 py-1.5 text-sm text-white hover:bg-red-900 cursor-pointer" %>
+      <%= link_to "Limpar", forecast_entries_path, class: "text-sm text-gray-500 hover:underline self-center" %>
+    </div>
   <% end %>
 
   <%= turbo_frame_tag "forecast_table" do %>
