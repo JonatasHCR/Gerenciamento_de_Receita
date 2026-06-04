@@ -2,6 +2,11 @@ class ForecastEntryPolicy < ApplicationPolicy
   def index?  = true
   def show?   = true
 
+  # Permite abrir o formulário; a validação do CC acontece no create?
+  def new?
+    admin? || financeiro? || gestor? || coordenador?
+  end
+
   def create?
     admin? || financeiro? || gestor? || (coordenador? && own_cost_center?)
   end

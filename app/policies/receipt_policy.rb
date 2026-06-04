@@ -3,7 +3,7 @@ class ReceiptPolicy < ApplicationPolicy
   def show?    = admin? || financeiro?
   def create?  = admin? || financeiro?
   def update?  = admin? || financeiro?
-  def destroy? = admin?
+  def destroy? = admin? || financeiro?
 
   class Scope < ApplicationPolicy::Scope
     def resolve
