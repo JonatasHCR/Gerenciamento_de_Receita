@@ -20,10 +20,10 @@
     </div>
 
     <div>
-      <%= f.label :month_year, "Mês/Ano (ex: JUNHO/2026)", class: "block text-sm font-medium text-gray-700 mb-1" %>
-      <%= f.text_field :month_year, placeholder: "JUNHO/2026",
-            class: "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-red-500 uppercase",
-            style: "text-transform: uppercase" %>
+      <%= f.label :month_year, "Mês/Ano", class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <%= f.month_field :month_year,
+            value: month_year_to_input(entry.month_year),
+            class: "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-red-500" %>
     </div>
 
     <div>

@@ -17,15 +17,20 @@
              data-controller="sidebar">
 
         <%# Logo + toggle %>
-        <div class="flex items-center justify-between h-16 px-3 border-b border-gray-100 flex-shrink-0">
-          <%= link_to root_path, class: "flex items-center gap-2.5 min-w-0 flex-1 py-2" do %>
+        <div class="flex items-center justify-between h-16 px-3 border-b border-gray-100 flex-shrink-0"
+             data-sidebar-target="headerEl">
+          <%= link_to root_path,
+                class: "flex items-center gap-2.5 min-w-0 flex-1 py-2",
+                data: { "sidebar-target": "logoLink" } do %>
             <div class="w-8 h-8 rounded-lg bg-red-700 flex items-center justify-center flex-shrink-0">
               <span class="text-white text-xs font-bold leading-none">UFC</span>
             </div>
             <span class="font-bold text-red-700 text-sm truncate" data-sidebar-target="label">UFC Engenharia</span>
           <% end %>
-          <div class="flex items-center gap-1 flex-shrink-0" data-controller="theme">
-            <button data-action="click->theme#toggle"
+          <div class="flex items-center gap-1 flex-shrink-0">
+            <button data-controller="theme"
+                    data-action="click->theme#toggle"
+                    data-sidebar-target="label"
                     title="Alternar tema"
                     class="p-1.5 rounded-md text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors text-sm leading-none">
               <span data-theme-target="icon">🌙</span>
