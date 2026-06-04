@@ -26,6 +26,16 @@ module ApplicationHelper
     end
   end
 
+  PT_MONTH_NAMES = %w[JANEIRO FEVEREIRO MARÇO ABRIL MAIO JUNHO JULHO AGOSTO SETEMBRO OUTUBRO NOVEMBRO DEZEMBRO].freeze
+
+  def month_year_to_input(month_year)
+    parts = month_year.to_s.split("/")
+    return "" unless parts.size == 2
+    idx = PT_MONTH_NAMES.index(parts[0].upcase)
+    return "" unless idx
+    format("%04d-%02d", parts[1].to_i, idx + 1)
+  end
+
   def brl(value)
     number_to_currency(value, unit: "R$ ", separator: ",", delimiter: ".", precision: 2)
   end

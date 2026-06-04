@@ -13,7 +13,9 @@ Rails.application.routes.draw do
   patch "profile",        to: "users#profile_update", as: :profile
   put   "profile",        to: "users#profile_update"
 
+  resources :clients
   resources :cost_centers
+  resources :receipts, only: [:index]
   resources :invoices do
     resources :receipts, shallow: true, only: [:new, :create, :edit, :update, :destroy]
   end
