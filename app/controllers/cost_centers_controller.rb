@@ -1,0 +1,61 @@
+class CostCentersController < ApplicationController
+  before_action :set_cost_center, only: [:show, :edit, :update, :destroy]
+
+  def index
+    scope = policy_scope(CostCenter).includes(:client)
+    scope = scope.where("cr_code ILIKE :q OR description ILIKE :q OR coordinator ILIKE :q",
+                        q: "%#{params[:q]}%") if params[:q].present?
+    @cost_centers = scope.ordered
+  end
+
+  def show
+    authorize @cost_center
+  end
+
+  def new
+    authorize CostCenter
+    @cost_center = CostCenter.new
+  end
+
+  def create
+    authorize CostCenter
+    @cost_center = CostCenter.new(cost_center_params)
+    if @cost_center.save
+      redirect_to @cost_center, notice: "Centro de custo criado."
+    else
+      render :new, status: :unprocessable_entity
+    end
+  end
+
+  def edit
+    authorize @cost_center
+  end
+
+  def update
+    authorize @cost_center
+    if @cost_center.update(cost_center_params)
+      redirect_to @cost_center, notice: "Centro de custo atualizado."
+    else
+      render :edit, status: :unprocessable_entity
+    end
+  end
+
+  def destroy
+    authorize @cost_center
+    if @cost_center.destroy
+      redirect_to cost_centers_path, notice: "Centro de custo removido."
+    else
+      redirect_to @cost_center, alert: "Não é possível remover: possui notas fiscais associadas."
+    end
+  end
+
+  private
+
+  def set_cost_center
+    @cost_center = CostCenter.find(params[:id])
+  end
+
+  def cost_center_params
+    params.require(:cost_center).permit(:cr_code, :description, :object_text, :participation, :coordinator, :end_date, :client_id)
+  end
+end
