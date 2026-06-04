@@ -1,3 +1,6 @@
+/* ===== MOBILE SIDEBAR OVERLAY ===== */
+html.dark #sidebar-backdrop { background-color: rgba(0, 0, 0, 0.7); }
+
 /* ===== DARK MODE ===== */
 html.dark { color-scheme: dark; }
 
