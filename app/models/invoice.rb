@@ -17,7 +17,15 @@ class Invoice < ApplicationRecord
   scope :ordered, -> { order(issued_at: :desc) }
 
   def received_amount
-    receipts.sum(:value)
+    # Usa valor pré-calculado via JOIN subquery quando disponível (index/list queries),
+    # evitando N+1. Cai no SQL SUM apenas em queries pontuais (show, validações).
+    if has_attribute?(:preloaded_received)
+      self[:preloaded_received] || 0
+    elsif receipts.loaded?
+      receipts.sum(&:value)
+    else
+      receipts.sum(:value)
+    end
   end
 
   def balance
