@@ -98,44 +98,200 @@
   <% end %>
 
   <%# Previsto x Realizado Summary %>
-  <div class="bg-white rounded-xl border border-gray-200">
+  <div class="bg-white rounded-xl border border-gray-200" data-controller="collapse">
     <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
-      <h2 class="text-sm font-semibold text-gray-700">
-        Previsto × Realizado — <%= pt_month_year(@month).capitalize %>
-      </h2>
-      <%= link_to "Ver completo →", forecast_entries_path, class: "text-sm text-red-600 hover:underline" %>
+      <div class="flex items-center gap-3 cursor-pointer select-none flex-1"
+           data-action="click->collapse#toggle">
+        <svg data-collapse-target="icon"
+             class="w-4 h-4 text-gray-400 transition-transform duration-200 flex-shrink-0"
+             fill="none" stroke="currentColor" viewBox="0 0 24 24">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+        </svg>
+        <h2 class="text-sm font-semibold text-gray-700">
+          Previsto × Realizado — <%= pt_month_year(@month).capitalize %>
+        </h2>
+      </div>
+      <%= link_to "Ver completo →", forecast_entries_path, class: "text-sm text-red-600 hover:underline flex-shrink-0" %>
     </div>
 
-    <% if @forecast_summary.empty? %>
-      <p class="px-5 py-8 text-center text-sm text-gray-400">Nenhuma previsão cadastrada para este mês.</p>
-    <% else %>
-      <div class="overflow-x-auto">
-        <table class="w-full text-sm">
-          <thead class="bg-gray-50 text-xs text-gray-500 uppercase tracking-wide">
-            <tr>
-              <th class="px-5 py-3 text-left">Cliente</th>
-              <th class="px-5 py-3 text-right">Previsto</th>
-              <th class="px-5 py-3 text-right">Realizado</th>
-              <th class="px-5 py-3 text-right">Diferença</th>
-            </tr>
-          </thead>
-          <tbody class="divide-y divide-gray-100">
-            <% @forecast_summary.each do |client, entries| %>
-              <% total_forecasted = entries.sum(&:forecasted_total) %>
-              <% total_realized = entries.sum(&:realized_total) %>
-              <tr class="hover:bg-gray-50">
-                <td class="px-5 py-3 font-medium text-gray-900"><%= client&.name || "—" %></td>
-                <td class="px-5 py-3 text-right text-gray-600"><%= brl(total_forecasted) %></td>
-                <td class="px-5 py-3 text-right text-gray-600"><%= brl(total_realized) %></td>
-                <td class="px-5 py-3 text-right font-medium
-                  <%= total_realized >= total_forecasted ? 'text-green-600' : 'text-red-500' %>">
-                  <%= brl(total_realized - total_forecasted) %>
-                </td>
+    <div data-collapse-target="content">
+      <% if @forecast_summary.empty? %>
+        <p class="px-5 py-8 text-center text-sm text-gray-400">Nenhuma previsão cadastrada para este mês.</p>
+      <% else %>
+        <div class="overflow-x-auto">
+          <table class="w-full text-sm">
+            <thead class="bg-gray-50 text-xs text-gray-500 uppercase tracking-wide">
+              <tr>
+                <th class="px-5 py-3 text-left">Cliente</th>
+                <th class="px-5 py-3 text-right">Previsto</th>
+                <th class="px-5 py-3 text-right">Realizado</th>
+                <th class="px-5 py-3 text-right">Diferença</th>
               </tr>
-            <% end %>
-          </tbody>
-        </table>
-      </div>
-    <% end %>
+            </thead>
+            <tbody class="divide-y divide-gray-100">
+              <% @forecast_summary.each do |client, entries| %>
+                <% total_forecasted = entries.sum(&:forecasted_total) %>
+                <% total_realized = entries.sum(&:realized_total) %>
+                <tr class="hover:bg-gray-50">
+                  <td class="px-5 py-3 font-medium text-gray-900"><%= client&.name || "—" %></td>
+                  <td class="px-5 py-3 text-right text-gray-600"><%= brl(total_forecasted) %></td>
+                  <td class="px-5 py-3 text-right text-gray-600"><%= brl(total_realized) %></td>
+                  <td class="px-5 py-3 text-right font-medium
+                    <%= total_realized >= total_forecasted ? 'text-green-600' : 'text-red-500' %>">
+                    <%= brl(total_realized - total_forecasted) %>
+                  </td>
+                </tr>
+              <% end %>
+            </tbody>
+          </table>
+        </div>
+      <% end %>
+    </div>
   </div>
+
+  <%# Faturado x Recebido por cliente/CC — apenas admin e financeiro %>
+  <% if current_user.admin_or_financeiro? && @billing_by_client.present? %>
+    <div class="bg-white rounded-xl border border-gray-200" data-controller="collapse">
+      <div class="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+        <div class="flex items-center gap-3 cursor-pointer select-none flex-1"
+             data-action="click->collapse#toggle">
+          <svg data-collapse-target="icon"
+               class="w-4 h-4 text-gray-400 transition-transform duration-200 flex-shrink-0"
+               fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+          </svg>
+          <h2 class="text-sm font-semibold text-gray-700">
+            Faturado × Recebido — <%= pt_month_year(@month).capitalize %>
+          </h2>
+        </div>
+        <%= link_to "Ver faturamento →", invoices_path, class: "text-sm text-red-600 hover:underline flex-shrink-0" %>
+      </div>
+
+      <div data-collapse-target="content">
+      <div class="space-y-0 divide-y divide-gray-100">
+        <%
+          grand_inv_cur = grand_inv_pre = grand_inv_total = 0
+          grand_rec_cur = grand_rec_pre = grand_rec_total = 0
+          grand_open    = 0
+        %>
+
+        <% @billing_by_client.each do |client, entries| %>
+          <%
+            cl_inv_cur   = entries.sum { |e| e[:inv_cur] }
+            cl_inv_pre   = entries.sum { |e| e[:inv_pre] }
+            cl_rec_cur   = entries.sum { |e| e[:rec_cur] }
+            cl_rec_pre   = entries.sum { |e| e[:rec_pre] }
+            cl_inv_total = entries.sum { |e| e[:inv_total] }
+            cl_rec_total = entries.sum { |e| e[:rec_total] }
+            cl_open      = entries.sum { |e| e[:open] }
+            grand_inv_cur   += cl_inv_cur
+            grand_inv_pre   += cl_inv_pre
+            grand_inv_total += cl_inv_total
+            grand_rec_cur   += cl_rec_cur
+            grand_rec_pre   += cl_rec_pre
+            grand_rec_total += cl_rec_total
+            grand_open      += cl_open
+          %>
+          <div data-controller="collapse">
+            <%# Cabeçalho do cliente %>
+            <div class="flex flex-wrap items-center justify-between px-5 py-3 cursor-pointer select-none
+                        bg-gray-50 hover:bg-red-50 transition-colors"
+                 data-action="click->collapse#toggle">
+              <div class="flex items-center gap-3">
+                <svg data-collapse-target="icon"
+                     class="w-4 h-4 text-gray-400 transition-transform duration-200 flex-shrink-0"
+                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+                <span class="font-semibold text-gray-800 text-sm"><%= client&.name || "Sem Cliente" %></span>
+                <span class="text-xs text-gray-400">(<%= entries.count %> CC<%= entries.count > 1 ? "s" : "" %>)</span>
+              </div>
+              <div class="flex flex-wrap gap-4 text-xs text-gray-500 mt-1 sm:mt-0">
+                <span>Fat. Mês: <strong class="text-gray-800"><%= brl(cl_inv_cur) %></strong></span>
+                <span>Rec. Mês: <strong class="text-green-700"><%= brl(cl_rec_cur) %></strong></span>
+                <span>Total Fat.: <strong class="text-gray-800"><%= brl(cl_inv_total) %></strong></span>
+                <span>Total Rec.: <strong class="text-green-700"><%= brl(cl_rec_total) %></strong></span>
+                <span>Em Aberto: <strong class="<%= cl_open > 0 ? 'text-red-600' : 'text-green-600' %>"><%= brl(cl_open) %></strong></span>
+              </div>
+            </div>
+
+            <%# Tabela de CCs %>
+            <div data-collapse-target="content">
+              <div class="overflow-x-auto">
+                <table class="w-full text-xs">
+                  <thead class="bg-gray-50 border-b border-gray-100">
+                    <tr class="text-gray-500 uppercase tracking-wide">
+                      <th class="px-4 py-2 text-left" rowspan="2">CR</th>
+                      <th class="px-4 py-2 text-left" rowspan="2">Descrição</th>
+                      <th colspan="2" class="px-4 py-1.5 text-center border-l border-gray-200 text-blue-600">Mês Atual</th>
+                      <th colspan="2" class="px-4 py-1.5 text-center border-l border-gray-200 text-orange-600">Meses Anteriores</th>
+                      <th colspan="3" class="px-4 py-1.5 text-center border-l border-gray-200 text-gray-600">Total</th>
+                    </tr>
+                    <tr class="text-gray-400">
+                      <th class="px-4 py-1.5 text-right border-l border-gray-200">Faturado</th>
+                      <th class="px-4 py-1.5 text-right">Recebido</th>
+                      <th class="px-4 py-1.5 text-right border-l border-gray-200">Faturado</th>
+                      <th class="px-4 py-1.5 text-right">Recebido</th>
+                      <th class="px-4 py-1.5 text-right border-l border-gray-200">Faturado</th>
+                      <th class="px-4 py-1.5 text-right">Recebido</th>
+                      <th class="px-4 py-1.5 text-right">Em Aberto</th>
+                    </tr>
+                  </thead>
+                  <tbody class="divide-y divide-gray-100">
+                    <% entries.each do |e| %>
+                      <tr class="hover:bg-gray-50">
+                        <td class="px-4 py-2 font-mono text-gray-700">
+                          <%= link_to e[:cc].cr_code, cost_center_path(e[:cc]),
+                                class: "text-red-600 hover:underline" %>
+                        </td>
+                        <td class="px-4 py-2 text-gray-600 max-w-[180px] truncate"><%= e[:cc].description %></td>
+                        <td class="px-4 py-2 text-right text-gray-700 border-l border-gray-100">
+                          <%= e[:inv_cur] > 0 ? brl(e[:inv_cur]) : '<span class="text-gray-300">—</span>'.html_safe %>
+                        </td>
+                        <td class="px-4 py-2 text-right text-green-700">
+                          <%= e[:rec_cur] > 0 ? brl(e[:rec_cur]) : '<span class="text-gray-300">—</span>'.html_safe %>
+                        </td>
+                        <td class="px-4 py-2 text-right text-gray-700 border-l border-gray-100">
+                          <%= e[:inv_pre] > 0 ? brl(e[:inv_pre]) : '<span class="text-gray-300">—</span>'.html_safe %>
+                        </td>
+                        <td class="px-4 py-2 text-right text-green-700">
+                          <%= e[:rec_pre] > 0 ? brl(e[:rec_pre]) : '<span class="text-gray-300">—</span>'.html_safe %>
+                        </td>
+                        <td class="px-4 py-2 text-right font-medium text-gray-800 border-l border-gray-100"><%= brl(e[:inv_total]) %></td>
+                        <td class="px-4 py-2 text-right font-medium text-green-700"><%= brl(e[:rec_total]) %></td>
+                        <td class="px-4 py-2 text-right font-medium <%= e[:open] > 0 ? 'text-red-600' : 'text-green-600' %>"><%= brl(e[:open]) %></td>
+                      </tr>
+                    <% end %>
+                    <%# Subtotal do cliente %>
+                    <tr class="bg-gray-50 font-semibold text-xs">
+                      <td class="px-4 py-2 text-gray-600" colspan="2">Subtotal <%= client&.name %></td>
+                      <td class="px-4 py-2 text-right text-gray-700 border-l border-gray-100"><%= brl(cl_inv_cur) %></td>
+                      <td class="px-4 py-2 text-right text-green-700"><%= brl(cl_rec_cur) %></td>
+                      <td class="px-4 py-2 text-right text-gray-700 border-l border-gray-100"><%= brl(cl_inv_pre) %></td>
+                      <td class="px-4 py-2 text-right text-green-700"><%= brl(cl_rec_pre) %></td>
+                      <td class="px-4 py-2 text-right text-gray-800 border-l border-gray-100"><%= brl(cl_inv_total) %></td>
+                      <td class="px-4 py-2 text-right text-green-700"><%= brl(cl_rec_total) %></td>
+                      <td class="px-4 py-2 text-right <%= cl_open > 0 ? 'text-red-600' : 'text-green-600' %>"><%= brl(cl_open) %></td>
+                    </tr>
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          </div>
+        <% end %>
+
+        <%# Total geral %>
+        <div class="bg-red-900 text-white px-5 py-3 flex flex-wrap gap-6 text-xs font-semibold justify-end rounded-b-xl">
+          <span>Fat. Mês: <%= brl(grand_inv_cur) %></span>
+          <span>Rec. Mês: <span class="text-green-300"><%= brl(grand_rec_cur) %></span></span>
+          <span>Fat. Ant.: <%= brl(grand_inv_pre) %></span>
+          <span>Rec. Ant.: <span class="text-green-300"><%= brl(grand_rec_pre) %></span></span>
+          <span>Total Fat.: <%= brl(grand_inv_total) %></span>
+          <span>Total Rec.: <span class="text-green-300"><%= brl(grand_rec_total) %></span></span>
+          <span>Em Aberto: <span class="<%= grand_open > 0 ? 'text-orange-300' : 'text-green-300' %>"><%= brl(grand_open) %></span></span>
+        </div>
+      </div>
+      </div><%# fecha data-collapse-target="content" %>
+    </div>
+  <% end %>
 </div>
