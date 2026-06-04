@@ -13,6 +13,28 @@ RSpec.describe Receipt, type: :model do
     it { is_expected.to belong_to(:invoice) }
   end
 
+  describe "payment date not before invoice issued_at" do
+    let(:invoice) { create(:invoice, issued_at: Date.new(2026, 3, 1), value: 1000) }
+
+    it "is valid when payment_date equals issued_at" do
+      receipt = build(:receipt, invoice: invoice, payment_date: Date.new(2026, 3, 1), value: 500)
+      expect(receipt).to be_valid
+    end
+
+    it "is valid when payment_date is after issued_at" do
+      receipt = build(:receipt, invoice: invoice, payment_date: Date.new(2026, 5, 1), value: 500)
+      expect(receipt).to be_valid
+    end
+
+    it "is invalid when payment_date is before issued_at" do
+      receipt = build(:receipt, invoice: invoice, payment_date: Date.new(2026, 2, 1), value: 500)
+      expect(receipt).not_to be_valid
+      expect(receipt.errors[:payment_date]).to include(
+        match(/anterior à data de emissão/)
+      )
+    end
+  end
+
   describe "value does not exceed invoice balance" do
     let(:invoice) { create(:invoice, value: 1000) }
 

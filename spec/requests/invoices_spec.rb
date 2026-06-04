@@ -135,11 +135,11 @@ RSpec.describe "Invoices", type: :request do
       expect(response).to redirect_to invoices_path
     end
 
-    it "financeiro cannot destroy" do
+    it "financeiro can destroy" do
       sign_in financeiro
       delete invoice_path(invoice)
-      expect(response).to redirect_to root_path
-      expect(flash[:alert]).to be_present
+      expect(response).to redirect_to invoices_path
+      expect(flash[:notice]).to be_present
     end
 
     it "gestor cannot destroy" do
