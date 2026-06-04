@@ -19,7 +19,7 @@ gem "image_processing", "~> 1.2"
 
 # Auth
 gem "devise"
-gem "devise-argon2"
+gem "devise-argon2", require: "devise-argon2"
 gem "pundit"
 
 # Audit trail
