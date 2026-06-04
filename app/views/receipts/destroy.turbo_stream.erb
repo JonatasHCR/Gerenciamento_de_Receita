@@ -1,6 +1,6 @@
 <%= turbo_stream.remove dom_id(@receipt) %>
 
-<% if @invoice.receipts.reload.empty? %>
+<% if @invoice.receipts.empty? %>
   <%= turbo_stream.append "receipts_body_#{@invoice.id}" do %>
     <tr id="empty_receipts_<%= @invoice.id %>">
       <td colspan="4" class="py-8 text-center text-sm text-gray-400">
@@ -8,4 +8,36 @@
       </td>
     </tr>
   <% end %>
+<% end %>
+
+<%= turbo_stream.replace "invoice_received_amount_#{@invoice.id}" do %>
+  <div id="invoice_received_amount_<%= @invoice.id %>">
+    <p class="text-xs text-gray-500 uppercase tracking-wide">Total Recebido</p>
+    <p class="mt-1 font-medium text-green-700"><%= brl(@invoice.received_amount) %></p>
+  </div>
+<% end %>
+
+<%= turbo_stream.replace "invoice_balance_#{@invoice.id}" do %>
+  <div id="invoice_balance_<%= @invoice.id %>">
+    <p class="text-xs text-gray-500 uppercase tracking-wide">Saldo em Aberto</p>
+    <p class="mt-1 font-medium <%= @invoice.balance > 0 ? 'text-red-600' : 'text-green-600' %>">
+      <%= brl(@invoice.balance) %>
+    </p>
+  </div>
+<% end %>
+
+<%= turbo_stream.replace "invoice_status_badge_#{@invoice.id}" do %>
+  <span id="invoice_status_badge_<%= @invoice.id %>"><%= payment_status_badge(@invoice) %></span>
+<% end %>
+
+<%= turbo_stream.replace "invoice_partial_card_#{@invoice.id}" do %>
+  <div id="invoice_partial_card_<%= @invoice.id %>">
+    <% if @invoice.partially_paid? %>
+      <div class="bg-orange-50 border border-orange-200 rounded-xl p-5 text-sm h-fit">
+        <p class="font-semibold text-orange-800 mb-1">⚠️ Pagamento Parcial</p>
+        <p class="text-orange-700">Esta nota foi parcialmente paga. Saldo restante:</p>
+        <p class="text-2xl font-bold text-orange-900 mt-2"><%= brl(@invoice.balance) %></p>
+      </div>
+    <% end %>
+  </div>
 <% end %>

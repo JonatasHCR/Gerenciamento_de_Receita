@@ -1,4 +1,4 @@
-<%= form_with model: [@invoice, receipt], class: "space-y-4" do |f| %>
+<%= form_with model: receipt.new_record? ? [@invoice, receipt] : receipt, class: "space-y-4" do |f| %>
   <% if receipt.errors.any? %>
     <div class="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-red-700 text-sm">
       <ul class="list-disc list-inside space-y-1">
@@ -22,8 +22,10 @@
               placeholder: "0,00",
               class: "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-red-500" %>
       </div>
+      <% available = receipt.new_record? ? @invoice.balance :
+           (@invoice.value - @invoice.receipts.where.not(id: receipt.id).sum(:value)) %>
       <p class="mt-1 text-xs text-gray-400">
-        Saldo disponível: <strong><%= brl(@invoice.balance) %></strong>
+        Saldo disponível: <strong><%= brl(available) %></strong>
       </p>
     </div>
 
