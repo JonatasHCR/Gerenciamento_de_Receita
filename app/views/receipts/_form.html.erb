@@ -1,0 +1,42 @@
+<%= form_with model: [@invoice, receipt], class: "space-y-4" do |f| %>
+  <% if receipt.errors.any? %>
+    <div class="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-red-700 text-sm">
+      <ul class="list-disc list-inside space-y-1">
+        <% receipt.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <div>
+      <%= f.label :payment_date, "Data de Recebimento", class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <%= f.date_field :payment_date, class: "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-red-500" %>
+    </div>
+
+    <div>
+      <%= f.label :value, "Valor Recebido (R$)", class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <div class="relative">
+        <%= f.number_field :value, step: "0.01", min: "0.01",
+              placeholder: "0,00",
+              class: "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-red-500" %>
+      </div>
+      <p class="mt-1 text-xs text-gray-400">
+        Saldo disponível: <strong><%= brl(@invoice.balance) %></strong>
+      </p>
+    </div>
+
+    <div class="sm:col-span-2">
+      <%= f.label :observations, "Observações", class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <%= f.text_area :observations, rows: 2,
+            class: "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-red-500" %>
+    </div>
+  </div>
+
+  <div class="flex gap-3 pt-2">
+    <%= f.submit class: "rounded-lg bg-green-600 px-5 py-2 text-sm font-medium text-white hover:bg-green-700 cursor-pointer" %>
+    <%= link_to "Cancelar", invoice_path(@invoice),
+          class: "rounded-lg border border-gray-300 px-5 py-2 text-sm text-gray-700 hover:bg-gray-50" %>
+  </div>
+<% end %>

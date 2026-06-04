@@ -1,0 +1,25 @@
+<%= turbo_stream.append "receipts_body_#{@invoice.id}" do %>
+  <tr id="<%= dom_id(@receipt) %>">
+    <td class="px-5 py-3 text-gray-700"><%= @receipt.payment_date&.strftime("%d/%m/%Y") %></td>
+    <td class="px-5 py-3 text-right font-medium text-green-700"><%= brl(@receipt.value) %></td>
+    <td class="px-5 py-3 text-gray-500"><%= @receipt.observations %></td>
+    <td class="px-5 py-3 text-right flex justify-end gap-3">
+      <% if policy(@receipt).update? %>
+        <%= link_to "Editar", edit_receipt_path(@receipt), class: "text-red-600 hover:underline" %>
+      <% end %>
+      <% if policy(@receipt).destroy? %>
+        <%= button_to "Excluir", receipt_path(@receipt), method: :delete,
+              data: { turbo_confirm: "Excluir este recebimento?" },
+              class: "text-red-500 hover:underline bg-transparent border-0 p-0 cursor-pointer" %>
+      <% end %>
+    </td>
+  </tr>
+<% end %>
+
+<%= turbo_stream.remove "empty_receipts_#{@invoice.id}" %>
+
+<%= turbo_stream.replace "flash" do %>
+  <div class="mx-6 mt-4 rounded-lg bg-green-50 border border-green-200 px-4 py-3 text-green-800 text-sm">
+    Recebimento registrado com sucesso.
+  </div>
+<% end %>

@@ -1,0 +1,12 @@
+<% content_for :title, "Editar Recebimento" %>
+
+<div class="max-w-xl">
+  <div class="flex items-center gap-3 mb-6">
+    <%= link_to "← Voltar para NF", invoice_path(@invoice), class: "text-sm text-gray-500 hover:text-gray-700" %>
+    <h1 class="text-xl font-semibold text-gray-900">Editar Recebimento</h1>
+  </div>
+
+  <div class="bg-white rounded-xl border border-gray-200 p-6">
+    <%= render "form", receipt: @receipt %>
+  </div>
+</div>

@@ -1,0 +1,20 @@
+<% content_for :title, "Registrar Recebimento" %>
+
+<div class="max-w-xl">
+  <div class="flex items-center gap-3 mb-6">
+    <%= link_to "← Voltar para NF", invoice_path(@invoice), class: "text-sm text-gray-500 hover:text-gray-700" %>
+    <h1 class="text-xl font-semibold text-gray-900">Registrar Recebimento</h1>
+  </div>
+
+  <div class="bg-orange-50 border border-orange-200 rounded-xl p-4 mb-4 text-sm">
+    <p class="text-orange-700">
+      <strong>NF <%= @invoice.number %></strong> — <%= @invoice.client_name %>
+      &nbsp;|&nbsp; Total: <strong><%= brl(@invoice.value) %></strong>
+      &nbsp;|&nbsp; Saldo aberto: <strong><%= brl(@invoice.balance) %></strong>
+    </p>
+  </div>
+
+  <div class="bg-white rounded-xl border border-gray-200 p-6">
+    <%= render "form", receipt: @receipt %>
+  </div>
+</div>

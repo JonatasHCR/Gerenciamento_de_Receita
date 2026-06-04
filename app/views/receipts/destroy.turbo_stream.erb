@@ -1,0 +1,11 @@
+<%= turbo_stream.remove dom_id(@receipt) %>
+
+<% if @invoice.receipts.reload.empty? %>
+  <%= turbo_stream.append "receipts_body_#{@invoice.id}" do %>
+    <tr id="empty_receipts_<%= @invoice.id %>">
+      <td colspan="4" class="py-8 text-center text-sm text-gray-400">
+        Nenhum recebimento registrado.
+      </td>
+    </tr>
+  <% end %>
+<% end %>
