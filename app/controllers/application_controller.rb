@@ -19,6 +19,14 @@ class ApplicationController < ActionController::Base
   end
   helper_method :pt_month_year
 
+  # "06/2026" → "Jun/2026" em português abreviado para os gráficos
+  def pt_month_label(mm_yyyy)
+    parts = mm_yyyy.split("/")
+    abbrev = PT_MONTHS[parts[0].to_i - 1].capitalize.first(3)
+    "#{abbrev}/#{parts[1]}"
+  end
+  helper_method :pt_month_label
+
   def set_paper_trail_whodunnit
     PaperTrail.request.whodunnit = current_user&.id&.to_s
   end

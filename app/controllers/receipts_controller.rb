@@ -1,6 +1,14 @@
 class ReceiptsController < ApplicationController
-  before_action :set_invoice_or_receipt
+  before_action :set_invoice_or_receipt, except: [:index]
   before_action :set_receipt, only: [:edit, :update, :destroy]
+
+  def index
+    authorize Receipt
+    scope = policy_scope(Receipt).includes(invoice: :cost_center)
+    scope = scope.for_month(Date.parse("#{params[:month]}-01")) if params[:month].present?
+    scope = scope.where(invoices: { cost_center_id: params[:cost_center_id] }) if params[:cost_center_id].present?
+    @pagy, @receipts = pagy(scope.order(payment_date: :desc))
+  end
 
   def new
     authorize Receipt
@@ -33,6 +41,7 @@ class ReceiptsController < ApplicationController
   def destroy
     authorize @receipt
     @receipt.destroy
+    @invoice.reload
     respond_to do |format|
       format.turbo_stream
       format.html { redirect_to @invoice, notice: "Recebimento removido." }

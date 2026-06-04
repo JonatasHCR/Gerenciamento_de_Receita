@@ -3,7 +3,11 @@ class ForecastEntriesController < ApplicationController
 
   def index
     authorize ForecastEntry
-    @month_year = params[:month_year] || pt_month_year
+    @month_year = if params[:month].present?
+      pt_month_year(Date.parse("#{params[:month]}-01"))
+    else
+      params[:month_year].presence || pt_month_year
+    end
     @entries_by_client = Forecasts::SummaryQuery.new(
       month_year: @month_year,
       scope: policy_scope(ForecastEntry)
@@ -11,8 +15,8 @@ class ForecastEntriesController < ApplicationController
   end
 
   def new
-    authorize ForecastEntry
     @entry = ForecastEntry.new
+    authorize @entry, :new?
   end
 
   def create

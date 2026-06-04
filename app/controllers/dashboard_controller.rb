@@ -10,15 +10,25 @@ class DashboardController < ApplicationController
       @open_balance         = Invoice.with_open_balance
                                      .sum("invoices.value - COALESCE(r.received, 0)")
 
+      chart_start = Date.new(@month.year, 1, 1)
+      chart_end   = @month.end_of_month
+
+      @chart_months = @month.month
+      @chart_year   = @month.year
+
+      chart_range = chart_start..chart_end
+
       @invoices_by_month = Invoice
-        .where(issued_at: 6.months.ago..Date.current)
-        .group_by_month(:issued_at, format: "%b/%Y")
+        .where(issued_at: chart_range)
+        .group_by_month(:issued_at, format: "%m/%Y", range: chart_range)
         .sum(:value)
+        .transform_keys { |k| pt_month_label(k) }
 
       @receipts_by_month = Receipt
-        .where(payment_date: 6.months.ago..Date.current)
-        .group_by_month(:payment_date, format: "%b/%Y")
+        .where(payment_date: chart_range)
+        .group_by_month(:payment_date, format: "%m/%Y", range: chart_range)
         .sum(:value)
+        .transform_keys { |k| pt_month_label(k) }
     end
 
     @forecast_summary = Forecasts::SummaryQuery.new(
