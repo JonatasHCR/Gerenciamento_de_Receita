@@ -1,0 +1,17 @@
+<%= turbo_stream.replace dom_id(@entry) do %>
+  <tr id="<%= dom_id(@entry) %>">
+    <td class="px-5 py-3 font-mono text-gray-700"><%= @entry.cost_center.cr_code %></td>
+    <td class="px-5 py-3 text-gray-600 max-w-xs truncate"><%= @entry.cost_center.description %></td>
+    <td class="px-5 py-3 text-right text-gray-700"><%= brl(@entry.forecasted_total) %></td>
+    <td class="px-5 py-3 text-right text-gray-700"><%= brl(@entry.realized_total) %></td>
+    <td class="px-5 py-3 text-right font-medium
+      <%= @entry.difference >= 0 ? 'text-green-700' : 'text-red-600' %>">
+      <%= brl(@entry.difference) %>
+    </td>
+    <td class="px-5 py-3 text-right">
+      <% if policy(@entry).update? %>
+        <%= link_to "Editar", edit_forecast_entry_path(@entry), class: "text-red-600 hover:underline" %>
+      <% end %>
+    </td>
+  </tr>
+<% end %>

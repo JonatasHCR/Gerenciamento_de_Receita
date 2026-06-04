@@ -1,0 +1,65 @@
+<%= form_with model: entry, class: "space-y-4" do |f| %>
+  <% if entry.errors.any? %>
+    <div class="rounded-lg bg-red-50 border border-red-200 px-4 py-3 text-red-700 text-sm">
+      <ul class="list-disc list-inside space-y-1">
+        <% entry.errors.full_messages.each do |msg| %>
+          <li><%= msg %></li>
+        <% end %>
+      </ul>
+    </div>
+  <% end %>
+
+  <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+    <div>
+      <%= f.label :cost_center_id, "Centro de Custo", class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <%= f.collection_select :cost_center_id,
+            policy_scope(CostCenter).order(:cr_code), :id,
+            ->(cc) { "#{cc.cr_code} — #{cc.description}" },
+            { include_blank: "Selecione..." },
+            class: "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-red-500" %>
+    </div>
+
+    <div>
+      <%= f.label :month_year, "Mês/Ano (ex: JUNHO/2026)", class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <%= f.text_field :month_year, placeholder: "JUNHO/2026",
+            class: "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-red-500 uppercase",
+            style: "text-transform: uppercase" %>
+    </div>
+
+    <div>
+      <%= f.label :forecasted_total, "Previsto Total (R$)", class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <%= f.number_field :forecasted_total, step: "0.01", min: "0",
+            class: "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-red-500" %>
+    </div>
+
+    <div>
+      <%= f.label :forecasted_pct_ufc, "% UFC Previsto (0–1)", class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <%= f.number_field :forecasted_pct_ufc, step: "0.01", min: "0", max: "1",
+            class: "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-red-500" %>
+    </div>
+
+    <div>
+      <%= f.label :realized_total, "Realizado Total (R$)", class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <%= f.number_field :realized_total, step: "0.01", min: "0",
+            class: "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-red-500" %>
+    </div>
+
+    <div>
+      <%= f.label :realized_pct_ufc, "% UFC Realizado (0–1)", class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <%= f.number_field :realized_pct_ufc, step: "0.01", min: "0", max: "1",
+            class: "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-red-500" %>
+    </div>
+
+    <div class="sm:col-span-2">
+      <%= f.label :observations, "Observações", class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <%= f.text_area :observations, rows: 2,
+            class: "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-red-500" %>
+    </div>
+  </div>
+
+  <div class="flex gap-3 pt-2">
+    <%= f.submit class: "rounded-lg bg-red-700 px-5 py-2 text-sm font-medium text-white hover:bg-red-800 cursor-pointer" %>
+    <%= link_to "Cancelar", forecast_entries_path,
+          class: "rounded-lg border border-gray-300 px-5 py-2 text-sm text-gray-700 hover:bg-gray-50" %>
+  </div>
+<% end %>

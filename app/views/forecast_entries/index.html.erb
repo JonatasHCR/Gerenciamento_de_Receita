@@ -1,0 +1,111 @@
+<% content_for :title, "Previsão de Faturamento" %>
+
+<div class="space-y-4">
+  <div class="flex items-center justify-between">
+    <h1 class="text-xl font-semibold text-gray-900">Previsão de Faturamento</h1>
+    <% if policy(ForecastEntry).create? %>
+      <%= link_to "Nova Previsão", new_forecast_entry_path,
+            class: "rounded-lg bg-red-700 px-4 py-2 text-sm font-medium text-white hover:bg-red-800" %>
+    <% end %>
+  </div>
+
+  <%# Month filter %>
+  <%= form_with url: forecast_entries_path, method: :get, class: "flex items-center gap-3" do |f| %>
+    <%= f.label :month_year, "Mês/Ano:", class: "text-sm font-medium text-gray-700" %>
+    <%= f.text_field :month_year, value: @month_year, placeholder: "JUNHO/2026",
+          class: "rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:ring-2 focus:ring-red-500 uppercase",
+          style: "text-transform: uppercase" %>
+    <%= f.submit "Filtrar", class: "rounded-lg bg-red-800 px-3 py-1.5 text-sm text-white hover:bg-red-900 cursor-pointer" %>
+  <% end %>
+
+  <%= turbo_frame_tag "forecast_table" do %>
+    <% if @entries_by_client.empty? %>
+      <div class="bg-white rounded-xl border border-gray-200 py-12 text-center text-sm text-gray-400">
+        Nenhuma previsão cadastrada para <%= @month_year %>.
+      </div>
+    <% else %>
+      <div class="space-y-2">
+        <% grand_forecasted = 0 %>
+        <% grand_realized = 0 %>
+
+        <% @entries_by_client.each do |client, entries| %>
+          <% client_forecasted = entries.sum(&:forecasted_total) %>
+          <% client_realized  = entries.sum(&:realized_total) %>
+          <% grand_forecasted += client_forecasted %>
+          <% grand_realized  += client_realized %>
+
+          <div class="bg-white rounded-xl border border-gray-200 overflow-hidden"
+               data-controller="collapse">
+            <%# Client header row (clickable) %>
+            <div class="flex items-center justify-between px-5 py-3 cursor-pointer select-none
+                        bg-gray-50 hover:bg-red-50 transition-colors border-b border-gray-200"
+                 data-action="click->collapse#toggle">
+              <div class="flex items-center gap-3">
+                <svg data-collapse-target="icon" class="w-4 h-4 text-gray-400 transition-transform duration-200"
+                     fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                </svg>
+                <span class="font-semibold text-gray-800 text-sm"><%= client&.name || "Sem Cliente" %></span>
+                <span class="text-xs text-gray-400">(<%= entries.count %> CC<%= entries.count > 1 ? "s" : "" %>)</span>
+              </div>
+              <div class="flex gap-6 text-sm">
+                <span class="text-gray-500">Previsto: <strong class="text-gray-800"><%= brl(client_forecasted) %></strong></span>
+                <span class="text-gray-500">Realizado: <strong class="<%= client_realized >= client_forecasted ? 'text-green-700' : 'text-red-600' %>"><%= brl(client_realized) %></strong></span>
+                <span class="text-gray-500">Diferença:
+                  <strong class="<%= client_realized >= client_forecasted ? 'text-green-700' : 'text-red-600' %>">
+                    <%= brl(client_realized - client_forecasted) %>
+                  </strong>
+                </span>
+              </div>
+            </div>
+
+            <%# Detail rows %>
+            <div data-collapse-target="content">
+              <table class="w-full text-sm">
+                <thead class="text-xs text-gray-500 uppercase tracking-wide bg-gray-50 border-b border-gray-100">
+                  <tr>
+                    <th class="px-5 py-2 text-left">CR</th>
+                    <th class="px-5 py-2 text-left">Descrição</th>
+                    <th class="px-5 py-2 text-right">Previsto Total</th>
+                    <th class="px-5 py-2 text-right">Realizado Total</th>
+                    <th class="px-5 py-2 text-right">Diferença</th>
+                    <th class="px-5 py-2"></th>
+                  </tr>
+                </thead>
+                <tbody class="divide-y divide-gray-100">
+                  <% entries.each do |entry| %>
+                    <%= tag.tr id: dom_id(entry) do %>
+                      <td class="px-5 py-3 font-mono text-gray-700"><%= entry.cost_center.cr_code %></td>
+                      <td class="px-5 py-3 text-gray-600 max-w-xs truncate"><%= entry.cost_center.description %></td>
+                      <td class="px-5 py-3 text-right text-gray-700"><%= brl(entry.forecasted_total) %></td>
+                      <td class="px-5 py-3 text-right text-gray-700"><%= brl(entry.realized_total) %></td>
+                      <td class="px-5 py-3 text-right font-medium
+                        <%= entry.difference >= 0 ? 'text-green-700' : 'text-red-600' %>">
+                        <%= brl(entry.difference) %>
+                      </td>
+                      <td class="px-5 py-3 text-right">
+                        <% if policy(entry).update? %>
+                          <%= link_to "Editar", edit_forecast_entry_path(entry),
+                                class: "text-red-600 hover:underline" %>
+                        <% end %>
+                      </td>
+                    <% end %>
+                  <% end %>
+                </tbody>
+              </table>
+            </div>
+          </div>
+        <% end %>
+
+        <%# Grand total row %>
+        <div class="bg-red-900 text-white rounded-xl px-5 py-3 flex justify-end gap-8 text-sm font-semibold">
+          <span>Total Previsto: <%= brl(grand_forecasted) %></span>
+          <span>Total Realizado: <%= brl(grand_realized) %></span>
+          <span class="<%= grand_realized >= grand_forecasted ? 'text-green-300' : 'text-orange-300' %>">
+            Diferença: <%= brl(grand_realized - grand_forecasted) %>
+          </span>
+        </div>
+      </div>
+    <% end %>
+  <% end %>
+</div>
