@@ -1,0 +1,43 @@
+<% content_for :title, "Clientes" %>
+
+<div class="space-y-4">
+  <div class="flex items-center justify-between">
+    <h1 class="text-xl font-semibold text-gray-900">Clientes</h1>
+    <% if policy(Client).create? %>
+      <%= link_to "Novo Cliente", new_client_path,
+            class: "rounded-lg bg-red-700 px-4 py-2 text-sm font-medium text-white hover:bg-red-800" %>
+    <% end %>
+  </div>
+
+  <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+    <% if @clients.any? %>
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 text-xs text-gray-500 uppercase tracking-wide">
+          <tr>
+            <th class="px-4 py-3 text-left">Sigla</th>
+            <th class="px-4 py-3 text-left">Nome Completo</th>
+            <th class="px-4 py-3 text-center">CCs</th>
+            <th class="px-4 py-3"></th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          <% @clients.each do |client| %>
+            <tr class="hover:bg-gray-50">
+              <td class="px-4 py-3 font-semibold text-gray-900"><%= client.name %></td>
+              <td class="px-4 py-3 text-gray-600"><%= client.full_name.presence || "—" %></td>
+              <td class="px-4 py-3 text-center text-gray-500"><%= client.cost_centers.count %></td>
+              <td class="px-4 py-3 text-right flex justify-end gap-3">
+                <%= link_to "Ver", client_path(client), class: "text-red-600 hover:underline" %>
+                <% if policy(client).update? %>
+                  <%= link_to "Editar", edit_client_path(client), class: "text-gray-500 hover:underline" %>
+                <% end %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% else %>
+      <p class="py-12 text-center text-sm text-gray-400">Nenhum cliente cadastrado.</p>
+    <% end %>
+  </div>
+</div>

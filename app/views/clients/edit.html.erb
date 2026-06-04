@@ -1,0 +1,11 @@
+<% content_for :title, "Editar Cliente" %>
+
+<div class="max-w-xl">
+  <div class="flex items-center gap-3 mb-6">
+    <%= link_to "← Voltar", client_path(@client), class: "text-sm text-gray-500 hover:text-gray-700" %>
+    <h1 class="text-xl font-semibold text-gray-900">Editar Cliente</h1>
+  </div>
+  <div class="bg-white rounded-xl border border-gray-200 p-6">
+    <%= render "form", client: @client %>
+  </div>
+</div>

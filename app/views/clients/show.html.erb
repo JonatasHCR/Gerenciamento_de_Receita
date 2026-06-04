@@ -1,0 +1,65 @@
+<% content_for :title, @client.name %>
+
+<div class="space-y-6">
+  <div class="flex items-center gap-3">
+    <%= link_to "← Clientes", clients_path, class: "text-sm text-gray-500 hover:text-gray-700" %>
+    <h1 class="text-xl font-semibold text-gray-900"><%= @client.name %></h1>
+  </div>
+
+  <div class="bg-white rounded-xl border border-gray-200 p-6 space-y-3">
+    <div>
+      <p class="text-xs text-gray-500 uppercase tracking-wide">Sigla</p>
+      <p class="mt-1 font-semibold text-gray-900"><%= @client.name %></p>
+    </div>
+    <% if @client.full_name.present? %>
+      <div>
+        <p class="text-xs text-gray-500 uppercase tracking-wide">Nome Completo</p>
+        <p class="mt-1 text-gray-700"><%= @client.full_name %></p>
+      </div>
+    <% end %>
+
+    <% if policy(@client).update? %>
+      <div class="flex gap-3 pt-2 border-t border-gray-100">
+        <%= link_to "Editar", edit_client_path(@client),
+              class: "rounded-lg border border-gray-300 px-4 py-2 text-sm hover:bg-gray-50" %>
+        <% if policy(@client).destroy? %>
+          <%= button_to "Excluir", client_path(@client), method: :delete,
+                data: { turbo_confirm: "Excluir este cliente?" },
+                class: "rounded-lg border border-red-300 px-4 py-2 text-sm text-red-600 hover:bg-red-50" %>
+        <% end %>
+      </div>
+    <% end %>
+  </div>
+
+  <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
+    <div class="px-5 py-4 border-b border-gray-100">
+      <h2 class="font-semibold text-gray-700 text-sm">Centros de Custo (<%= @client.cost_centers.count %>)</h2>
+    </div>
+    <% if @client.cost_centers.any? %>
+      <table class="w-full text-sm">
+        <thead class="bg-gray-50 text-xs text-gray-500 uppercase tracking-wide">
+          <tr>
+            <th class="px-4 py-3 text-left">CR</th>
+            <th class="px-4 py-3 text-left">Descrição</th>
+            <th class="px-4 py-3 text-left">Coordenador</th>
+            <th class="px-4 py-3"></th>
+          </tr>
+        </thead>
+        <tbody class="divide-y divide-gray-100">
+          <% @client.cost_centers.order(:cr_code).each do |cc| %>
+            <tr class="hover:bg-gray-50">
+              <td class="px-4 py-3 font-mono text-gray-700"><%= cc.cr_code %></td>
+              <td class="px-4 py-3 text-gray-600"><%= cc.description %></td>
+              <td class="px-4 py-3 text-gray-500"><%= cc.coordinator %></td>
+              <td class="px-4 py-3 text-right">
+                <%= link_to "Ver", cost_center_path(cc), class: "text-red-600 hover:underline" %>
+              </td>
+            </tr>
+          <% end %>
+        </tbody>
+      </table>
+    <% else %>
+      <p class="py-8 text-center text-sm text-gray-400">Nenhum centro de custo associado.</p>
+    <% end %>
+  </div>
+</div>
