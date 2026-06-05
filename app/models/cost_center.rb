@@ -13,4 +13,16 @@ class CostCenter < ApplicationRecord
             numericality: { greater_than: 0, less_than_or_equal_to: 1 }
 
   scope :ordered, -> { order(:cr_code) }
+
+  # Participação informada/exibida em percentual (0 a 100), armazenada como
+  # decimal (0 a 1,0) no banco.
+  def participation_percent
+    return nil if participation.nil?
+    pct = participation * 100
+    pct == pct.to_i ? pct.to_i : pct
+  end
+
+  def participation_percent=(value)
+    self.participation = value.present? ? (value.to_d / 100) : nil
+  end
 end
