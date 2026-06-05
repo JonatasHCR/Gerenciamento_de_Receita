@@ -29,7 +29,7 @@ RSpec.describe Imports::ExcelImporter do
     unless omit_sheets.include?(:invoices)
       wb.add_worksheet(name: "FATURAMENTO") do |s|
         s.add_row ["FATURAMENTO"]; s.add_row []; s.add_row []
-        s.add_row ["CENTRO","NF","CR","CLIENTE","DATA","VALOR","MÊS","OBS"]  # linha 4
+        s.add_row ["CENTRO DE CUSTO","NOTA FISCAL","CR","CLIENTE","DATA EMISSÃO","VALOR","MÊS EMISSÃO","OBSERVAÇÃO"]
         s.add_row []                                                          # linha 5
         invoice_rows.each { |r| s.add_row(r) }                                # linha 6+
       end
@@ -38,7 +38,7 @@ RSpec.describe Imports::ExcelImporter do
     unless omit_sheets.include?(:receipts)
       wb.add_worksheet(name: "RECEBIMENTO") do |s|
         s.add_row ["RECEBIMENTO"]; s.add_row []; s.add_row []
-        s.add_row ["NF","CR","CLIENTE","DATA","VALOR","MÊS","OBS"]   # linha 4
+        s.add_row ["NOTA FISCAL","CENTRO DE CUSTO","CLIENTE","DATA BAIXA","RECEBIDO NO MÊS","MÊS BAIXA","OBSERVAÇÃO"]
         s.add_row []                                                 # linha 5
         receipt_rows.each { |r| s.add_row(r) }                       # linha 6+
       end

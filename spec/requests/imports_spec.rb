@@ -94,7 +94,7 @@ RSpec.describe "Imports", type: :request do
       end
 
       it "redirects to root on fully clean import" do
-        stub_importer(Imports::ExcelImporter::Result.new(imported: 5, errors: [], fatal_error: nil))
+        stub_importer(Imports::ExcelImporter::Result.new(created: 5, updated: 0, errors: [], fatal_error: nil))
         post imports_path, params: { file: upload }
         expect(response).to redirect_to root_path
         expect(flash[:notice]).to include("5")
@@ -102,7 +102,7 @@ RSpec.describe "Imports", type: :request do
 
       it "renders summary with 422 on partial success (imports good rows, lists errors)" do
         result = Imports::ExcelImporter::Result.new(
-          imported: 3,
+          created: 3, updated: 0,
           errors: ["Faturamento — linha 7 (NF 123): centro de custo X não encontrado."],
           fatal_error: nil
         )
@@ -115,7 +115,7 @@ RSpec.describe "Imports", type: :request do
 
       it "renders new with 422 and alert on fatal error" do
         result = Imports::ExcelImporter::Result.new(
-          imported: 0, errors: [], fatal_error: "Não foi possível processar o arquivo: boom"
+          created: 0, updated: 0, errors: [], fatal_error: "Não foi possível processar o arquivo: boom"
         )
         stub_importer(result)
         post imports_path, params: { file: upload }
