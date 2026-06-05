@@ -7,10 +7,25 @@ class CostCentersController < ApplicationController
     scope = scope.where("cr_code ILIKE :q OR description ILIKE :q OR coordinator ILIKE :q",
                         q: "%#{params[:q]}%") if params[:q].present?
     @cost_centers = scope.ordered
+    # Faturado PRINCIPAL por CC numa única query (saldo = valor − principal faturado).
+    @principal_totals = Invoice.principal.where(cost_center_id: @cost_centers.map(&:id))
+                               .group(:cost_center_id).sum(:value)
   end
 
   def show
     authorize @cost_center
+    @adjustments = @cost_center.adjustments.recent
+    @adjustment  = @cost_center.adjustments.new
+  end
+
+  def report
+    authorize CostCenter, :index?
+    scope = policy_scope(CostCenter).includes(:client).ordered
+    xlsx = CostCenters::CommitmentsReport.new(scope).call
+    send_data xlsx,
+      filename: "relacao_compromissos_#{Date.current.strftime('%Y_%m_%d')}.xlsx",
+      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+      disposition: "attachment"
   end
 
   def new
@@ -58,7 +73,11 @@ class CostCentersController < ApplicationController
   end
 
   def cost_center_params
-    params.require(:cost_center).permit(:cr_code, :description, :object_text, :participation_percent, :coordinator, :end_date, :client_id)
+    params.require(:cost_center).permit(
+      :cr_code, :description, :object_text, :participation_percent, :client_id,
+      :contract_number, :start_date, :end_date, :value,
+      coordinator_list: []
+    )
   end
 
   def set_coordinator_options
