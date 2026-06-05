@@ -5,10 +5,6 @@ class ForecastEntry < ApplicationRecord
 
   validates :month_year, presence: true, uniqueness: { scope: :cost_center_id }
   validates :forecasted_total, numericality: { greater_than_or_equal_to: 0 }
-  validates :realized_total, numericality: { greater_than_or_equal_to: 0 }
-
-  # realized_total é derivado do faturamento (NFs emitidas no mês do CC).
-  before_validation :set_realized_from_invoices, on: :create
 
   scope :for_month, ->(month_year) { where(month_year: month_year) }
   scope :ordered, -> { joins(:cost_center).order("cost_centers.cr_code") }
@@ -32,26 +28,17 @@ class ForecastEntry < ApplicationRecord
     nil
   end
 
-  # Soma das NFs emitidas no mês para o centro de custo (o "realizado").
-  def realized_from_invoices
+  # Realizado = soma das NFs emitidas no mês para o centro de custo.
+  # NÃO é armazenado: é calculado sob demanda a partir do faturamento, então
+  # está sempre correto e não exige sincronização por callback.
+  def realized_total
     range = period_range
     return 0 unless range && cost_center_id
 
     cost_center.invoices.where(issued_at: range).sum(:value)
   end
 
-  # Recalcula e persiste o realizado sem disparar validações/callbacks.
-  def sync_realized!
-    update_column(:realized_total, realized_from_invoices)
-  end
-
   def difference
     realized_total - forecasted_total
-  end
-
-  private
-
-  def set_realized_from_invoices
-    self.realized_total = realized_from_invoices
   end
 end

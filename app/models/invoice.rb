@@ -4,6 +4,9 @@ class Invoice < ApplicationRecord
   belongs_to :cost_center
   has_many :receipts, dependent: :destroy
 
+  # principal = faturamento do contrato; reajuste = NF de reajuste (não entra no saldo principal)
+  enum :kind, { principal: 0, reajuste: 1 }
+
   validates :number, presence: true, uniqueness: { scope: :cost_center_id }
   validates :client_name, presence: true
   validates :issued_at, presence: true
@@ -15,9 +18,6 @@ class Invoice < ApplicationRecord
       .where("invoices.value > COALESCE(r.received, 0)")
   }
   scope :ordered, -> { order(issued_at: :desc) }
-
-  # Mantém ForecastEntry.realized_total em sincronia com o faturamento.
-  after_commit :sync_forecast_realized, on: [:create, :update, :destroy]
 
   def received_amount
     # Usa valor pré-calculado via JOIN subquery quando disponível (index/list queries),
@@ -50,28 +50,6 @@ class Invoice < ApplicationRecord
       :partial
     else
       :unpaid
-    end
-  end
-
-  private
-
-  # Recalcula o realizado da previsão do mês deste CC. Em alterações de
-  # data/CC, sincroniza também a previsão do período/CC anterior.
-  def sync_forecast_realized
-    pairs = [[cost_center_id, issued_at]]
-
-    if saved_change_to_issued_at? || saved_change_to_cost_center_id?
-      prev_cc   = saved_change_to_cost_center_id? ? saved_change_to_cost_center_id.first : cost_center_id
-      prev_date = saved_change_to_issued_at?      ? saved_change_to_issued_at.first      : issued_at
-      pairs << [prev_cc, prev_date]
-    end
-
-    pairs.uniq.each do |cc_id, date|
-      next unless cc_id && date
-
-      ForecastEntry
-        .find_by(cost_center_id: cc_id, month_year: ForecastEntry.month_year_for(date))
-        &.sync_realized!
     end
   end
 end
