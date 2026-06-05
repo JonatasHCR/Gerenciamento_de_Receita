@@ -188,7 +188,7 @@
       <div data-collapse-target="content" class="hidden">
       <div class="space-y-0 divide-y divide-gray-100">
         <%
-          grand_inv_cur = grand_inv_pre = grand_inv_total = 0
+          grand_inv_cur = grand_open_pre = grand_inv_total = 0
           grand_rec_cur = grand_rec_total = 0
           grand_open    = 0
         %>
@@ -196,13 +196,13 @@
         <% @billing_by_client.each do |client, entries| %>
           <%
             cl_inv_cur   = entries.sum { |e| e[:inv_cur] }
-            cl_inv_pre   = entries.sum { |e| e[:inv_pre] }
+            cl_open_pre  = entries.sum { |e| e[:open_pre] }
             cl_rec_cur   = entries.sum { |e| e[:rec_cur] }
             cl_inv_total = entries.sum { |e| e[:inv_total] }
             cl_rec_total = entries.sum { |e| e[:rec_total] }
             cl_open      = entries.sum { |e| e[:open] }
             grand_inv_cur   += cl_inv_cur
-            grand_inv_pre   += cl_inv_pre
+            grand_open_pre  += cl_open_pre
             grand_inv_total += cl_inv_total
             grand_rec_cur   += cl_rec_cur
             grand_rec_total += cl_rec_total
@@ -225,7 +225,7 @@
               <div class="flex flex-wrap gap-4 text-xs text-gray-500 mt-1 sm:mt-0">
                 <span>Fat. Mês: <strong class="text-gray-800"><%= brl(cl_inv_cur) %></strong></span>
                 <span>Rec. Mês: <strong class="text-green-700"><%= brl(cl_rec_cur) %></strong></span>
-                <span>Fat. Ant.: <strong class="text-gray-800"><%= brl(cl_inv_pre) %></strong></span>
+                <span>Aberto Ant.: <strong class="text-orange-600"><%= brl(cl_open_pre) %></strong></span>
                 <span>Total Fat.: <strong class="text-gray-800"><%= brl(cl_inv_total) %></strong></span>
                 <span>Total Rec.: <strong class="text-green-700"><%= brl(cl_rec_total) %></strong></span>
                 <span>Em Aberto: <strong class="<%= cl_open > 0 ? 'text-red-600' : 'text-green-600' %>"><%= brl(cl_open) %></strong></span>
@@ -247,7 +247,7 @@
                     <tr class="text-gray-400">
                       <th class="px-4 py-1.5 text-right border-l border-gray-200">Faturado</th>
                       <th class="px-4 py-1.5 text-right">Recebido</th>
-                      <th class="px-4 py-1.5 text-right border-l border-gray-200">Faturado</th>
+                      <th class="px-4 py-1.5 text-right border-l border-gray-200">Em Aberto</th>
                       <th class="px-4 py-1.5 text-right border-l border-gray-200">Faturado</th>
                       <th class="px-4 py-1.5 text-right">Recebido</th>
                       <th class="px-4 py-1.5 text-right">Em Aberto</th>
@@ -267,8 +267,8 @@
                         <td class="px-4 py-2 text-right text-green-700">
                           <%= e[:rec_cur] > 0 ? brl(e[:rec_cur]) : '<span class="text-gray-300">—</span>'.html_safe %>
                         </td>
-                        <td class="px-4 py-2 text-right text-gray-700 border-l border-gray-100">
-                          <%= e[:inv_pre] > 0 ? brl(e[:inv_pre]) : '<span class="text-gray-300">—</span>'.html_safe %>
+                        <td class="px-4 py-2 text-right border-l border-gray-100 <%= e[:open_pre] > 0 ? 'text-orange-600' : 'text-gray-700' %>">
+                          <%= e[:open_pre] != 0 ? brl(e[:open_pre]) : '<span class="text-gray-300">—</span>'.html_safe %>
                         </td>
                         <td class="px-4 py-2 text-right font-medium text-gray-800 border-l border-gray-100"><%= brl(e[:inv_total]) %></td>
                         <td class="px-4 py-2 text-right font-medium text-green-700"><%= brl(e[:rec_total]) %></td>
@@ -280,7 +280,7 @@
                       <td class="px-4 py-2 text-gray-600" colspan="2">Subtotal <%= client&.name %></td>
                       <td class="px-4 py-2 text-right text-gray-700 border-l border-gray-100"><%= brl(cl_inv_cur) %></td>
                       <td class="px-4 py-2 text-right text-green-700"><%= brl(cl_rec_cur) %></td>
-                      <td class="px-4 py-2 text-right text-gray-700 border-l border-gray-100"><%= brl(cl_inv_pre) %></td>
+                      <td class="px-4 py-2 text-right border-l border-gray-100 <%= cl_open_pre > 0 ? 'text-orange-600' : 'text-gray-700' %>"><%= brl(cl_open_pre) %></td>
                       <td class="px-4 py-2 text-right text-gray-800 border-l border-gray-100"><%= brl(cl_inv_total) %></td>
                       <td class="px-4 py-2 text-right text-green-700"><%= brl(cl_rec_total) %></td>
                       <td class="px-4 py-2 text-right <%= cl_open > 0 ? 'text-red-600' : 'text-green-600' %>"><%= brl(cl_open) %></td>
@@ -296,7 +296,7 @@
         <div class="bg-red-900 text-white px-5 py-3 flex flex-wrap gap-6 text-xs font-semibold justify-end rounded-b-xl">
           <span>Fat. Mês: <%= brl(grand_inv_cur) %></span>
           <span>Rec. Mês: <span class="text-green-300"><%= brl(grand_rec_cur) %></span></span>
-          <span>Fat. Ant.: <%= brl(grand_inv_pre) %></span>
+          <span>Aberto Ant.: <span class="text-orange-300"><%= brl(grand_open_pre) %></span></span>
           <span>Total Fat.: <%= brl(grand_inv_total) %></span>
           <span>Total Rec.: <span class="text-green-300"><%= brl(grand_rec_total) %></span></span>
           <span>Em Aberto: <span class="<%= grand_open > 0 ? 'text-orange-300' : 'text-green-300' %>"><%= brl(grand_open) %></span></span>
