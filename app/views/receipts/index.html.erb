@@ -20,7 +20,7 @@
       <%= f.label :cost_center_id, "Centro de Custo", class: "block text-xs text-gray-500 mb-1" %>
       <%= f.select :cost_center_id,
             policy_scope(CostCenter).order(:cr_code).map { |cc| ["#{cc.cr_code} — #{cc.description}", cc.id] },
-            { include_blank: "Todos" },
+            { include_blank: "Todos", selected: params[:cost_center_id] },
             class: "rounded-lg border border-gray-300 px-3 py-1.5 text-sm" %>
     </div>
     <div class="flex items-end gap-2">
