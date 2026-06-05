@@ -37,6 +37,10 @@ gem "roo"
 gem "roo-xls"
 gem "caxlsx"
 
+# PDF export (relatórios)
+gem "prawn"
+gem "prawn-table"
+
 # Tailwind CSS
 gem "tailwindcss-rails"
 

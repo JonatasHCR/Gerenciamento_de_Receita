@@ -1,0 +1,68 @@
+name: CI
+
+on:
+  push:
+    branches: [main, master]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    container:
+      image: ruby:3.3-slim
+
+    services:
+      postgres:
+        image: postgres:16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: receita_test
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      RAILS_ENV: test
+      DATABASE_URL: postgres://postgres:postgres@postgres:5432/receita_test
+      SECRET_KEY_BASE: ci_dummy_secret_key_base
+      BUNDLE_WITHOUT: ""
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Instalar dependências de sistema
+        run: |
+          apt-get update -qq
+          apt-get install -y --no-install-recommends \
+            build-essential git curl libpq-dev libyaml-dev libargon2-dev pkg-config
+
+      - name: Cache de gems
+        uses: actions/cache@v4
+        with:
+          path: vendor/bundle
+          key: gems-${{ runner.os }}-${{ hashFiles('Gemfile.lock') }}
+          restore-keys: gems-${{ runner.os }}-
+
+      - name: Instalar gems
+        run: |
+          gem install bundler --no-document
+          bundle config set --local path vendor/bundle
+          bundle install --jobs 4 --retry 3
+
+      - name: Preparar banco de teste
+        run: bin/rails db:test:prepare
+
+      - name: Testes (RSpec)
+        run: bundle exec rspec --format progress
+
+      - name: Segurança — Brakeman
+        run: bundle exec brakeman --quiet --no-pager --exit-on-warn
+
+      - name: Segurança — bundler-audit
+        run: |
+          bundle exec bundler-audit update
+          bundle exec bundler-audit check

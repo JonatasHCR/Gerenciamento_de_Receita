@@ -1,0 +1,55 @@
+name: Deploy
+
+# Dispara só ao integrar na branch principal. O deploy depende do CI passar.
+on:
+  push:
+    branches: [main, master]
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Login no registry do Gitea
+        uses: docker/login-action@v3
+        with:
+          registry: ${{ secrets.REGISTRY_HOST }}        # ex.: gitea.suaempresa.com
+          username: ${{ secrets.REGISTRY_USER }}
+          password: ${{ secrets.REGISTRY_TOKEN }}
+
+      - name: Build e push da imagem de produção
+        uses: docker/build-push-action@v6
+        with:
+          context: .
+          file: ./Dockerfile
+          push: true
+          tags: |
+            ${{ secrets.REGISTRY_HOST }}/${{ github.repository }}:latest
+            ${{ secrets.REGISTRY_HOST }}/${{ github.repository }}:${{ github.sha }}
+
+      - name: Deploy no servidor via SSH
+        uses: appleboy/ssh-action@v1
+        with:
+          host: ${{ secrets.DEPLOY_HOST }}
+          username: ${{ secrets.DEPLOY_USER }}
+          key: ${{ secrets.DEPLOY_SSH_KEY }}
+          script: |
+            cd ${{ secrets.DEPLOY_PATH }}            # ex.: /opt/gerencimento_receita
+            echo "${{ secrets.REGISTRY_TOKEN }}" | docker login ${{ secrets.REGISTRY_HOST }} -u ${{ secrets.REGISTRY_USER }} --password-stdin
+            docker compose -f docker-compose.prod.yml pull
+            docker compose -f docker-compose.prod.yml up -d
+            docker compose -f docker-compose.prod.yml run --rm web bin/rails db:migrate
+            docker image prune -f
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Secrets necessários (Settings → Actions → Secrets do repositório/organização):
+#   REGISTRY_HOST   host do registry (normalmente o próprio Gitea)
+#   REGISTRY_USER   usuário com permissão de push no registry
+#   REGISTRY_TOKEN  token/senha do registry
+#   DEPLOY_HOST     IP/hostname do servidor de produção
+#   DEPLOY_USER     usuário SSH
+#   DEPLOY_SSH_KEY  chave privada SSH (conteúdo)
+#   DEPLOY_PATH     caminho no servidor com o docker-compose.prod.yml e o .env de produção
+# ─────────────────────────────────────────────────────────────────────────────
