@@ -40,6 +40,13 @@ class CostCenter < ApplicationRecord
     self.participation = value.present? ? (value.to_d / 100) : nil
   end
 
+  def end_date_not_before_start_date
+    return if start_date.blank? || end_date.blank?
+    if end_date < start_date
+      errors.add(:end_date, "não pode ser anterior à data de início (#{start_date.strftime('%d/%m/%Y')})")
+    end
+  end
+
   # Total faturado considerando apenas NFs PRINCIPAIS (reajustes não entram).
   def principal_invoiced
     invoices.principal.sum(:value)

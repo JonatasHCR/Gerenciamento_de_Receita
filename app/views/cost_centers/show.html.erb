@@ -44,7 +44,7 @@
         </div>
         <div>
           <p class="text-xs text-gray-500 uppercase tracking-wide">Saldo (valor − faturado principal)</p>
-          <p class="mt-1 font-bold <%= @cost_center.saldo > 0 ? 'text-red-600' : 'text-green-600' %>"><%= brl(@cost_center.saldo) %></p>
+          <p class="mt-1 font-bold <%= @cost_center.saldo < 0 ? 'text-red-600' : 'text-green-600' %>"><%= brl(@cost_center.saldo) %></p>
         </div>
         <% if @cost_center.object_text.present? %>
           <div class="col-span-2">

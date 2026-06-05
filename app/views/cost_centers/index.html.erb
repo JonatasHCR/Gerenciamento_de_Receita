@@ -53,7 +53,7 @@
                     <td class="px-4 py-3 text-gray-500"><%= cc.start_date&.strftime("%d/%m/%Y") %></td>
                     <td class="px-4 py-3 text-gray-500"><%= cc.end_date&.strftime("%d/%m/%Y") %></td>
                     <td class="px-4 py-3 text-right text-gray-900"><%= brl(cc.value || 0) %></td>
-                    <td class="px-4 py-3 text-right font-medium <%= saldo > 0 ? 'text-red-600' : 'text-green-600' %>"><%= brl(saldo) %></td>
+                    <td class="px-4 py-3 text-right font-medium <%= saldo < 0 ? 'text-red-600' : 'text-green-600' %>"><%= brl(saldo) %></td>
                     <td class="px-4 py-3 text-right">
                       <%= link_to "Ver", cost_center_path(cc), class: "text-red-600 hover:underline",
                               data: { turbo_frame: "_top" } %>

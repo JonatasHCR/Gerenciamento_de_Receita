@@ -9,6 +9,7 @@ class Adjustment < ApplicationRecord
   validates :kind, presence: true
   validates :new_value, presence: true, numericality: { greater_than: 0 }, if: :valor?
   validates :new_date,  presence: true, if: :prazo?
+  validate :new_date_not_before_start, if: :prazo?
 
   before_validation :capture_previous, on: :create
   after_create :apply_to_cost_center
@@ -16,6 +17,13 @@ class Adjustment < ApplicationRecord
   scope :recent, -> { order(created_at: :desc) }
 
   private
+
+  def new_date_not_before_start
+    return if new_date.blank? || cost_center&.start_date.blank?
+    if new_date < cost_center.start_date
+      errors.add(:new_date, "não pode ser anterior à data de início do contrato")
+    end
+  end
 
   def capture_previous
     if valor?
