@@ -14,7 +14,12 @@ Rails.application.routes.draw do
   put   "profile",        to: "users#profile_update"
 
   resources :clients
-  resources :cost_centers
+  resources :cost_centers do
+    resources :adjustments, only: [:create], module: :cost_centers
+    collection do
+      get :report   # relatório Excel (RELAÇÃO DE COMPROMISSOS)
+    end
+  end
   resources :receipts, only: [:index, :new]
   resources :invoices do
     resources :receipts, shallow: true, only: [:new, :create, :edit, :update, :destroy]
