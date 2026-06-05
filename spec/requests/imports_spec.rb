@@ -81,30 +81,46 @@ RSpec.describe "Imports", type: :request do
         expect(flash[:alert]).to be_present
       end
 
-      it "redirects to root on successful import" do
-        importer = instance_double(Imports::ExcelImporter,
-                                   call: double(success?: true, errors: []))
+      def stub_importer(result)
+        importer = instance_double(Imports::ExcelImporter, call: result)
         allow(Imports::ExcelImporter).to receive(:new).and_return(importer)
-
-        file = fixture_file_upload(
-          Rails.root.join("spec/fixtures/files/sample.xlsx"),
-          "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
-        )
-        post imports_path, params: { file: file }
-        expect(response).to redirect_to root_path
       end
 
-      it "renders new with 422 on importer errors" do
-        importer = instance_double(Imports::ExcelImporter,
-                                   call: double(success?: false, errors: ["Erro na linha 3"]))
-        allow(Imports::ExcelImporter).to receive(:new).and_return(importer)
-
-        file = fixture_file_upload(
+      def upload
+        fixture_file_upload(
           Rails.root.join("spec/fixtures/files/sample.xlsx"),
           "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
-        post imports_path, params: { file: file }
+      end
+
+      it "redirects to root on fully clean import" do
+        stub_importer(Imports::ExcelImporter::Result.new(imported: 5, errors: [], fatal_error: nil))
+        post imports_path, params: { file: upload }
+        expect(response).to redirect_to root_path
+        expect(flash[:notice]).to include("5")
+      end
+
+      it "renders summary with 422 on partial success (imports good rows, lists errors)" do
+        result = Imports::ExcelImporter::Result.new(
+          imported: 3,
+          errors: ["Faturamento — linha 7 (NF 123): centro de custo X não encontrado."],
+          fatal_error: nil
+        )
+        stub_importer(result)
+        post imports_path, params: { file: upload }
         expect(response).to have_http_status(:unprocessable_entity)
+        expect(response.body).to include("3 registro")
+        expect(response.body).to include("linha 7")
+      end
+
+      it "renders new with 422 and alert on fatal error" do
+        result = Imports::ExcelImporter::Result.new(
+          imported: 0, errors: [], fatal_error: "Não foi possível processar o arquivo: boom"
+        )
+        stub_importer(result)
+        post imports_path, params: { file: upload }
+        expect(response).to have_http_status(:unprocessable_entity)
+        expect(response.body).to include("Não foi possível processar")
       end
     end
 

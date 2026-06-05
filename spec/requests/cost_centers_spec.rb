@@ -11,11 +11,11 @@ RSpec.describe "CostCenters", type: :request do
   let(:valid_params) do
     {
       cost_center: {
-        cr_code:       "9999",
-        description:   "NOVO CONTRATO",
-        participation: 1.0,
-        coordinator:   "Fulano",
-        client_id:     client.id
+        cr_code:               "9999",
+        description:           "NOVO CONTRATO",
+        participation_percent: 100,
+        coordinator:           "Fulano",
+        client_id:             client.id
       }
     }
   end

@@ -57,6 +57,37 @@ RSpec.describe "Receipts", type: :request do
     end
   end
 
+  # ── GET /receipts/new (busca de NF a partir da página de recebimentos) ────
+  describe "GET /receipts/new" do
+    it "exibe a busca de NF para financeiro" do
+      sign_in financeiro
+      get new_receipt_path
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Buscar nota fiscal")
+    end
+
+    it "lista NFs ao buscar pelo número" do
+      invoice
+      sign_in financeiro
+      get new_receipt_path(q: invoice.number)
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include(invoice.number)
+    end
+
+    it "exibe o formulário quando uma NF é selecionada (invoice_id)" do
+      sign_in financeiro
+      get new_receipt_path(invoice_id: invoice.id)
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Registrar Recebimento")
+    end
+
+    it "bloqueia gestor" do
+      sign_in gestor
+      get new_receipt_path
+      expect(response).to redirect_to root_path
+    end
+  end
+
   # ── GET /invoices/:id/receipts/new ────────────────────────────────────────
   describe "GET /invoices/:invoice_id/receipts/new" do
     it "returns 200 for financeiro" do

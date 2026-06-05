@@ -57,6 +57,16 @@ RSpec.describe "Dashboard", type: :request do
         get root_path, params: { month: "2026-06" }
         expect(response).to have_http_status(:ok)
       end
+
+      it "não quebra com mês inválido (cai no mês atual em vez de 500)" do
+        get root_path, params: { month: "'; DROP TABLE invoices; --" }
+        expect(response).to have_http_status(:ok)
+      end
+
+      it "não quebra com mês malformado" do
+        get root_path, params: { month: "2026-99-xx" }
+        expect(response).to have_http_status(:ok)
+      end
     end
   end
 end

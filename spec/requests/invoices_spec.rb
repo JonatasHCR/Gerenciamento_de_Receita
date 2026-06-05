@@ -62,6 +62,16 @@ RSpec.describe "Invoices", type: :request do
       expect(response).to redirect_to root_path
       expect(flash[:alert]).to be_present
     end
+
+    it "filtra por número da NF (busca dinâmica)" do
+      match = create(:invoice, cost_center: cost_center, number: "NF-BUSCA-123")
+      other = create(:invoice, cost_center: cost_center, number: "OUTRA-999")
+      sign_in financeiro
+      get invoices_path(q: "BUSCA")
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("NF-BUSCA-123")
+      expect(response.body).not_to include("OUTRA-999")
+    end
   end
 
   # ── GET /invoices/:id ─────────────────────────────────────────────────────

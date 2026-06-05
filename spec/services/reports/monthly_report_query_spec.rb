@@ -51,6 +51,37 @@ RSpec.describe Reports::MonthlyReportQuery do
     expect(row[:open]).to eq(40_000)
   end
 
+  it "em aberto de meses anteriores = faturamento anterior sem pagamentos prévios" do
+    group = result.find { |g| g[:client] == client_a }
+    row   = group[:cost_centers].first
+
+    # NF anterior (maio) = 20k, nenhum pagamento até o mês anterior => 20k em aberto ant.
+    expect(row[:open_pre]).to eq(20_000)
+  end
+
+  it "NÃO desconta pagamentos feitos no mês selecionado do em aberto anterior" do
+    inv_may = Invoice.where(cost_center: cc_a, issued_at: Date.new(2026, 5, 10)).first
+    create(:receipt, invoice: inv_may, payment_date: Date.new(2026, 6, 5), value: 8_000)
+
+    group = result.find { |g| g[:client] == client_a }
+    row   = group[:cost_centers].first
+
+    # Pagamento foi em JUNHO (mês selecionado) → não baixa o aberto anterior => 20k
+    expect(row[:open_pre]).to eq(20_000)
+  end
+
+  it "desconta apenas pagamentos feitos ATÉ o mês anterior" do
+    # NF emitida em abril (5k) paga parcialmente em maio (2k) — ambos antes de junho
+    inv_apr = create(:invoice, cost_center: cc_a, issued_at: Date.new(2026, 4, 5), value: 5_000)
+    create(:receipt, invoice: inv_apr, payment_date: Date.new(2026, 5, 20), value: 2_000)
+
+    group = result.find { |g| g[:client] == client_a }
+    row   = group[:cost_centers].first
+
+    # inv_pre = 20k (maio) + 5k (abril) = 25k; pago até o mês anterior = 2k => 23k
+    expect(row[:open_pre]).to eq(23_000)
+  end
+
   it "monta os totais por cliente" do
     group = result.find { |g| g[:client] == client_a }
     expect(group[:totals][:inv_cur]).to eq(30_000)
