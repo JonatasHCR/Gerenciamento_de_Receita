@@ -37,6 +37,12 @@ jobs:
           key: ${{ secrets.DEPLOY_SSH_KEY }}
           script: |
             cd ${{ secrets.DEPLOY_PATH }}            # ex.: /opt/gerencimento_receita
+            # Backup do banco ANTES do deploy (rollback fácil se algo der errado).
+            mkdir -p backups
+            docker compose -f docker-compose.prod.yml exec -T db \
+              sh -c 'pg_dump -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Fc' \
+              > "backups/predeploy_$(date +%Y%m%d_%H%M%S).dump" \
+              && echo "Backup pré-deploy concluído." || { echo "Backup pré-deploy FALHOU — abortando."; exit 1; }
             echo "${{ secrets.REGISTRY_TOKEN }}" | docker login ${{ secrets.REGISTRY_HOST }} -u ${{ secrets.REGISTRY_USER }} --password-stdin
             docker compose -f docker-compose.prod.yml pull
             docker compose -f docker-compose.prod.yml up -d

@@ -1,0 +1,25 @@
+# act_runner do Gitea — rodar na máquina do runner (separada do Gitea).
+#
+# Passos:
+#   1. Copie esta pasta `runner/` para a máquina do runner.
+#   2. Crie um runner.env (veja runner.env.example) com a URL do Gitea e o TOKEN.
+#   3. docker compose up -d   (a 1ª subida registra o runner no Gitea)
+#
+# O runner precisa de Docker (os jobs rodam em containers) e alcançar o Gitea.
+services:
+  act_runner:
+    image: gitea/act_runner:latest
+    restart: always
+    env_file: runner.env
+    environment:
+      # URL do Gitea acessível a partir desta máquina (LAN).
+      GITEA_INSTANCE_URL: ${GITEA_INSTANCE_URL:-http://10.0.0.114:3000}
+      # Token de registro (Admin/Org/Repo → Actions → Runners → Create new runner).
+      GITEA_RUNNER_REGISTRATION_TOKEN: ${GITEA_RUNNER_REGISTRATION_TOKEN:?defina no runner.env}
+      GITEA_RUNNER_NAME: ${GITEA_RUNNER_NAME:-runner-ci}
+      CONFIG_FILE: /config.yaml
+    volumes:
+      - ./config.yaml:/config.yaml:ro
+      - ./data:/data
+      # Acesso ao Docker do host (os jobs sobem containers: ruby, postgres, build de imagem).
+      - /var/run/docker.sock:/var/run/docker.sock

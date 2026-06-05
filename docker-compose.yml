@@ -13,6 +13,25 @@ services:
       timeout: 5s
       retries: 5
 
+  # Backup diário automático (sidecar) — gera dump em ./backups no horário BACKUP_HOUR.
+  backup:
+    image: postgres:16
+    restart: unless-stopped
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      PGPASSWORD: receita
+      POSTGRES_USER: receita
+      POSTGRES_DB: receita_dev
+      DB_HOST: db
+      BACKUP_INTERVAL_HOURS: ${BACKUP_INTERVAL_HOURS:-12}
+      BACKUP_KEEP: ${BACKUP_KEEP:-14}
+    volumes:
+      - ./scripts/backup_loop.sh:/backup_loop.sh:ro
+      - ./backups:/backups
+    entrypoint: ["bash", "/backup_loop.sh"]
+
   web:
     build:
       context: .

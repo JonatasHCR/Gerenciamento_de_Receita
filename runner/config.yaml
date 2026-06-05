@@ -1,0 +1,25 @@
+# Configuração do act_runner.
+log:
+  level: info
+
+runner:
+  file: /data/.runner
+  capacity: 2            # quantos jobs em paralelo
+  timeout: 3h
+  # A label DEVE bater com o `runs-on:` dos workflows (ubuntu-latest).
+  labels:
+    - "ubuntu-latest:docker://catthehacker/ubuntu:act-22.04"
+
+cache:
+  enabled: true
+
+container:
+  # Vazio = rede padrão. Os containers de job conseguem falar com os services
+  # (ex.: postgres) e com o Docker do host (socket montado no compose).
+  network: ""
+  privileged: false
+  # Monta o socket do Docker dentro do container do job — necessário para o
+  # job de DEPLOY (docker build/push). Para CI de testes não é obrigatório.
+  options: "-v /var/run/docker.sock:/var/run/docker.sock"
+  valid_volumes:
+    - /var/run/docker.sock
