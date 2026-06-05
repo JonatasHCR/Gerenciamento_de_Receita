@@ -11,12 +11,9 @@ RSpec.describe "ForecastEntries", type: :request do
   let(:valid_params) do
     {
       forecast_entry: {
-        month_year:          "JUNHO/2026",
-        forecasted_total:    100_000,
-        forecasted_pct_ufc:  100_000,
-        realized_total:      0,
-        realized_pct_ufc:    0,
-        cost_center_id:      cost_center.id
+        month_year:       "JUNHO/2026",
+        forecasted_total: 100_000,
+        cost_center_id:   cost_center.id
       }
     }
   end
@@ -118,7 +115,7 @@ RSpec.describe "ForecastEntries", type: :request do
       before { sign_in gestor }
 
       it "updates and redirects" do
-        patch forecast_entry_path(entry), params: { forecast_entry: { realized_total: 50_000 } }
+        patch forecast_entry_path(entry), params: { forecast_entry: { forecasted_total: 50_000 } }
         expect(response).to redirect_to forecast_entries_path
       end
     end
@@ -127,13 +124,13 @@ RSpec.describe "ForecastEntries", type: :request do
       before { sign_in coordenador }
 
       it "blocked without ownership" do
-        patch forecast_entry_path(entry), params: { forecast_entry: { realized_total: 50_000 } }
+        patch forecast_entry_path(entry), params: { forecast_entry: { forecasted_total: 50_000 } }
         expect(response).to redirect_to root_path
       end
 
       it "allowed with ownership" do
         UserCostCenter.create!(user: coordenador, cost_center: cost_center)
-        patch forecast_entry_path(entry), params: { forecast_entry: { realized_total: 50_000 } }
+        patch forecast_entry_path(entry), params: { forecast_entry: { forecasted_total: 50_000 } }
         expect(response).to redirect_to forecast_entries_path
       end
     end

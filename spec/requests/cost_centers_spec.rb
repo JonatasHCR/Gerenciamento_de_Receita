@@ -40,10 +40,47 @@ RSpec.describe "CostCenters", type: :request do
       end
     end
 
+    it "exibe o saldo (valor − faturado principal) sem N+1" do
+      cc = create(:cost_center, client: client, value: 100_000)
+      create(:invoice, cost_center: cc, value: 40_000, kind: :principal)
+      sign_in admin
+      get cost_centers_path
+      expect(response).to have_http_status(:ok)
+      expect(response.body).to include("Saldo")
+    end
+
     it "filters by search query" do
       sign_in admin
       get cost_centers_path, params: { q: cost_center.description }
       expect(response).to have_http_status(:ok)
+    end
+  end
+
+  # ── GET /cost_centers/report (Excel) ──────────────────────────────────────
+  describe "GET /cost_centers/report" do
+    it "gera um Excel para admin" do
+      sign_in admin
+      get report_cost_centers_path
+      expect(response).to have_http_status(:ok)
+      expect(response.media_type).to eq("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    end
+  end
+
+  # ── POST /cost_centers/:id/adjustments (reajuste) ─────────────────────────
+  describe "POST /cost_centers/:id/adjustments" do
+    let(:cc) { create(:cost_center, client: client, value: 50_000) }
+
+    it "registra reajuste de valor e aplica ao CC (admin)" do
+      sign_in admin
+      post cost_center_adjustments_path(cc), params: { adjustment: { kind: "valor", new_value: 60_000 } }
+      expect(response).to redirect_to(cost_center_path(cc))
+      expect(cc.reload.value).to eq(60_000)
+    end
+
+    it "bloqueia coordenador sem vínculo" do
+      sign_in coordenador
+      post cost_center_adjustments_path(cc), params: { adjustment: { kind: "valor", new_value: 60_000 } }
+      expect(response).to redirect_to(root_path)
     end
   end
 

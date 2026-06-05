@@ -72,6 +72,34 @@ RSpec.describe "Invoices", type: :request do
       expect(response.body).to include("NF-BUSCA-123")
       expect(response.body).not_to include("OUTRA-999")
     end
+
+    context "filtro de situação (quitadas × em aberto)" do
+      let!(:aberta)  { create(:invoice, cost_center: cost_center, number: "ABERTA-1", value: 2_000) }
+      let!(:quitada) do
+        inv = create(:invoice, cost_center: cost_center, number: "QUITADA-1", value: 1_000)
+        create(:receipt, invoice: inv, value: 1_000, payment_date: inv.issued_at)
+        inv
+      end
+      before { sign_in financeiro }
+
+      it "por padrão esconde notas quitadas (mostra só em aberto)" do
+        get invoices_path
+        expect(response.body).to include("ABERTA-1")
+        expect(response.body).not_to include("QUITADA-1")
+      end
+
+      it "status=paid mostra só quitadas" do
+        get invoices_path(status: "paid")
+        expect(response.body).to include("QUITADA-1")
+        expect(response.body).not_to include("ABERTA-1")
+      end
+
+      it "status=all mostra todas" do
+        get invoices_path(status: "all")
+        expect(response.body).to include("ABERTA-1")
+        expect(response.body).to include("QUITADA-1")
+      end
+    end
   end
 
   # ── GET /invoices/:id ─────────────────────────────────────────────────────
