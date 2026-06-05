@@ -29,7 +29,18 @@
     </div>
   <% end %>
 
-  <%= turbo_frame_tag "invoices_list" do %>
+  <div data-controller="search" data-search-url-value="<%= invoices_path %>">
+    <div class="relative mb-3">
+      <input type="text" placeholder="Buscar NF pelo número..."
+             data-search-target="input"
+             data-action="input->search#search"
+             value="<%= params[:q] %>"
+             autocomplete="off"
+             class="w-full rounded-xl border border-gray-300 pl-10 pr-4 py-2.5 text-sm focus:ring-2 focus:ring-red-500 bg-white">
+      <span class="absolute left-3 top-2.5 text-gray-400 text-sm">🔍</span>
+    </div>
+
+    <%= turbo_frame_tag "invoices_list", data: { "search-target": "frame" } do %>
     <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
       <% if @invoices.any? %>
         <div class="overflow-x-auto">
@@ -73,5 +84,6 @@
         <p class="py-12 text-center text-sm text-gray-400">Nenhuma nota fiscal encontrada.</p>
       <% end %>
     </div>
-  <% end %>
+    <% end %>
+  </div>
 </div>

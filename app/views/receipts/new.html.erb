@@ -1,20 +1,86 @@
 <% content_for :title, "Registrar Recebimento" %>
 
 <div class="max-w-xl">
-  <div class="flex items-center gap-3 mb-6">
-    <%= link_to "← Voltar para NF", invoice_path(@invoice), class: "text-sm text-gray-500 hover:text-gray-700" %>
-    <h1 class="text-xl font-semibold text-gray-900">Registrar Recebimento</h1>
-  </div>
+  <% if @invoice %>
+    <%# ── Modo formulário: NF já selecionada ─────────────────────────────── %>
+    <div class="flex items-center gap-3 mb-6">
+      <%= link_to "← Trocar NF", new_receipt_path, class: "text-sm text-gray-500 hover:text-gray-700" %>
+      <h1 class="text-xl font-semibold text-gray-900">Registrar Recebimento</h1>
+    </div>
 
-  <div class="bg-orange-50 border border-orange-200 rounded-xl p-4 mb-4 text-sm">
-    <p class="text-orange-700">
-      <strong>NF <%= @invoice.number %></strong> — <%= @invoice.client_name %>
-      &nbsp;|&nbsp; Total: <strong><%= brl(@invoice.value) %></strong>
-      &nbsp;|&nbsp; Saldo aberto: <strong><%= brl(@invoice.balance) %></strong>
-    </p>
-  </div>
+    <div class="bg-orange-50 border border-orange-200 rounded-xl p-4 mb-4 text-sm">
+      <p class="text-orange-700">
+        <strong>NF <%= @invoice.number %></strong> — <%= @invoice.client_name %>
+        &nbsp;|&nbsp; Total: <strong><%= brl(@invoice.value) %></strong>
+        &nbsp;|&nbsp; Saldo aberto: <strong><%= brl(@invoice.balance) %></strong>
+      </p>
+    </div>
 
-  <div class="bg-white rounded-xl border border-gray-200 p-6">
-    <%= render "form", receipt: @receipt %>
-  </div>
+    <div class="bg-white rounded-xl border border-gray-200 p-6">
+      <%= render "form", receipt: @receipt %>
+    </div>
+  <% else %>
+    <%# ── Modo busca: localizar a NF pelo número ──────────────────────────── %>
+    <div class="flex items-center gap-3 mb-6">
+      <%= link_to "← Voltar", receipts_path, class: "text-sm text-gray-500 hover:text-gray-700" %>
+      <h1 class="text-xl font-semibold text-gray-900">Registrar Recebimento</h1>
+    </div>
+
+    <div class="bg-white rounded-xl border border-gray-200 p-6"
+         data-controller="search" data-search-url-value="<%= new_receipt_path %>">
+      <label class="block text-sm font-medium text-gray-700 mb-1">Buscar nota fiscal pelo número</label>
+      <div class="relative mb-4">
+        <input type="text" placeholder="Digite o número da NF..."
+               data-search-target="input"
+               data-action="input->search#search"
+               value="<%= params[:q] %>"
+               autocomplete="off" autofocus
+               class="w-full rounded-lg border border-gray-300 pl-10 pr-4 py-2.5 text-sm focus:ring-2 focus:ring-red-500">
+        <span class="absolute left-3 top-2.5 text-gray-400 text-sm">🔍</span>
+      </div>
+
+      <%= turbo_frame_tag "invoice_results", data: { "search-target": "frame" } do %>
+        <% if @invoices&.any? %>
+          <div class="border border-gray-100 rounded-lg overflow-hidden">
+            <table class="w-full text-sm table-fixed">
+              <thead class="bg-gray-50 text-xs text-gray-500 uppercase tracking-wide">
+                <tr>
+                  <th class="px-3 py-2 text-left w-20">NF</th>
+                  <th class="px-3 py-2 text-left w-14">CR</th>
+                  <th class="px-3 py-2 text-left">Cliente</th>
+                  <th class="px-3 py-2 text-right w-24">Saldo</th>
+                  <th class="px-3 py-2 w-28"></th>
+                </tr>
+              </thead>
+              <tbody class="divide-y divide-gray-100">
+                <% @invoices.each do |inv| %>
+                  <tr class="hover:bg-gray-50">
+                    <td class="px-3 py-2 font-medium text-gray-900 truncate"><%= inv.number %></td>
+                    <td class="px-3 py-2 text-gray-600 truncate"><%= inv.cost_center&.cr_code %></td>
+                    <td class="px-3 py-2 text-gray-600 truncate" title="<%= inv.client_name %>"><%= inv.client_name %></td>
+                    <td class="px-3 py-2 text-right whitespace-nowrap <%= inv.balance > 0 ? 'text-red-600' : 'text-green-600' %>">
+                      <%= brl(inv.balance) %>
+                    </td>
+                    <td class="px-3 py-2 text-right whitespace-nowrap">
+                      <% if inv.balance > 0 %>
+                        <%= link_to "Selecionar", new_receipt_path(invoice_id: inv.id),
+                              data: { turbo_frame: "_top" },
+                              class: "rounded-md bg-green-600 px-3 py-1 text-xs text-white hover:bg-green-700" %>
+                      <% else %>
+                        <span class="text-xs text-gray-400">Quitada</span>
+                      <% end %>
+                    </td>
+                  </tr>
+                <% end %>
+              </tbody>
+            </table>
+          </div>
+        <% elsif params[:q].present? %>
+          <p class="py-8 text-center text-sm text-gray-400">Nenhuma NF encontrada para "<%= params[:q] %>".</p>
+        <% else %>
+          <p class="py-8 text-center text-sm text-gray-400">Digite o número da nota fiscal para localizar.</p>
+        <% end %>
+      <% end %>
+    </div>
+  <% end %>
 </div>
