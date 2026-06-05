@@ -9,8 +9,18 @@
     <% end %>
   </div>
 
-  <%# Filters %>
-  <%= form_with url: invoices_path, method: :get, class: "bg-white rounded-xl border border-gray-200 p-4 flex flex-wrap gap-3" do |f| %>
+  <%# Filtros + busca unificados: tudo num form só, que atualiza o turbo_frame.
+      A busca por número (q) é enviada com debounce junto com mês/CC/situação,
+      então respeita os filtros e nenhuma seleção é resetada. %>
+  <%= form_with url: invoices_path, method: :get,
+        data: { turbo_frame: "invoices_list", turbo_action: "advance", controller: "filter" },
+        class: "bg-white rounded-xl border border-gray-200 p-4 flex flex-wrap gap-3 items-end" do |f| %>
+    <div class="flex-1 min-w-[200px]">
+      <%= f.label :q, "Buscar NF", class: "block text-xs text-gray-500 mb-1" %>
+      <%= f.search_field :q, value: params[:q], placeholder: "Número da NF...",
+            autocomplete: "off", data: { action: "input->filter#submit" },
+            class: "w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:ring-2 focus:ring-red-500" %>
+    </div>
     <div>
       <%= f.label :month, "Mês", class: "block text-xs text-gray-500 mb-1" %>
       <%= f.month_field :month, value: params[:month],
@@ -20,27 +30,24 @@
       <%= f.label :cost_center_id, "Centro de Custo", class: "block text-xs text-gray-500 mb-1" %>
       <%= f.select :cost_center_id,
             CostCenter.order(:cr_code).map { |cc| ["#{cc.cr_code} — #{cc.description}", cc.id] },
-            { include_blank: "Todos" },
+            { include_blank: "Todos", selected: params[:cost_center_id] },
+            class: "rounded-lg border border-gray-300 px-3 py-1.5 text-sm" %>
+    </div>
+    <div>
+      <%= f.label :status, "Situação", class: "block text-xs text-gray-500 mb-1" %>
+      <%= f.select :status,
+            [["Em aberto", "open"], ["Quitadas", "paid"], ["Todas", "all"]],
+            { selected: @status },
             class: "rounded-lg border border-gray-300 px-3 py-1.5 text-sm" %>
     </div>
     <div class="flex items-end">
       <%= f.submit "Filtrar", class: "rounded-lg bg-red-800 px-4 py-1.5 text-sm text-white hover:bg-red-900 cursor-pointer" %>
-      <%= link_to "Limpar", invoices_path, class: "ml-2 text-sm text-gray-500 hover:underline self-center" %>
+      <%= link_to "Limpar", invoices_path, data: { turbo_frame: "_top" }, class: "ml-2 text-sm text-gray-500 hover:underline self-center" %>
     </div>
   <% end %>
 
-  <div data-controller="search" data-search-url-value="<%= invoices_path %>">
-    <div class="relative mb-3">
-      <input type="text" placeholder="Buscar NF pelo número..."
-             data-search-target="input"
-             data-action="input->search#search"
-             value="<%= params[:q] %>"
-             autocomplete="off"
-             class="w-full rounded-xl border border-gray-300 pl-10 pr-4 py-2.5 text-sm focus:ring-2 focus:ring-red-500 bg-white">
-      <span class="absolute left-3 top-2.5 text-gray-400 text-sm">🔍</span>
-    </div>
-
-    <%= turbo_frame_tag "invoices_list", data: { "search-target": "frame" } do %>
+  <div>
+    <%= turbo_frame_tag "invoices_list" do %>
     <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
       <% if @invoices.any? %>
         <div class="overflow-x-auto">

@@ -30,26 +30,7 @@
       <%= f.label :forecasted_total, "Previsto Total (R$)", class: "block text-sm font-medium text-gray-700 mb-1" %>
       <%= f.number_field :forecasted_total, step: "0.01", min: "0",
             class: "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-red-500" %>
-    </div>
-
-    <div>
-      <%= f.label :forecasted_pct_ufc, "% UFC Previsto (0–1)", class: "block text-sm font-medium text-gray-700 mb-1" %>
-      <%= f.number_field :forecasted_pct_ufc, step: "0.01", min: "0", max: "1",
-            class: "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-red-500" %>
-    </div>
-
-    <div>
-      <%= f.label :realized_total, "Realizado Total (R$)", class: "block text-sm font-medium text-gray-700 mb-1" %>
-      <%= f.number_field :realized_total, value: number_with_precision(entry.realized_total, precision: 2),
-            readonly: true, disabled: true,
-            class: "w-full rounded-lg border border-gray-200 bg-gray-50 px-3 py-2 text-sm text-gray-500 cursor-not-allowed" %>
-      <p class="mt-1 text-xs text-gray-400">Calculado automaticamente pelo faturamento do mês neste centro de custo.</p>
-    </div>
-
-    <div>
-      <%= f.label :realized_pct_ufc, "% UFC Realizado (0–1)", class: "block text-sm font-medium text-gray-700 mb-1" %>
-      <%= f.number_field :realized_pct_ufc, step: "0.01", min: "0", max: "1",
-            class: "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-red-500" %>
+      <p class="mt-1 text-xs text-gray-400">O realizado é calculado automaticamente pelo faturamento do mês neste centro de custo.</p>
     </div>
 
     <div class="sm:col-span-2">
