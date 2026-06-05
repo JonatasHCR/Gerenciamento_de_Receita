@@ -7,6 +7,26 @@ RSpec.describe CostCenter, type: :model do
     it { is_expected.to validate_presence_of(:description) }
   end
 
+  describe "saldo e % a executar (faturamento principal)" do
+    let(:cc) { create(:cost_center, value: 100_000) }
+
+    it "saldo = valor − faturado principal (ignora reajustes)" do
+      create(:invoice, cost_center: cc, value: 30_000, kind: :principal)
+      create(:invoice, cost_center: cc, value: 10_000, kind: :reajuste)
+      expect(cc.principal_invoiced).to eq(30_000)
+      expect(cc.saldo).to eq(70_000)
+    end
+
+    it "% a executar = saldo/valor*100 com 2 casas" do
+      create(:invoice, cost_center: cc, value: 25_000, kind: :principal)
+      expect(cc.percent_to_execute).to eq(75.0)
+    end
+
+    it "% a executar é 0 quando valor é zero" do
+      expect(build(:cost_center, value: 0).percent_to_execute).to eq(0)
+    end
+  end
+
   describe "coordinator_list (múltiplos coordenadores/gestores)" do
     it "divide a string por '/' em uma lista" do
       cc = build(:cost_center, coordinator: "Ana / Dr. João / Beltrano")
