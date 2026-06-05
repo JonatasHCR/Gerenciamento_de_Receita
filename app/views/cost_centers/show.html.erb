@@ -17,8 +17,12 @@
           <p class="mt-1 font-medium text-gray-900"><%= @cost_center.client&.name %></p>
         </div>
         <div>
-          <p class="text-xs text-gray-500 uppercase tracking-wide">Coordenador</p>
-          <p class="mt-1 font-medium text-gray-900"><%= @cost_center.coordinator %></p>
+          <p class="text-xs text-gray-500 uppercase tracking-wide">Nº do Contrato</p>
+          <p class="mt-1 font-medium text-gray-900"><%= @cost_center.contract_number.presence || "—" %></p>
+        </div>
+        <div>
+          <p class="text-xs text-gray-500 uppercase tracking-wide">Coordenador(es)</p>
+          <p class="mt-1 font-medium text-gray-900"><%= @cost_center.coordinator.presence || "—" %></p>
         </div>
         <div>
           <p class="text-xs text-gray-500 uppercase tracking-wide">Participação UFC</p>
@@ -27,8 +31,20 @@
           </p>
         </div>
         <div>
+          <p class="text-xs text-gray-500 uppercase tracking-wide">Início</p>
+          <p class="mt-1 font-medium text-gray-900"><%= @cost_center.start_date&.strftime("%d/%m/%Y") || "—" %></p>
+        </div>
+        <div>
           <p class="text-xs text-gray-500 uppercase tracking-wide">Data Final</p>
-          <p class="mt-1 font-medium text-gray-900"><%= @cost_center.end_date&.strftime("%d/%m/%Y") %></p>
+          <p class="mt-1 font-medium text-gray-900"><%= @cost_center.end_date&.strftime("%d/%m/%Y") || "—" %></p>
+        </div>
+        <div>
+          <p class="text-xs text-gray-500 uppercase tracking-wide">Valor do Contrato</p>
+          <p class="mt-1 font-medium text-gray-900"><%= brl(@cost_center.value || 0) %></p>
+        </div>
+        <div>
+          <p class="text-xs text-gray-500 uppercase tracking-wide">Saldo (valor − faturado principal)</p>
+          <p class="mt-1 font-bold <%= @cost_center.saldo > 0 ? 'text-red-600' : 'text-green-600' %>"><%= brl(@cost_center.saldo) %></p>
         </div>
         <% if @cost_center.object_text.present? %>
           <div class="col-span-2">
@@ -49,6 +65,61 @@
           <% end %>
         </div>
       <% end %>
+    </div>
+
+    <%# Reajustes (valor / prazo) + histórico %>
+    <div class="bg-white rounded-xl border border-gray-200 p-5 space-y-4">
+      <h2 class="font-semibold text-gray-700 text-sm">Reajustes</h2>
+
+      <% if policy(@cost_center).update? %>
+        <%# Reajuste de VALOR %>
+        <%= form_with url: cost_center_adjustments_path(@cost_center), method: :post, class: "space-y-2" do |f| %>
+          <%= hidden_field_tag "adjustment[kind]", "valor" %>
+          <label class="block text-xs text-gray-500">Reajuste de Valor (R$)</label>
+          <div class="flex gap-2">
+            <%= number_field_tag "adjustment[new_value]", nil, step: "0.01", min: "0", placeholder: "Novo valor",
+                  class: "flex-1 rounded-lg border border-gray-300 px-3 py-1.5 text-sm" %>
+            <%= f.submit "Aplicar", class: "rounded-lg bg-red-700 px-3 py-1.5 text-sm text-white hover:bg-red-800 cursor-pointer" %>
+          </div>
+        <% end %>
+
+        <%# Reajuste de PRAZO %>
+        <%= form_with url: cost_center_adjustments_path(@cost_center), method: :post, class: "space-y-2 pt-2 border-t border-gray-100" do |f| %>
+          <%= hidden_field_tag "adjustment[kind]", "prazo" %>
+          <label class="block text-xs text-gray-500">Reajuste de Prazo (nova Data Final)</label>
+          <div class="flex gap-2">
+            <%= date_field_tag "adjustment[new_date]", nil,
+                  class: "flex-1 rounded-lg border border-gray-300 px-3 py-1.5 text-sm" %>
+            <%= f.submit "Aplicar", class: "rounded-lg bg-red-700 px-3 py-1.5 text-sm text-white hover:bg-red-800 cursor-pointer" %>
+          </div>
+        <% end %>
+      <% end %>
+
+      <%# Histórico %>
+      <div class="pt-2 border-t border-gray-100">
+        <p class="text-xs text-gray-500 uppercase tracking-wide mb-2">Histórico</p>
+        <% if @adjustments.any? %>
+          <ul class="space-y-2 text-sm">
+            <% @adjustments.each do |adj| %>
+              <li class="flex items-start gap-2">
+                <span class="mt-0.5 text-xs px-1.5 py-0.5 rounded-full font-medium <%= adj.valor? ? 'bg-orange-100 text-orange-700' : 'bg-blue-100 text-blue-700' %>">
+                  <%= adj.valor? ? "Valor" : "Prazo" %>
+                </span>
+                <div class="flex-1">
+                  <% if adj.valor? %>
+                    <span class="text-gray-700"><%= brl(adj.previous_value || 0) %> → <strong><%= brl(adj.new_value) %></strong></span>
+                  <% else %>
+                    <span class="text-gray-700"><%= adj.previous_date&.strftime("%d/%m/%Y") || "—" %> → <strong><%= adj.new_date&.strftime("%d/%m/%Y") %></strong></span>
+                  <% end %>
+                  <span class="block text-xs text-gray-400"><%= l(adj.created_at, format: :short) %><%= " — #{adj.note}" if adj.note.present? %></span>
+                </div>
+              </li>
+            <% end %>
+          </ul>
+        <% else %>
+          <p class="text-sm text-gray-400">Nenhum reajuste registrado.</p>
+        <% end %>
+      </div>
     </div>
   </div>
 
