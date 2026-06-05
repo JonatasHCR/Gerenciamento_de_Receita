@@ -15,7 +15,7 @@ Rails.application.routes.draw do
 
   resources :clients
   resources :cost_centers
-  resources :receipts, only: [:index]
+  resources :receipts, only: [:index, :new]
   resources :invoices do
     resources :receipts, shallow: true, only: [:new, :create, :edit, :update, :destroy]
   end
@@ -26,6 +26,8 @@ Rails.application.routes.draw do
       get :template
     end
   end
+  get "reports/monthly", to: "reports#monthly", as: :monthly_report
+
   get "audit_logs", to: "audit_logs#index"
   get "audit_logs/:id", to: "audit_logs#show", as: :audit_log
 end

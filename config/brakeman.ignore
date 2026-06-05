@@ -1,0 +1,28 @@
+{
+  "ignored_warnings": [
+    {
+      "warning_type": "Mass Assignment",
+      "warning_code": 70,
+      "fingerprint": "f32cc90e79c7506b295bb230dbf4663eb3c8509433ca9e5d52d25455252ff02e",
+      "check_name": "MassAssignment",
+      "message": "Potentially dangerous key allowed for mass assignment",
+      "file": "app/controllers/users_controller.rb",
+      "line": 72,
+      "link": "https://brakemanscanner.org/docs/warning_types/mass_assignment/",
+      "code": "params.require(:user).permit(:name, :email, :password, :password_confirmation, :role)",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "UsersController",
+        "method": "user_params"
+      },
+      "user_input": null,
+      "confidence": "Medium",
+      "cwe_id": [
+        915
+      ],
+      "note": "Falso-positivo revisado: :role só é incluído no permit quando current_user.admin? (ver user_params). Não-admin nunca consegue alterar o próprio papel; create é admin-only via Pundit. Sem escalonamento de privilégio."
+    }
+  ],
+  "brakeman_version": "8.0.4"
+}

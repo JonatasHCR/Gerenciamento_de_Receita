@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_04_163600) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_04_214925) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -68,6 +68,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_04_163600) do
     t.index ["cost_center_id"], name: "index_invoices_on_cost_center_id"
     t.index ["issued_at", "cost_center_id"], name: "index_invoices_on_issued_at_and_cost_center_id"
     t.index ["issued_at"], name: "index_invoices_on_issued_at"
+    t.index ["number"], name: "idx_invoices_number_trgm", opclass: :gin_trgm_ops, using: :gin
   end
 
   create_table "receipts", force: :cascade do |t|
