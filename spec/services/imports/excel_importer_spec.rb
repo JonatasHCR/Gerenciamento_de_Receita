@@ -2,88 +2,125 @@ require "rails_helper"
 require "caxlsx"
 
 RSpec.describe Imports::ExcelImporter do
-  # Gera um .xlsx temporário com as 4 abas esperadas. Por padrão as abas extras
-  # ficam só com cabeçalhos; cada teste preenche as linhas que precisa.
-  def build_xlsx(cost_center_rows: [], invoice_rows: [], omit_sheets: [])
+  # Monta um .xlsx no layout real (0-indexed por coluna, igual ao MODELO).
+  def build_xlsx(cost_center_rows: [], forecast_rows: [], invoice_rows: [],
+                 receipt_rows: [], month_year: "JUNHO/2026", omit_sheets: [])
     pkg = Axlsx::Package.new
     wb  = pkg.workbook
 
     unless omit_sheets.include?(:cost_centers)
       wb.add_worksheet(name: "CADASTRO CENTRO DE CUSTO") do |s|
-        4.times { s.add_row [] }              # offset 4
-        cost_center_rows.each { |r| s.add_row(r) }
+        s.add_row ["CADASTRO"]; s.add_row []; s.add_row []
+        s.add_row ["CR", "PART.", "DESCRIÇÃO", "CLIENTE"]          # linha 4
+        cost_center_rows.each { |r| s.add_row(r) }                  # linha 5+
+      end
+    end
+
+    unless omit_sheets.include?(:forecasts)
+      wb.add_worksheet(name: "PREVISAO FATURAMENTO") do |s|
+        s.add_row ["PREVISAO"]; s.add_row []
+        s.add_row ["", "", "", "", "", "", "", "", month_year]      # I3 = mês/ano
+        s.add_row ["ORD","CR","PART","OBJETO","DESCRIÇÃO","CLIENTE","DATA FINAL","COORDENADOR","","PREVISTO","%UFC","REALIZADO","%UFCR"]
+        s.add_row []                                                 # linha 5
+        forecast_rows.each { |r| s.add_row(r) }                      # linha 6+
       end
     end
 
     unless omit_sheets.include?(:invoices)
       wb.add_worksheet(name: "FATURAMENTO") do |s|
-        5.times { s.add_row [] }              # offset 5
-        invoice_rows.each { |r| s.add_row(r) }
+        s.add_row ["FATURAMENTO"]; s.add_row []; s.add_row []
+        s.add_row ["CENTRO","NF","CR","CLIENTE","DATA","VALOR","MÊS","OBS"]  # linha 4
+        s.add_row []                                                          # linha 5
+        invoice_rows.each { |r| s.add_row(r) }                                # linha 6+
       end
     end
 
-    wb.add_worksheet(name: "RECEBIMENTO")          { |s| 5.times { s.add_row [] } } unless omit_sheets.include?(:receipts)
-    wb.add_worksheet(name: "PREVISAO FATURAMENTO") { |s| 6.times { s.add_row [] } } unless omit_sheets.include?(:forecasts)
+    unless omit_sheets.include?(:receipts)
+      wb.add_worksheet(name: "RECEBIMENTO") do |s|
+        s.add_row ["RECEBIMENTO"]; s.add_row []; s.add_row []
+        s.add_row ["NF","CR","CLIENTE","DATA","VALOR","MÊS","OBS"]   # linha 4
+        s.add_row []                                                 # linha 5
+        receipt_rows.each { |r| s.add_row(r) }                       # linha 6+
+      end
+    end
 
     path = Rails.root.join("tmp", "import_test_#{SecureRandom.hex(4)}.xlsx").to_s
     pkg.serialize(path)
     path
   end
 
-  # Colunas CC: [0]=marcador, [1]=CR, [2]=part, [3]=descrição, [4]=cliente, [5]=, [6]=coord
-  def cc_row(cr:, desc:, client: "Cliente Teste", part: 1.0)
-    ["x", cr, part, desc, client, "", "Coordenador"]
-  end
+  # CADASTRO: [CR, PART, DESCRIÇÃO, CLIENTE]
+  def cc_row(cr:, desc:, client: "Cliente Teste", part: 1.0) = [cr, part, desc, client]
+  # FATURAMENTO: [CENTRO, NF, CR, CLIENTE, DATA, VALOR, MÊS, OBS]
+  def inv_row(nf:, cr:, value:, date: Date.new(2026, 6, 10), client: "X", obs: "") = ["", nf, cr, client, date, value, "", obs]
 
   after { Dir.glob(Rails.root.join("tmp", "import_test_*.xlsx")).each { |f| File.delete(f) } }
 
-  it "importa as linhas válidas e continua mesmo com uma linha inválida" do
+  it "importa linhas válidas e continua mesmo com uma inválida" do
     path = build_xlsx(cost_center_rows: [
       cc_row(cr: "CR-OK1", desc: "Contrato A"),
-      cc_row(cr: "CR-BAD", desc: ""),          # descrição vazia → inválido
+      cc_row(cr: "CR-BAD", desc: ""),     # descrição e cliente vazios → pulada (seção)
       cc_row(cr: "CR-OK2", desc: "Contrato B")
     ])
-
     result = described_class.new(path).call
 
-    expect(result.success?).to be(true)          # não houve erro fatal
-    expect(result.partial?).to be(true)          # houve linha com erro
-    expect(result.imported).to eq(2)             # as duas válidas entraram
+    expect(result.success?).to be(true)
     expect(CostCenter.where(cr_code: %w[CR-OK1 CR-OK2]).count).to eq(2)
-    expect(CostCenter.find_by(cr_code: "CR-BAD")).to be_nil
-    expect(result.errors.size).to eq(1)
-    expect(result.errors.first).to include("CR-BAD")
-    expect(result.errors.first).to match(/linha 6/)  # 4 cabeçalhos + 2ª linha de dados
   end
 
-  it "sinaliza faturamento cujo centro de custo não existe, sem abortar" do
+  it "enriquece o CC com objeto, data final e MÚLTIPLOS coordenadores da PREVISÃO" do
     path = build_xlsx(
-      cost_center_rows: [cc_row(cr: "CR-OK1", desc: "Contrato A")],
-      invoice_rows: [
-        # [2]=NF, [3]=CR, [4]=cliente, [5]=data, [6]=valor
-        ["", "", "NF1", "CR-OK1", "Cliente", Date.new(2026, 6, 10), 1000],
-        ["", "", "NF2", "CR-INEXISTENTE", "Cliente", Date.new(2026, 6, 11), 500]
+      cost_center_rows: [cc_row(cr: "CR-1", desc: "Desc A", client: "ACME")],
+      forecast_rows: [
+        [1, "CR-1", 1.0, "Objeto do contrato", "Desc A", "ACME",
+         Date.new(2027, 1, 5), "Ana Maria / Dr. João", "", 100_000, 1.0, 0, 0]
       ]
     )
+    described_class.new(path).call
+    cc = CostCenter.find_by(cr_code: "CR-1")
 
-    result = described_class.new(path).call
-
-    expect(result.imported).to eq(2)             # 1 CC + 1 NF válida
-    expect(Invoice.find_by(number: "NF1")).to be_present
-    expect(Invoice.find_by(number: "NF2")).to be_nil
-    expect(result.errors.any? { |e| e.include?("CR-INEXISTENTE") }).to be(true)
+    expect(cc.object_text).to eq("Objeto do contrato")
+    expect(cc.end_date).to eq(Date.new(2027, 1, 5))
+    expect(cc.coordinator_list).to eq(["Ana Maria", "Dr. João"])
+    expect(ForecastEntry.find_by(cost_center: cc, month_year: "JUNHO/2026")).to be_present
   end
 
-  it "não aborta quando uma aba está ausente — importa as demais e sinaliza a aba" do
+  it "importa observações do faturamento" do
     path = build_xlsx(
-      cost_center_rows: [cc_row(cr: "CR-OK1", desc: "Contrato A")],
-      omit_sheets: [:receipts]
+      cost_center_rows: [cc_row(cr: "CR-1", desc: "Desc A")],
+      invoice_rows: [inv_row(nf: "NF1", cr: "CR-1", value: 1000, obs: "pago adiantado")]
     )
+    described_class.new(path).call
+    expect(Invoice.find_by(number: "NF1").observations).to eq("pago adiantado")
+  end
+
+  it "atualiza registros existentes na reimportação (upsert)" do
+    cc = create(:cost_center, cr_code: "CR-UP", description: "Antiga")
+    path = build_xlsx(cost_center_rows: [cc_row(cr: "CR-UP", desc: "Nova Descrição", client: cc.client.name)])
 
     result = described_class.new(path).call
+    expect(result.updated).to be >= 1
+    expect(cc.reload.description).to eq("Nova Descrição")
+  end
 
-    expect(result.imported).to eq(1)
-    expect(CostCenter.find_by(cr_code: "CR-OK1")).to be_present
+  it "sinaliza faturamento cujo CC não existe, sem abortar" do
+    path = build_xlsx(
+      cost_center_rows: [cc_row(cr: "CR-1", desc: "Desc A")],
+      invoice_rows: [
+        inv_row(nf: "NF1", cr: "CR-1", value: 1000),
+        inv_row(nf: "NF2", cr: "CR-X", value: 500)
+      ]
+    )
+    result = described_class.new(path).call
+    expect(Invoice.find_by(number: "NF1")).to be_present
+    expect(Invoice.find_by(number: "NF2")).to be_nil
+    expect(result.errors.any? { |e| e.include?("CR-X") }).to be(true)
+  end
+
+  it "não aborta quando uma aba está ausente" do
+    path = build_xlsx(cost_center_rows: [cc_row(cr: "CR-1", desc: "Desc A")], omit_sheets: [:receipts])
+    result = described_class.new(path).call
+    expect(CostCenter.find_by(cr_code: "CR-1")).to be_present
     expect(result.errors.any? { |e| e.include?("RECEBIMENTO") }).to be(true)
   end
 

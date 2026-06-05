@@ -14,7 +14,7 @@ RSpec.describe "CostCenters", type: :request do
         cr_code:               "9999",
         description:           "NOVO CONTRATO",
         participation_percent: 100,
-        coordinator:           "Fulano",
+        coordinator_list:      ["Fulano", "Beltrano"],
         client_id:             client.id
       }
     }

@@ -7,6 +7,23 @@ RSpec.describe CostCenter, type: :model do
     it { is_expected.to validate_presence_of(:description) }
   end
 
+  describe "coordinator_list (múltiplos coordenadores/gestores)" do
+    it "divide a string por '/' em uma lista" do
+      cc = build(:cost_center, coordinator: "Ana / Dr. João / Beltrano")
+      expect(cc.coordinator_list).to eq(["Ana", "Dr. João", "Beltrano"])
+    end
+
+    it "junta a lista com ' / ' ignorando vazios" do
+      cc = build(:cost_center)
+      cc.coordinator_list = ["Ana", "", "  ", "João"]
+      expect(cc.coordinator).to eq("Ana / João")
+    end
+
+    it "retorna lista vazia quando não há coordenador" do
+      expect(build(:cost_center, coordinator: nil).coordinator_list).to eq([])
+    end
+  end
+
   describe "participation_percent" do
     it "converte percentual (0–100) para decimal (0–1) ao atribuir" do
       cc = build(:cost_center, participation_percent: 50)
