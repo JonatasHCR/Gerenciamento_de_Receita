@@ -18,8 +18,8 @@ module Reports
     MUTED      = "6B7280".freeze
 
     COLUMNS = [
-      "CR", "Descrição", "Previsto no Mês", "Faturado no Mês",
-      "Faturado Mês Ant.", "Recebido no Mês", "Faturas em Aberto"
+      "CR", "Part. UFC", "Descrição", "Previsto no Mês", "Faturado no Mês",
+      "Em Aberto Mês Ant.", "Recebido no Mês", "Faturas em Aberto"
     ].freeze
 
     def initialize(report_data:, month_label:, generated_by: nil)
@@ -75,25 +75,28 @@ module Reports
       rows.each do |r|
         table_data << [
           safe(r[:cc].cr_code.to_s),
-          safe(truncate(r[:cc].description, 38)),
+          pct(r[:cc].participation),
+          safe(truncate(r[:cc].description, 36)),
           brl(r[:previsto]),
           brl(r[:inv_cur]),
-          brl(r[:inv_pre]),
+          brl(r[:open_pre]),
           brl(r[:rec_cur]),
           brl(r[:open])
         ]
       end
 
       table_data << [
-        "", safe("Subtotal #{client&.name}"),
-        brl(totals[:previsto]), brl(totals[:inv_cur]), brl(totals[:inv_pre]),
+        "", "", safe("Subtotal #{client&.name}"),
+        brl(totals[:previsto]), brl(totals[:inv_cur]), brl(totals[:open_pre]),
         brl(totals[:rec_cur]), brl(totals[:open])
       ]
 
       @pdf.table(table_data, width: @pdf.bounds.width, cell_style: { size: 8, padding: [4, 5] }) do |t|
-        t.columns(2..6).align = :right
-        t.column(0).width = 50
-        t.column(1).width = 170
+        t.columns(3..7).align = :right
+        t.column(1).align = :center
+        t.column(0).width = 45
+        t.column(1).width = 50
+        t.column(2).width = 150
 
         # Cabeçalho
         t.row(0).background_color = GRAY_HEAD
@@ -118,7 +121,7 @@ module Reports
       g = {
         previsto: @data.sum { |grp| grp[:totals][:previsto] },
         inv_cur:  @data.sum { |grp| grp[:totals][:inv_cur] },
-        inv_pre:  @data.sum { |grp| grp[:totals][:inv_pre] },
+        open_pre: @data.sum { |grp| grp[:totals][:open_pre] },
         rec_cur:  @data.sum { |grp| grp[:totals][:rec_cur] },
         open:     @data.sum { |grp| grp[:totals][:open] }
       }
@@ -126,12 +129,12 @@ module Reports
       @pdf.move_down 4
       total_row = [[
         "TOTAL GERAL", brl(g[:previsto]), brl(g[:inv_cur]),
-        brl(g[:inv_pre]), brl(g[:rec_cur]), brl(g[:open])
+        brl(g[:open_pre]), brl(g[:rec_cur]), brl(g[:open])
       ]]
 
       @pdf.table(total_row, width: @pdf.bounds.width, cell_style: { size: 9, padding: [6, 5] }) do |t|
         t.columns(1..5).align = :right
-        t.column(0).width = 220
+        t.column(0).width = 245
         t.cells.background_color = DARK_RED
         t.cells.text_color       = "FFFFFF"
         t.cells.font_style       = :bold
@@ -155,6 +158,14 @@ module Reports
       ActiveSupport::NumberHelper.number_to_currency(
         value || 0, unit: "R$ ", separator: ",", delimiter: ".", precision: 2
       )
+    end
+
+    # Participação (decimal 0..1) → percentual: 1.0 → "100%", 0.5 → "50%"
+    def pct(value)
+      return "—" if value.nil?
+      n = value * 100
+      n = n == n.to_i ? n.to_i : n.round(2)
+      "#{n.to_s.tr('.', ',')}%"
     end
 
     def truncate(text, length)
