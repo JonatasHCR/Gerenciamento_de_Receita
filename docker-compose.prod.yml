@@ -1,0 +1,35 @@
+# Compose de PRODUÇÃO (fica no servidor, em DEPLOY_PATH).
+# A imagem é puxada do registry pelo workflow de deploy.
+# Variáveis sensíveis vêm de um arquivo .env (não versionado) ao lado deste.
+services:
+  db:
+    image: postgres:16
+    restart: always
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-receita}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?defina no .env}
+      POSTGRES_DB: ${POSTGRES_DB:-receita_production}
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-receita} -d ${POSTGRES_DB:-receita_production}"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  web:
+    image: ${WEB_IMAGE:?defina WEB_IMAGE no .env (registry/owner/repo:latest)}
+    restart: always
+    depends_on:
+      db:
+        condition: service_healthy
+    environment:
+      RAILS_ENV: production
+      DATABASE_URL: ${DATABASE_URL:?defina no .env}
+      RAILS_MASTER_KEY: ${RAILS_MASTER_KEY:?defina no .env}
+      RAILS_MAX_THREADS: ${RAILS_MAX_THREADS:-5}
+    ports:
+      - "${WEB_PORT:-80}:80"   # Thruster expõe 80 dentro do container
+
+volumes:
+  postgres_data:

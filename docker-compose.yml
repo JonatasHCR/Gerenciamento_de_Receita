@@ -17,7 +17,8 @@ services:
     build:
       context: .
       dockerfile: Dockerfile.dev
-    command: bin/dev
+    # Garante que novos gems sejam instalados (no volume persistente) antes de subir.
+    command: bash -c "bundle check || bundle install; bin/dev"
     ports:
       - "0.0.0.0:3040:3000"
     depends_on:
@@ -26,8 +27,14 @@ services:
     env_file: .env
     volumes:
       - .:/rails
+      # Volumes nomeados: gems e bootsnap persistem entre recriações de container
+      # (evita reinstalar tudo e o "gem some ao recriar" — ex.: prawn).
+      - bundle_cache:/usr/local/bundle
+      - bootsnap_cache:/rails/tmp/cache/bootsnap
     stdin_open: true
     tty: true
 
 volumes:
   postgres_data:
+  bundle_cache:
+  bootsnap_cache:
