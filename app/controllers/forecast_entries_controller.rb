@@ -55,10 +55,10 @@ class ForecastEntriesController < ApplicationController
   end
 
   def entry_params
-    # realized_total não é permitido: é derivado automaticamente do faturamento.
+    # realized_total e os % UFC não são permitidos: realizado é derivado do
+    # faturamento e os percentuais não são mais usados.
     permitted = params.require(:forecast_entry).permit(
-      :month_year, :forecasted_total, :forecasted_pct_ufc,
-      :realized_pct_ufc, :observations, :cost_center_id
+      :month_year, :forecasted_total, :observations, :cost_center_id
     )
     if permitted[:month_year].present? && permitted[:month_year].match?(/\A\d{4}-\d{2}\z/)
       permitted[:month_year] = pt_month_year(Date.parse("#{permitted[:month_year]}-01"))
