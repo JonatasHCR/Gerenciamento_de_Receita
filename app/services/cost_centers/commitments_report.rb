@@ -34,10 +34,12 @@ module CostCenters
           sheet.add_row(
             [
               cc.contract_number, cc.client&.name, cc.cr_code, cc.object_text,
-              cc.start_date, cc.end_date, cc.value.to_f, cc.percent_to_execute.to_f, cc.saldo.to_f
+              fmt_date(cc.start_date), fmt_date(cc.end_date),
+              cc.value.to_f, cc.percent_to_execute.to_f, cc.saldo.to_f
             ],
             style: [styles[:cell], styles[:cell], styles[:cell], styles[:cell],
-                    styles[:date], styles[:date], styles[:money], styles[:pct], styles[:money]]
+                    styles[:date], styles[:date], styles[:money], styles[:pct], styles[:money]],
+            types: [:string, :string, :string, :string, :string, :string, :float, :float, :float]
           )
         end
 
@@ -55,6 +57,10 @@ module CostCenters
     end
 
     private
+
+    def fmt_date(date)
+      date&.strftime("%d/%m/%Y") || ""
+    end
 
     def build_styles(wb)
       thin = { style: :thin, color: "FF999999" }

@@ -36,6 +36,11 @@ module ApplicationHelper
     format("%04d-%02d", parts[1].to_i, idx + 1)
   end
 
+  # Rótulo com asterisco indicando campo obrigatório.
+  def req(text)
+    safe_join([text, " ", tag.span("*", class: "text-red-500", title: "Campo obrigatório")])
+  end
+
   def brl(value)
     number_to_currency(value, unit: "R$ ", separator: ",", delimiter: ".", precision: 2)
   end
