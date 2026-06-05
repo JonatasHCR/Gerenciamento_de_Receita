@@ -7,6 +7,18 @@ RSpec.describe CostCenter, type: :model do
     it { is_expected.to validate_presence_of(:description) }
   end
 
+  describe "datas do contrato" do
+    it "não aceita data final anterior à data de início" do
+      cc = build(:cost_center, start_date: Date.new(2026, 6, 1), end_date: Date.new(2026, 1, 1))
+      expect(cc).not_to be_valid
+      expect(cc.errors[:end_date]).to be_present
+    end
+
+    it "aceita data final igual ou posterior ao início" do
+      expect(build(:cost_center, start_date: Date.new(2026, 1, 1), end_date: Date.new(2026, 12, 31))).to be_valid
+    end
+  end
+
   describe "saldo e % a executar (faturamento principal)" do
     let(:cc) { create(:cost_center, value: 100_000) }
 

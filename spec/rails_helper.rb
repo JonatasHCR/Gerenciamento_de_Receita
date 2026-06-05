@@ -1,5 +1,15 @@
 require 'spec_helper'
 ENV['RAILS_ENV'] = 'test'
+
+# Cobertura de testes (SimpleCov) — precisa iniciar antes de carregar o app.
+require 'simplecov'
+SimpleCov.start 'rails' do
+  enable_coverage :branch
+  add_filter %w[/spec/ /config/ /db/ /vendor/]
+  add_group "Services",    "app/services"
+  add_group "Policies",    "app/policies"
+end
+
 require_relative '../config/environment'
 abort("The Rails environment is running in production mode!") if Rails.env.production?
 require 'rspec/rails'

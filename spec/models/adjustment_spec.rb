@@ -22,5 +22,11 @@ RSpec.describe Adjustment, type: :model do
       expect(adj.previous_date).to eq(Date.new(2026, 6, 5))
       expect(cost_center.reload.end_date).to eq(Date.new(2027, 6, 5))
     end
+
+    it "não aceita nova data final anterior ao início do contrato" do
+      cost_center.update!(start_date: Date.new(2026, 1, 1))
+      adj = cost_center.adjustments.build(kind: :prazo, new_date: Date.new(2025, 1, 1))
+      expect(adj).not_to be_valid
+    end
   end
 end
