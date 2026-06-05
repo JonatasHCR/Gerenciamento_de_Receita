@@ -4,7 +4,7 @@ class ForecastEntriesController < ApplicationController
   def index
     authorize ForecastEntry
     @month_year = if params[:month].present?
-      pt_month_year(Date.parse("#{params[:month]}-01"))
+      pt_month_year(parse_month(params[:month]))
     else
       params[:month_year].presence || pt_month_year
     end
@@ -55,9 +55,10 @@ class ForecastEntriesController < ApplicationController
   end
 
   def entry_params
+    # realized_total não é permitido: é derivado automaticamente do faturamento.
     permitted = params.require(:forecast_entry).permit(
       :month_year, :forecasted_total, :forecasted_pct_ufc,
-      :realized_total, :realized_pct_ufc, :observations, :cost_center_id
+      :realized_pct_ufc, :observations, :cost_center_id
     )
     if permitted[:month_year].present? && permitted[:month_year].match?(/\A\d{4}-\d{2}\z/)
       permitted[:month_year] = pt_month_year(Date.parse("#{permitted[:month_year]}-01"))

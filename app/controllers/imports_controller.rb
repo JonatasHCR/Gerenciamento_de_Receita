@@ -21,10 +21,21 @@ class ImportsController < ApplicationController
     end
 
     result = Imports::ExcelImporter.new(file.path).call
-    if result.success?
-      redirect_to root_path, notice: "Importação concluída com sucesso."
+
+    if !result.success?
+      # Erro fatal: arquivo não pôde ser processado.
+      @errors        = result.errors
+      @fatal_error   = result.fatal_error
+      @import_count  = result.imported
+      flash.now[:alert] = result.fatal_error
+      render :new, status: :unprocessable_entity
+    elsif result.fully_clean?
+      redirect_to root_path,
+        notice: "Importação concluída: #{result.imported} registro(s) importado(s)."
     else
-      @errors = result.errors
+      # Sucesso parcial: registros válidos foram gravados; linhas com erro listadas.
+      @errors       = result.errors
+      @import_count = result.imported
       render :new, status: :unprocessable_entity
     end
   end

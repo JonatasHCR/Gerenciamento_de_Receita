@@ -61,8 +61,9 @@ class InvoicesController < ApplicationController
   end
 
   def apply_filters(scope)
+    scope = scope.where("invoices.number ILIKE ?", "%#{params[:q].strip}%") if params[:q].present?
     scope = scope.where(cost_center_id: params[:cost_center_id]) if params[:cost_center_id].present?
-    scope = scope.for_month(Date.parse("#{params[:month]}-01"))  if params[:month].present?
+    scope = scope.for_month(parse_month(params[:month]))  if params[:month].present?
     scope
   end
 end

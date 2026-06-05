@@ -5,14 +5,26 @@ class ReceiptsController < ApplicationController
   def index
     authorize Receipt
     scope = policy_scope(Receipt).includes(invoice: :cost_center)
-    scope = scope.for_month(Date.parse("#{params[:month]}-01")) if params[:month].present?
+    scope = scope.for_month(parse_month(params[:month])) if params[:month].present?
     scope = scope.where(invoices: { cost_center_id: params[:cost_center_id] }) if params[:cost_center_id].present?
     @pagy, @receipts = pagy(scope.order(payment_date: :desc))
   end
 
   def new
     authorize Receipt
-    @receipt = @invoice.receipts.new
+    if @invoice
+      @receipt = @invoice.receipts.new
+    else
+      # Fluxo a partir da página de Recebimentos: busca a NF pelo número.
+      @receipt = Receipt.new
+      if params[:q].present?
+        @invoices = policy_scope(Invoice)
+                      .where("invoices.number ILIKE ?", "%#{params[:q].strip}%")
+                      .includes(:cost_center)
+                      .order(issued_at: :desc)
+                      .limit(20)
+      end
+    end
   end
 
   def create

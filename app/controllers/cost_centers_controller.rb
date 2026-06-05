@@ -58,7 +58,7 @@ class CostCentersController < ApplicationController
   end
 
   def cost_center_params
-    params.require(:cost_center).permit(:cr_code, :description, :object_text, :participation, :coordinator, :end_date, :client_id)
+    params.require(:cost_center).permit(:cr_code, :description, :object_text, :participation_percent, :coordinator, :end_date, :client_id)
   end
 
   def set_coordinator_options

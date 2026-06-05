@@ -19,6 +19,15 @@ class ApplicationController < ActionController::Base
   end
   helper_method :pt_month_year
 
+  # Converte "AAAA-MM" (input month_field) em Date no 1º dia do mês.
+  # Entrada ausente/inválida cai no fallback — evita 500 por Date::Error.
+  def parse_month(value, fallback = Date.current.beginning_of_month)
+    return fallback if value.blank?
+    Date.strptime(value.to_s, "%Y-%m").beginning_of_month
+  rescue ArgumentError, Date::Error
+    fallback
+  end
+
   # "06/2026" → "Jun/2026" em português abreviado para os gráficos
   def pt_month_label(mm_yyyy)
     parts = mm_yyyy.split("/")

@@ -65,11 +65,15 @@ class UsersController < ApplicationController
   end
 
   def user_params
-    params.require(:user).permit(:name, :email, :role, :password, :password_confirmation)
+    # :role só é permitido para admin — evita escalonamento de privilégio via
+    # mass assignment (um não-admin nunca consegue alterar o próprio papel).
+    permitted = [:name, :email, :password, :password_confirmation]
+    permitted << :role if current_user.admin?
+    params.require(:user).permit(*permitted)
   end
 
   def build_update_params
-    p = current_user.admin? ? user_params : user_params.except(:role)
+    p = user_params
     p[:password].blank? ? p.except(:password, :password_confirmation) : p
   end
 end
