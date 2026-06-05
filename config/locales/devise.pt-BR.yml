@@ -17,8 +17,6 @@ pt-BR:
     mailer:
       confirmation_instructions:
         subject: "Instruções de confirmação de conta"
-      reset_password_instructions:
-        subject: "Instruções para redefinição de senha"
       unlock_instructions:
         subject: "Instruções para desbloquear conta"
       email_changed:
@@ -28,12 +26,6 @@ pt-BR:
     omniauth_callbacks:
       failure: "Não foi possível autenticar via %{kind}: \"%{reason}\"."
       success: "Autenticado com sucesso pela conta %{kind}."
-    passwords:
-      no_token: "Link de redefinição de senha inválido ou expirado."
-      send_instructions: "Em breve você receberá um e-mail com instruções para redefinir sua senha."
-      send_paranoid_instructions: "Se o e-mail existir em nosso cadastro, você receberá um link de recuperação em breve."
-      updated: "Senha alterada com sucesso. Você está autenticado."
-      updated_not_active: "Senha alterada com sucesso."
     registrations:
       destroyed: "Sua conta foi cancelada com sucesso."
       signed_up: "Bem-vindo! Cadastro realizado com sucesso."
