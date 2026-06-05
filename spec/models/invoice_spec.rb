@@ -51,4 +51,50 @@ RSpec.describe Invoice, type: :model do
       expect(invoice.payment_status).to eq(:paid)
     end
   end
+
+  describe "sincronização do realizado da previsão" do
+    let(:cc) { create(:cost_center) }
+    let!(:forecast) do
+      create(:forecast_entry, cost_center: cc, month_year: "JUNHO/2026", forecasted_total: 10_000)
+    end
+
+    it "atualiza realized ao criar NF no mês" do
+      create(:invoice, cost_center: cc, issued_at: Date.new(2026, 6, 10), value: 5_000)
+      expect(forecast.reload.realized_total).to eq(5_000)
+    end
+
+    it "acumula múltiplas NFs do mês" do
+      create(:invoice, cost_center: cc, issued_at: Date.new(2026, 6, 10), value: 5_000)
+      create(:invoice, cost_center: cc, issued_at: Date.new(2026, 6, 25), value: 2_000)
+      expect(forecast.reload.realized_total).to eq(7_000)
+    end
+
+    it "reduz realized ao excluir NF" do
+      inv = create(:invoice, cost_center: cc, issued_at: Date.new(2026, 6, 10), value: 5_000)
+      expect(forecast.reload.realized_total).to eq(5_000)
+      inv.destroy
+      expect(forecast.reload.realized_total).to eq(0)
+    end
+
+    it "recalcula ao alterar o valor da NF" do
+      inv = create(:invoice, cost_center: cc, issued_at: Date.new(2026, 6, 10), value: 5_000)
+      inv.update!(value: 8_000)
+      expect(forecast.reload.realized_total).to eq(8_000)
+    end
+
+    it "move o realizado ao mudar a data da NF para outro mês" do
+      may = create(:forecast_entry, cost_center: cc, month_year: "MAIO/2026", forecasted_total: 1)
+      inv = create(:invoice, cost_center: cc, issued_at: Date.new(2026, 6, 10), value: 5_000)
+      expect(forecast.reload.realized_total).to eq(5_000)
+
+      inv.update!(issued_at: Date.new(2026, 5, 10))
+      expect(forecast.reload.realized_total).to eq(0)
+      expect(may.reload.realized_total).to eq(5_000)
+    end
+
+    it "não afeta NF fora do período da previsão" do
+      create(:invoice, cost_center: cc, issued_at: Date.new(2026, 7, 1), value: 9_999)
+      expect(forecast.reload.realized_total).to eq(0)
+    end
+  end
 end
