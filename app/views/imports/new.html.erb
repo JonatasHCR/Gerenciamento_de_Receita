@@ -12,11 +12,22 @@
         <div>
           <p class="font-medium mb-1">Formato esperado</p>
           <ul class="list-disc list-inside space-y-1 text-xs">
-            <li>Arquivo <strong>.xlsx</strong></li>
-            <li>Aba <strong>CADASTRO CENTRO DE CUSTO</strong> — cadastro dos contratos</li>
-            <li>Aba <strong>FATURAMENTO</strong> — notas fiscais emitidas</li>
-            <li>Aba <strong>RECEBIMENTO</strong> — pagamentos realizados</li>
-            <li>Aba <strong>PREVISAO FATURAMENTO</strong> — previsão mensal</li>
+            <li>Arquivo <strong>.xlsx</strong> com as 4 abas abaixo (use o modelo ao lado).</li>
+            <li><strong>CADASTRO CENTRO DE CUSTO</strong>: CR, Participação, Descrição, Cliente.</li>
+            <li><strong>PREVISAO FATURAMENTO</strong>: CR, Participação, <em>Objeto</em>, Descrição, Cliente,
+                <em>Data Final</em>, <em>Coordenador(es)</em>, Previsto, % UFC. O mês/ano fica na célula <strong>I3</strong>.</li>
+            <li><strong>FATURAMENTO</strong>: NF, CR, Cliente, Data de Emissão, Valor, Observação.</li>
+            <li><strong>RECEBIMENTO</strong>: NF, CR, Data de Baixa, Valor, Observação.</li>
+          </ul>
+          <p class="font-medium mt-2 mb-1">Instruções de preenchimento</p>
+          <ul class="list-disc list-inside space-y-1 text-xs">
+            <li><strong>Participação:</strong> informe em <strong>percentual (0 a 100)</strong> — ex.: 100 = 100%, 50 = 50%.</li>
+            <li><strong>Vários coordenadores/gestores:</strong> separe os nomes com barra <strong>" / "</strong> na mesma célula (ex.: <em>Ana Maria / Dr. João</em>).</li>
+            <li><strong>Objeto, Data Final e Coordenador</strong> são lidos da aba <strong>PREVISÃO</strong> (não precisa repetir na CADASTRO).</li>
+            <li>As colunas são localizadas pelo <strong>cabeçalho</strong>: a ordem é livre e colunas extras (ex.: "Mês", "Centro de Custo") são ignoradas. Basta a data — não precisa de coluna de mês.</li>
+            <li>O <strong>Realizado</strong> da previsão é calculado automaticamente pelo faturamento — não precisa preencher.</li>
+            <li>CR já existente é <strong>atualizado</strong> (reimportar não duplica). CR sem cliente entra como “NÃO INFORMADO”.</li>
+            <li>Linhas com erro são ignoradas e <strong>sinalizadas</strong> ao final; as demais são importadas normalmente.</li>
           </ul>
         </div>
         <%= link_to template_imports_path,
