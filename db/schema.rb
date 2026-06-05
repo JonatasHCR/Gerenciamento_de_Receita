@@ -10,10 +10,23 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_04_214925) do
+ActiveRecord::Schema[8.1].define(version: 2026_06_05_135229) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
+
+  create_table "adjustments", force: :cascade do |t|
+    t.bigint "cost_center_id", null: false
+    t.datetime "created_at", null: false
+    t.integer "kind", null: false
+    t.date "new_date"
+    t.decimal "new_value", precision: 15, scale: 2
+    t.text "note"
+    t.date "previous_date"
+    t.decimal "previous_value", precision: 15, scale: 2
+    t.datetime "updated_at", null: false
+    t.index ["cost_center_id"], name: "index_adjustments_on_cost_center_id"
+  end
 
   create_table "clients", force: :cascade do |t|
     t.datetime "created_at", null: false
@@ -25,6 +38,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_04_214925) do
 
   create_table "cost_centers", force: :cascade do |t|
     t.bigint "client_id", null: false
+    t.string "contract_number"
     t.string "coordinator"
     t.string "cr_code", null: false
     t.datetime "created_at", null: false
@@ -32,7 +46,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_04_214925) do
     t.date "end_date"
     t.text "object_text"
     t.decimal "participation", precision: 5, scale: 4, default: "1.0"
+    t.date "start_date"
     t.datetime "updated_at", null: false
+    t.decimal "value", precision: 15, scale: 2, default: "0.0"
     t.index ["client_id"], name: "index_cost_centers_on_client_id"
     t.index ["coordinator"], name: "idx_cost_centers_coordinator_trgm", opclass: :gin_trgm_ops, using: :gin
     t.index ["cr_code"], name: "idx_cost_centers_cr_code_trgm", opclass: :gin_trgm_ops, using: :gin
@@ -43,12 +59,9 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_04_214925) do
   create_table "forecast_entries", force: :cascade do |t|
     t.bigint "cost_center_id", null: false
     t.datetime "created_at", null: false
-    t.decimal "forecasted_pct_ufc", precision: 15, scale: 2, default: "0.0"
     t.decimal "forecasted_total", precision: 15, scale: 2, default: "0.0"
     t.string "month_year", null: false
     t.text "observations"
-    t.decimal "realized_pct_ufc", precision: 15, scale: 2, default: "0.0"
-    t.decimal "realized_total", precision: 15, scale: 2, default: "0.0"
     t.datetime "updated_at", null: false
     t.index ["cost_center_id", "month_year"], name: "index_forecast_entries_on_cost_center_id_and_month_year", unique: true
     t.index ["cost_center_id"], name: "index_forecast_entries_on_cost_center_id"
@@ -60,6 +73,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_04_214925) do
     t.bigint "cost_center_id", null: false
     t.datetime "created_at", null: false
     t.date "issued_at", null: false
+    t.integer "kind", default: 0, null: false
     t.string "number", null: false
     t.text "observations"
     t.datetime "updated_at", null: false
@@ -68,6 +82,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_04_214925) do
     t.index ["cost_center_id"], name: "index_invoices_on_cost_center_id"
     t.index ["issued_at", "cost_center_id"], name: "index_invoices_on_issued_at_and_cost_center_id"
     t.index ["issued_at"], name: "index_invoices_on_issued_at"
+    t.index ["kind"], name: "index_invoices_on_kind"
     t.index ["number"], name: "idx_invoices_number_trgm", opclass: :gin_trgm_ops, using: :gin
   end
 
@@ -126,6 +141,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_04_214925) do
     t.index ["whodunnit"], name: "index_versions_on_whodunnit"
   end
 
+  add_foreign_key "adjustments", "cost_centers"
   add_foreign_key "cost_centers", "clients"
   add_foreign_key "forecast_entries", "cost_centers"
   add_foreign_key "invoices", "cost_centers"
