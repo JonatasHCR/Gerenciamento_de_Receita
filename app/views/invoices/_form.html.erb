@@ -18,12 +18,12 @@
 
   <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
     <div>
-      <%= f.label :number, "Número da NF", class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <%= f.label :number, req("Número da NF"), class: "block text-sm font-medium text-gray-700 mb-1" %>
       <%= f.text_field :number, class: "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-red-500" %>
     </div>
 
     <div>
-      <%= f.label :cost_center_id, "Centro de Custo", class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <%= f.label :cost_center_id, req("Centro de Custo"), class: "block text-sm font-medium text-gray-700 mb-1" %>
       <%= f.collection_select :cost_center_id,
             CostCenter.order(:cr_code), :id, ->(cc) { "#{cc.cr_code} — #{cc.description}" },
             { include_blank: "Selecione..." },
@@ -32,28 +32,33 @@
     </div>
 
     <div>
-      <%= f.label :client_name, "Cliente", class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <%= f.label :client_name, req("Cliente"), class: "block text-sm font-medium text-gray-700 mb-1" %>
       <%= f.text_field :client_name,
             class: "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-red-500",
             data: { "cost-center-client-target": "clientName" } %>
     </div>
 
     <div>
-      <%= f.label :issued_at, "Data de Emissão", class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <%= f.label :issued_at, req("Data de Emissão"), class: "block text-sm font-medium text-gray-700 mb-1" %>
       <%= f.date_field :issued_at, class: "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-red-500" %>
     </div>
 
     <div>
-      <%= f.label :value, "Valor (R$)", class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <%= f.label :value, req("Valor (R$)"), class: "block text-sm font-medium text-gray-700 mb-1" %>
       <%= f.number_field :value, step: "0.01", min: "0",
             class: "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-red-500" %>
     </div>
 
     <div class="sm:col-span-2">
-      <label class="flex items-center gap-2 text-sm text-gray-700">
-        <%= f.check_box :kind, { checked: invoice.reajuste? }, "reajuste", "principal" %>
-        É <strong>reajuste</strong>? (deixe desmarcado para faturamento <strong>principal</strong> — só o principal conta no saldo do contrato)
-      </label>
+      <span class="block text-sm font-medium text-gray-700 mb-1">Tipo de faturamento</span>
+      <div class="flex gap-6">
+        <label class="flex items-center gap-2 text-sm text-gray-700">
+          <%= f.radio_button :kind, "principal", class: "text-red-600 focus:ring-red-500" %> Principal
+        </label>
+        <label class="flex items-center gap-2 text-sm text-gray-700">
+          <%= f.radio_button :kind, "reajuste", class: "text-red-600 focus:ring-red-500" %> Reajuste
+        </label>
+      </div>
     </div>
 
     <div class="sm:col-span-2">

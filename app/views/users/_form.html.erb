@@ -13,19 +13,19 @@
 
   <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
     <div class="sm:col-span-2">
-      <%= f.label :name, "Nome completo", class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <%= f.label :name, req("Nome completo"), class: "block text-sm font-medium text-gray-700 mb-1" %>
       <%= f.text_field :name, class: "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-red-500" %>
     </div>
 
     <div>
-      <%= f.label :email, "E-mail", class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <%= f.label :email, req("E-mail"), class: "block text-sm font-medium text-gray-700 mb-1" %>
       <%= f.email_field :email, autocomplete: "off",
             class: "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-red-500" %>
     </div>
 
     <% if current_user.admin? %>
       <div>
-        <%= f.label :role, "Perfil de acesso", class: "block text-sm font-medium text-gray-700 mb-1" %>
+        <%= f.label :role, req("Perfil de acesso"), class: "block text-sm font-medium text-gray-700 mb-1" %>
         <%= f.select :role,
               User.roles.keys.map { |r| [r.capitalize, r] },
               {},
@@ -34,7 +34,7 @@
     <% end %>
 
     <div>
-      <%= f.label :password, is_profile ? "Nova senha" : "Senha", class: "block text-sm font-medium text-gray-700 mb-1" %>
+      <%= f.label :password, (user.persisted? ? (is_profile ? "Nova senha" : "Senha") : req("Senha")), class: "block text-sm font-medium text-gray-700 mb-1" %>
       <%= f.password_field :password, autocomplete: "new-password",
             class: "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-red-500" %>
       <% if user.persisted? %>
