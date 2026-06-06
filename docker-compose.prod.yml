@@ -35,7 +35,9 @@ services:
     volumes:
       - ./scripts/backup_loop.sh:/backup_loop.sh:ro
       - ./backups:/backups
-    entrypoint: ["bash", "/backup_loop.sh"]
+    # Tolerante a CRLF: normaliza \r antes de rodar (checkout Windows quebraria com
+    # "$'\r': command not found"). O mount é :ro, então roda uma cópia limpa.
+    entrypoint: ["bash", "-c", "exec bash <(sed 's/\\r$//' /backup_loop.sh)"]
 
   web:
     build:
