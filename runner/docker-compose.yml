@@ -1,7 +1,7 @@
-# act_runner do Gitea — rodar na máquina do runner (separada do Gitea).
+# act_runner do Gitea — roda na MESMA máquina do Gitea/produção (servidor único).
 #
 # Passos:
-#   1. Copie esta pasta `runner/` para a máquina do runner.
+#   1. (no servidor) entre nesta pasta `runner/`.
 #   2. Crie um runner.env (veja runner.env.example) com a URL do Gitea e o TOKEN.
 #   3. docker compose up -d   (a 1ª subida registra o runner no Gitea)
 #

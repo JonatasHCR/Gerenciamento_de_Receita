@@ -18,8 +18,12 @@ container:
   # (ex.: postgres) e com o Docker do host (socket montado no compose).
   network: ""
   privileged: false
-  # Monta o socket do Docker dentro do container do job — necessário para o
-  # job de DEPLOY (docker build/push). Para CI de testes não é obrigatório.
-  options: "-v /var/run/docker.sock:/var/run/docker.sock"
+  # Monta no container do job:
+  #   • o socket do Docker do host — para o deploy buildar/subir a imagem;
+  #   • a pasta de deploy NO MESMO CAMINHO do host — para que os bind-mounts do
+  #     docker-compose.prod.yml (./backups, ./scripts/...) e o build context
+  #     resolvam corretamente no daemon do host (deve ser == DEPLOY_PATH).
+  options: "-v /var/run/docker.sock:/var/run/docker.sock -v /opt/gerencimento_receita:/opt/gerencimento_receita"
   valid_volumes:
     - /var/run/docker.sock
+    - /opt/gerencimento_receita

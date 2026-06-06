@@ -1,5 +1,6 @@
 # Compose de PRODUÇÃO (fica no servidor, em DEPLOY_PATH).
-# A imagem é puxada do registry pelo workflow de deploy.
+# A imagem é CONSTRUÍDA localmente no próprio servidor (sem registry) — o repo é
+# clonado/atualizado em DEPLOY_PATH e o deploy faz `up -d --build`.
 # Variáveis sensíveis vêm de um arquivo .env (não versionado) ao lado deste.
 services:
   db:
@@ -37,7 +38,10 @@ services:
     entrypoint: ["bash", "/backup_loop.sh"]
 
   web:
-    image: ${WEB_IMAGE:?defina WEB_IMAGE no .env (registry/owner/repo:latest)}
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: gerencimento_receita:latest   # tag local da imagem construída
     restart: always
     depends_on:
       db:
