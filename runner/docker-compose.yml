@@ -12,11 +12,6 @@ services:
     restart: always
     env_file: runner.env
     environment:
-      # URL do Gitea acessível a partir desta máquina (LAN).
-      GITEA_INSTANCE_URL: ${GITEA_INSTANCE_URL:-http://10.0.0.114:3000}
-      # Token de registro (Admin/Org/Repo → Actions → Runners → Create new runner).
-      GITEA_RUNNER_REGISTRATION_TOKEN: ${GITEA_RUNNER_REGISTRATION_TOKEN:?defina no runner.env}
-      GITEA_RUNNER_NAME: ${GITEA_RUNNER_NAME:-runner-ci}
       CONFIG_FILE: /config.yaml
     volumes:
       - ./config.yaml:/config.yaml:ro
