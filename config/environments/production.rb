@@ -24,14 +24,13 @@ Rails.application.configure do
   # Store uploaded files on the local file system (see config/storage.yml for options).
   config.active_storage.service = :local
 
-  # Assume all access to the app is happening through a SSL-terminating reverse proxy.
-  # config.assume_ssl = true
+  # SSL é opt-in via ENV: em deploy interno (LAN, sem TLS) deixe desligado;
+  # atrás de um proxy/HTTPS, defina ASSUME_SSL=1 e/ou FORCE_SSL=1.
+  config.assume_ssl = ENV["ASSUME_SSL"].present?
+  config.force_ssl  = ENV["FORCE_SSL"].present?
 
-  # Force all access to the app over SSL, use Strict-Transport-Security, and use secure cookies.
-  # config.force_ssl = true
-
-  # Skip http-to-https redirect for the default health check endpoint.
-  # config.ssl_options = { redirect: { exclude: ->(request) { request.path == "/up" } } }
+  # Não redireciona http→https no health check (mantém /up acessível ao Docker).
+  config.ssl_options = { redirect: { exclude: ->(request) { request.path == "/up" } } }
 
   # Log to STDOUT with the current request id as a default log tag.
   config.log_tags = [ :request_id ]

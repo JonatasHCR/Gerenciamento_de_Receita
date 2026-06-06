@@ -21,6 +21,10 @@ module CostCenters
 
       styles = build_styles(wb)
 
+      # Faturado PRINCIPAL por CC numa única query (evita N+1 de saldo/%).
+      principal = Invoice.principal.where(cost_center_id: @cost_centers.map(&:id))
+                         .group(:cost_center_id).sum(:value)
+
       wb.add_worksheet(name: "Compromissos") do |sheet|
         sheet.add_row ["RELAÇÃO DE COMPROMISSOS - MOD"], style: styles[:title]
         sheet.merge_cells("A1:I1")
@@ -29,13 +33,16 @@ module CostCenters
 
         total_valor = total_saldo = 0
         @cost_centers.each do |cc|
-          total_valor += cc.value.to_f
-          total_saldo += cc.saldo.to_f
+          valor = cc.value.to_f
+          saldo = valor - (principal[cc.id] || 0).to_f
+          pct   = valor.zero? ? 0 : (saldo / valor * 100).round(2)
+          total_valor += valor
+          total_saldo += saldo
           sheet.add_row(
             [
               cc.contract_number, cc.client&.name, cc.cr_code, cc.object_text,
               fmt_date(cc.start_date), fmt_date(cc.end_date),
-              cc.value.to_f, cc.percent_to_execute.to_f, cc.saldo.to_f
+              valor, pct, saldo
             ],
             style: [styles[:cell], styles[:cell], styles[:cell], styles[:cell],
                     styles[:date], styles[:date], styles[:money], styles[:pct], styles[:money]],
