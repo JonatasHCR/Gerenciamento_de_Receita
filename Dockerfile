@@ -35,12 +35,12 @@ ENV RAILS_ENV="production" \
 # Throw-away build stage to reduce size of final image
 FROM base AS build
 
-# Install packages needed to build gems (compile-time only — stays in build stage)
+# Install packages needed to build gems (compile-time only — stays in build stage).
+# libvips NÃO entra aqui: já está na base (runtime) e ruby-vips usa FFI (sem headers).
 RUN apt-get update -qq && \
     apt-get install --no-install-recommends -y \
       build-essential \
       git \
-      libvips \
       libpq-dev \
       libargon2-dev \
       libyaml-dev \

@@ -1,5 +1,12 @@
 # See https://git-scm.com/docs/gitattributes for more about git attribute files.
 
+# Scripts executados em Linux/containers DEVEM usar LF, mesmo com core.autocrlf=true
+# no Windows. Sem isso o shebang vira "ruby\r" e o build Docker quebra
+# (env: 'ruby\r': No such file or directory).
+bin/*        text eol=lf
+*.sh         text eol=lf
+Dockerfile*  text eol=lf
+
 # Mark the database schema as having been generated.
 db/schema.rb linguist-generated
 

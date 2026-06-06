@@ -53,6 +53,13 @@ services:
       RAILS_MAX_THREADS: ${RAILS_MAX_THREADS:-5}
     ports:
       - "${WEB_PORT:-80}:80"   # Thruster expõe 80 dentro do container
+    healthcheck:
+      # curl já vem na imagem de produção; /up é o endpoint de saúde do Rails.
+      test: ["CMD-SHELL", "curl -fsS http://localhost:80/up || exit 1"]
+      interval: 30s
+      timeout: 5s
+      retries: 3
+      start_period: 40s   # tempo de boot (db:prepare + Thruster) antes de contar falhas
 
 volumes:
   postgres_data:
