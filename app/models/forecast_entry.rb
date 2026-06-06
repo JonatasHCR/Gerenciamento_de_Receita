@@ -31,7 +31,12 @@ class ForecastEntry < ApplicationRecord
   # Realizado = soma das NFs emitidas no mês para o centro de custo.
   # NÃO é armazenado: é calculado sob demanda a partir do faturamento, então
   # está sempre correto e não exige sincronização por callback.
+  # Pode ser pré-carregado em lote (realized_total=) para evitar N+1 em listas.
+  attr_writer :realized_total
+
   def realized_total
+    return @realized_total if instance_variable_defined?(:@realized_total)
+
     range = period_range
     return 0 unless range && cost_center_id
 
