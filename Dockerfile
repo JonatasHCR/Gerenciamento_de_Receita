@@ -59,6 +59,11 @@ RUN bundle install && \
 # Copy application code
 COPY . .
 
+# Defesa contra CRLF: se o código foi check-out no Windows (core.autocrlf), os
+# scripts em bin/ chegam com \r e o shebang vira "ruby\r" — quebrando o build
+# (env: 'ruby\r': No such file or directory). Normaliza para LF e garante +x.
+RUN sed -i 's/\r$//' bin/* && chmod +x bin/*
+
 # Precompile bootsnap code for faster boot times.
 # -j 1 disable parallel compilation to avoid a QEMU bug: https://github.com/rails/bootsnap/issues/495
 RUN bundle exec bootsnap precompile -j 1 app/ lib/
