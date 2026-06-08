@@ -35,4 +35,11 @@ Rails.application.routes.draw do
 
   get "audit_logs", to: "audit_logs#index"
   get "audit_logs/:id", to: "audit_logs#show", as: :audit_log
+
+  # Administração / Manutenção (somente admin)
+  get    "maintenance",          to: "maintenance#index"
+  post   "maintenance/backup",   to: "maintenance#backup",   as: :maintenance_backup
+  delete "maintenance/cleanup",  to: "maintenance#cleanup",  as: :maintenance_cleanup
+  post   "maintenance/restore",  to: "maintenance#restore",  as: :maintenance_restore
+  get    "maintenance/download", to: "maintenance#download", as: :maintenance_download
 end

@@ -1,0 +1,134 @@
+<% content_for :title, "Administração" %>
+
+<div class="max-w-3xl space-y-6">
+  <div>
+    <h1 class="text-xl font-semibold text-gray-900">Administração / Manutenção</h1>
+    <p class="mt-1 text-sm text-gray-500">
+      Ações restritas ao administrador. Tudo aqui é registrado na
+      <%= link_to "auditoria", audit_logs_path, class: "text-red-700 underline" %>.
+    </p>
+  </div>
+
+  <%# ── Backup (sem confirmação de senha, auditado) ─────────────────────────── %>
+  <div class="bg-white rounded-xl border border-gray-200 p-5">
+    <h2 class="font-semibold text-gray-800 text-sm">Backup do banco de dados</h2>
+    <p class="mt-1 text-sm text-gray-500">
+      Gera um dump (<code>pg_dump -Fc</code>) na pasta <code>backups/</code>, junto com os
+      backups automáticos. Não apaga nada.
+    </p>
+    <%= form_with url: maintenance_backup_path, method: :post, class: "mt-3" do %>
+      <%= submit_tag "Fazer backup agora",
+            class: "rounded-lg bg-green-600 px-5 py-2 text-sm font-medium text-white hover:bg-green-700 cursor-pointer" %>
+    <% end %>
+  </div>
+
+  <%# ── Backups recentes ─────────────────────────────────────────────────────── %>
+  <div class="bg-white rounded-xl border border-gray-200 p-5">
+    <h2 class="font-semibold text-gray-800 text-sm">Backups recentes</h2>
+    <% if @backups.empty? %>
+      <p class="mt-2 text-sm text-gray-400">Nenhum backup encontrado em <code>backups/</code>.</p>
+    <% else %>
+      <div class="mt-3 rounded-lg border border-gray-200 overflow-hidden">
+        <table class="w-full text-sm">
+          <thead class="bg-gray-50 text-gray-500 text-xs">
+            <tr>
+              <th class="px-4 py-2 text-left">Arquivo</th>
+              <th class="px-4 py-2 text-left">Data/Hora</th>
+              <th class="px-4 py-2 text-right">Tamanho</th>
+              <th class="px-4 py-2 text-right">Ações</th>
+            </tr>
+          </thead>
+          <tbody class="divide-y divide-gray-100">
+            <% @backups.each do |b| %>
+              <tr>
+                <td class="px-4 py-2 font-mono text-xs text-gray-700"><%= b[:name] %></td>
+                <td class="px-4 py-2 text-gray-600"><%= b[:mtime].strftime("%d/%m/%Y %H:%M") %></td>
+                <td class="px-4 py-2 text-right text-gray-600"><%= number_to_human_size(b[:size]) %></td>
+                <td class="px-4 py-2 text-right">
+                  <%= link_to "Baixar", maintenance_download_path(file: b[:name]),
+                        class: "text-red-700 hover:underline" %>
+                </td>
+              </tr>
+            <% end %>
+          </tbody>
+        </table>
+      </div>
+    <% end %>
+  </div>
+
+  <%# ── Restauração (senha + confirmação) ───────────────────────────────────── %>
+  <div class="bg-white rounded-xl border border-amber-300 p-5">
+    <h2 class="font-semibold text-amber-700 text-sm">Restaurar backup</h2>
+    <p class="mt-1 text-sm text-gray-500">
+      <strong>Substitui todos os dados atuais</strong> pelos do backup escolhido
+      (<code>pg_restore --clean</code>). Irreversível. Exige sua senha.
+    </p>
+    <% if @backups.any? %>
+      <%= form_with url: maintenance_restore_path, method: :post,
+            data: { turbo_confirm: "ATENÇÃO: restaurar vai SUBSTITUIR todos os dados atuais pelos do backup. Esta ação não pode ser desfeita. Confirmar?" },
+            class: "mt-3 space-y-2" do %>
+        <%= select_tag :file,
+              options_for_select(@backups.map { |b| ["#{b[:name]} — #{b[:mtime].strftime('%d/%m/%Y %H:%M')}", b[:name]] }),
+              class: "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500" %>
+        <div class="flex flex-col sm:flex-row gap-2 sm:items-center">
+          <%= password_field_tag :password, nil, autocomplete: "off", placeholder: "Senha do admin", required: true,
+                class: "flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500" %>
+          <%= submit_tag "Restaurar",
+                class: "rounded-lg bg-amber-600 px-5 py-2 text-sm font-medium text-white hover:bg-amber-700 cursor-pointer whitespace-nowrap" %>
+        </div>
+      <% end %>
+    <% else %>
+      <p class="mt-2 text-sm text-gray-400">Faça um backup primeiro para poder restaurar.</p>
+    <% end %>
+  </div>
+
+  <%# ── Limpezas (alvo + filtros + senha + confirmação) ─────────────────────── %>
+  <div class="bg-white rounded-xl border border-red-200 p-5">
+    <h2 class="font-semibold text-red-700 text-sm">Limpeza de dados</h2>
+    <p class="mt-1 text-sm text-gray-500">
+      Apaga registros de forma <strong>irreversível</strong>. Use os filtros para restringir
+      (deixe em branco = geral). Usuários e auditoria nunca são apagados.
+      <strong>Faça um backup antes.</strong>
+    </p>
+
+    <%= form_with url: maintenance_cleanup_path, method: :delete,
+          data: { turbo_confirm: "ATENÇÃO: isso apaga dados definitivamente e não pode ser desfeito. Confirmar a limpeza?" },
+          class: "mt-3 space-y-3" do %>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <div>
+          <label class="block text-xs text-gray-500 mb-1">O que limpar</label>
+          <%= select_tag :target,
+                options_for_select(@targets.map { |k, v| [v, k] }),
+                class: "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-red-500" %>
+        </div>
+        <div>
+          <label class="block text-xs text-gray-500 mb-1">Cliente (opcional)</label>
+          <%= select_tag :client_id,
+                options_for_select([["Todos", ""]] + @clients.map { |c| [c.name, c.id] }),
+                class: "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-red-500" %>
+        </div>
+        <div>
+          <label class="block text-xs text-gray-500 mb-1">Centro de Custo (opcional)</label>
+          <%= select_tag :cost_center_id,
+                options_for_select([["Todos", ""]] + @cost_centers.map { |cc| ["#{cc.cr_code} — #{cc.description}", cc.id] }),
+                class: "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-red-500" %>
+        </div>
+        <div>
+          <label class="block text-xs text-gray-500 mb-1">Mês/Ano (opcional)</label>
+          <%= month_field_tag :month, nil,
+                class: "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-red-500" %>
+        </div>
+      </div>
+      <p class="text-xs text-gray-400">
+        Mês/Ano aplica-se a Previsões (mês), Faturamento (emissão) e Recebimentos (baixa).
+        Não se aplica a Centros de Custo nem a "Tudo".
+      </p>
+      <div class="flex flex-col sm:flex-row gap-2 sm:items-center">
+        <%= password_field_tag :password, nil, autocomplete: "off", placeholder: "Senha do admin", required: true,
+              class: "flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-red-500" %>
+        <%= submit_tag "Limpar",
+              class: "rounded-lg bg-red-700 px-5 py-2 text-sm font-medium text-white hover:bg-red-800 cursor-pointer whitespace-nowrap" %>
+      </div>
+    <% end %>
+  </div>
+</div>
