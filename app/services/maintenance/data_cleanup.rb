@@ -12,7 +12,8 @@ module Maintenance
       "recebimentos" => "Recebimentos",
       "faturamento"  => "Faturamento (NFs e recebimentos)",
       "centros"      => "Centros de Custo (e tudo vinculado)",
-      "tudo"         => "Tudo (todos os dados de negócio)"
+      "tudo"         => "Tudo (dados de negócio — NÃO inclui auditoria)",
+      "auditoria"    => "Auditoria (histórico de alterações)"
     }.freeze
 
     def self.label(target) = TARGETS[target.to_s]
@@ -49,6 +50,7 @@ module Maintenance
       when "faturamento"  then clean_invoices
       when "centros"      then clean_cost_centers
       when "tudo"         then wipe_all # ignora filtros
+      when "auditoria"    then { versions: PaperTrail::Version.delete_all } # histórico de auditoria
       end
     end
 

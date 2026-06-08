@@ -43,17 +43,17 @@ module CostCenters
           saldo = valor - fat                          # saldo total do contrato
           pct   = valor.zero? ? 0 : (saldo / valor * 100).round(2)
           part  = cc.participation.to_f                # 0..1
+          saldo_ufc = saldo * part                     # saldo respeitando a participação
 
           total_valor += valor
-          total_saldo += saldo
+          total_saldo += saldo_ufc                     # coluna "Saldo" usa o valor UFC
 
           # % UFC é SEMPRE preenchido. As demais colunas (valor/faturamento/saldo
-          # totais e valores UFC) só fazem sentido com participação < 100%;
+          # totais e valor UFC) só fazem sentido com participação < 100%;
           # para 100% ficam em branco (já constam em Valor/Saldo).
           pct_ufc = (part * 100).round(2)
           if part < 1.0
             valor_ufc = valor * part
-            saldo_ufc = saldo * part
             ufc_cols  = [pct_ufc, valor, fat, saldo, valor_ufc, saldo_ufc]
             t_valor_tot += valor; t_fat += fat; t_saldo_tot += saldo
             t_valor_ufc += valor_ufc; t_saldo_ufc += saldo_ufc
@@ -65,7 +65,7 @@ module CostCenters
             [
               cc.contract_number, cc.client&.name, cc.cr_code, cc.object_text,
               fmt_date(cc.start_date), fmt_date(cc.end_date),
-              valor, pct, saldo, *ufc_cols
+              valor, pct, saldo_ufc, *ufc_cols
             ],
             style: [styles[:cell], styles[:cell], styles[:cell], styles[:cell],
                     styles[:date], styles[:date], styles[:money], styles[:pct], styles[:money],
