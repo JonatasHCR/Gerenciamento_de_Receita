@@ -76,11 +76,16 @@ module Reports
         }
       end
 
-      grouped.map do |client, rows|
+      # Omite CCs com TODOS os valores exibidos zerados; e clientes cujos CCs
+      # ficaram todos zerados. Se algum CC tiver valor, o cliente aparece.
+      grouped.filter_map do |client, rows|
+        visible = rows.reject { |r| display_all_zero?(r) }
+        next if visible.empty?
+
         {
           client:       client,
-          cost_centers: rows,
-          totals:       sum_rows(rows)
+          cost_centers: visible,
+          totals:       sum_rows(visible)
         }
       end
     end
@@ -89,6 +94,13 @@ module Reports
 
     def connection
       ActiveRecord::Base.connection
+    end
+
+    # Colunas monetárias exibidas no relatório (PDF). "Tudo zerado" = todas elas 0.
+    DISPLAY_KEYS = %i[previsto inv_cur open_pre rec_cur open].freeze
+
+    def display_all_zero?(row)
+      DISPLAY_KEYS.all? { |k| row[k].to_d.zero? }
     end
 
     def sum_rows(rows)
