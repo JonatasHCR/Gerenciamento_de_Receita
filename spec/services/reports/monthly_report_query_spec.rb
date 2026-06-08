@@ -93,4 +93,22 @@ RSpec.describe Reports::MonthlyReportQuery do
     group = result.find { |g| g[:client] == client_a }
     expect(group[:cost_centers].first[:inv_cur]).to eq(30_000)
   end
+
+  it "omite o cliente quando TODOS os seus CCs estão zerados" do
+    client_c = create(:client, name: "CCC Cliente")
+    cc_c     = create(:cost_center, client: client_c, cr_code: "3001")
+    create(:forecast_entry, cost_center: cc_c, month_year: month_year, forecasted_total: 0)
+
+    expect(result.map { |g| g[:client] }).not_to include(client_c)
+  end
+
+  it "mantém o cliente e omite só o CC zerado quando há outro com valor" do
+    cc_a2 = create(:cost_center, client: client_a, cr_code: "1002")
+    create(:forecast_entry, cost_center: cc_a2, month_year: month_year, forecasted_total: 0)
+
+    group = result.find { |g| g[:client] == client_a }
+    crs   = group[:cost_centers].map { |r| r[:cc].cr_code }
+    expect(crs).to include("1001")
+    expect(crs).not_to include("1002")
+  end
 end
