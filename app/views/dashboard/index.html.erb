@@ -222,14 +222,7 @@
                 <span class="font-semibold text-gray-800 text-sm"><%= client&.name || "Sem Cliente" %></span>
                 <span class="text-xs text-gray-400">(<%= entries.count %> CC<%= entries.count > 1 ? "s" : "" %>)</span>
               </div>
-              <div class="flex flex-wrap gap-4 text-xs text-gray-500 mt-1 sm:mt-0">
-                <span>Fat. Mês: <strong class="text-gray-800"><%= brl(cl_inv_cur) %></strong></span>
-                <span>Rec. Mês: <strong class="text-green-700"><%= brl(cl_rec_cur) %></strong></span>
-                <span>Aberto Ant.: <strong class="text-orange-600"><%= brl(cl_open_pre) %></strong></span>
-                <span>Total Fat.: <strong class="text-gray-800"><%= brl(cl_inv_total) %></strong></span>
-                <span>Total Rec.: <strong class="text-green-700"><%= brl(cl_rec_total) %></strong></span>
-                <span>Em Aberto: <strong class="<%= cl_open > 0 ? 'text-red-600' : 'text-green-600' %>"><%= brl(cl_open) %></strong></span>
-              </div>
+              <%# Totais do cliente aparecem só no subtotal (rodapé da tabela), não aqui. %>
             </div>
 
             <%# Tabela de CCs %>

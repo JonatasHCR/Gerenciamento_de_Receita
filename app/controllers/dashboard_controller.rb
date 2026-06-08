@@ -121,11 +121,22 @@ class DashboardController < ApplicationController
           open:      inv_total - rec_until  # em aberto até o fim do mês
         }
       end
+
+      # Oculta CCs totalmente recebidos (faturado == recebido → nada em aberto;
+      # inclui o caso tudo zerado); e clientes que ficaram sem nenhum CC pendente.
+      @billing_by_client.each_value do |entries|
+        entries.reject! { |e| e[:inv_total] == e[:rec_total] }
+      end
+      @billing_by_client.reject! { |_client, entries| entries.empty? }
     end
 
     @forecast_summary = Forecasts::SummaryQuery.new(
       month_year: pt_month_year(@month),
       scope: policy_scope(ForecastEntry)
     ).call
+    # Oculta clientes cujas previsões e realizados estão todos zerados.
+    @forecast_summary = @forecast_summary.reject do |_client, entries|
+      entries.sum(&:forecasted_total).zero? && entries.sum(&:realized_total).zero?
+    end
   end
 end
