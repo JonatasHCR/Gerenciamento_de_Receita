@@ -39,6 +39,22 @@ RSpec.describe CostCenter, type: :model do
     end
   end
 
+  describe "valores UFC (participação aplicada)" do
+    it "100% → saldo/valor UFC iguais ao total" do
+      cc = create(:cost_center, value: 100_000, participation: 1.0)
+      create(:invoice, cost_center: cc, value: 30_000, kind: :principal)
+      expect(cc.value_ufc).to eq(100_000)
+      expect(cc.saldo_ufc).to eq(70_000)
+    end
+
+    it "50% → metade do valor e do saldo" do
+      cc = create(:cost_center, value: 100_000, participation: 0.5)
+      create(:invoice, cost_center: cc, value: 30_000, kind: :principal)
+      expect(cc.value_ufc).to eq(50_000)
+      expect(cc.saldo_ufc).to eq(35_000) # (100k - 30k) * 0,5
+    end
+  end
+
   describe "coordinator_list (múltiplos coordenadores/gestores)" do
     it "divide a string por '/' em uma lista" do
       cc = build(:cost_center, coordinator: "Ana / Dr. João / Beltrano")

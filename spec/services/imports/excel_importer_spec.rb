@@ -91,6 +91,19 @@ RSpec.describe Imports::ExcelImporter do
     expect(fe.observations).to eq("obs da previsão")
   end
 
+  it "importa previsões de meses diferentes cada uma no seu mês (não colapsa)" do
+    create(:cost_center, cr_code: "CR-1")
+    path = build_xlsx(forecast_rows: [
+      ["CR-1", "06/2026", 100_000, ""],
+      ["CR-1", "07/2026", 110_000, ""]
+    ])
+    described_class.new(path).call
+
+    cc = CostCenter.find_by(cr_code: "CR-1")
+    expect(ForecastEntry.find_by(cost_center: cc, month_year: "JUNHO/2026")&.forecasted_total).to eq(100_000)
+    expect(ForecastEntry.find_by(cost_center: cc, month_year: "JULHO/2026")&.forecasted_total).to eq(110_000)
+  end
+
   it "cria previsão quando o mês/ano vem como Date (célula formatada como data)" do
     create(:cost_center, cr_code: "CR-1")
     # Excel formatado como data → roo entrega um Date; deve cair em JUNHO/2025.
