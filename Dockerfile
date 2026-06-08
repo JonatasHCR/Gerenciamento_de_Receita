@@ -15,13 +15,15 @@ FROM docker.io/library/ruby:$RUBY_VERSION-slim AS base
 WORKDIR /rails
 
 # Install base packages (runtime libs only — no build tools)
+# postgresql-client: necessário para o botão "Fazer backup" (pg_dump) da tela de Administração.
 RUN apt-get update -qq && \
     apt-get install --no-install-recommends -y \
       curl \
       libjemalloc2 \
       libvips \
       libpq5 \
-      libargon2-1 && \
+      libargon2-1 \
+      postgresql-client && \
     ln -s /usr/lib/$(uname -m)-linux-gnu/libjemalloc.so.2 /usr/local/lib/libjemalloc.so && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 

@@ -22,6 +22,29 @@
         915
       ],
       "note": "Falso-positivo revisado: :role só é incluído no permit quando current_user.admin? (ver user_params). Não-admin nunca consegue alterar o próprio papel; create é admin-only via Pundit. Sem escalonamento de privilégio."
+    },
+    {
+      "warning_type": "File Access",
+      "warning_code": 16,
+      "fingerprint": "c16dd24b91561e625bd1ef8e284504e7f5993f574e0aa1eb94cab826e2a93f95",
+      "check_name": "SendFile",
+      "message": "Parameter value used in file name",
+      "file": "app/controllers/maintenance_controller.rb",
+      "line": 51,
+      "link": "https://brakemanscanner.org/docs/warning_types/file_access/",
+      "code": "send_file(Maintenance::BackupList.resolve(params[:file]), :type => \"application/octet-stream\", :filename => File.basename(Maintenance::BackupList.resolve(params[:file])))",
+      "render_path": null,
+      "location": {
+        "type": "method",
+        "class": "MaintenanceController",
+        "method": "download"
+      },
+      "user_input": "params[:file]",
+      "confidence": "Weak",
+      "cwe_id": [
+        22
+      ],
+      "note": "Falso-positivo revisado: BackupList.resolve usa File.basename (remove path traversal), exige extensão .dump e valida File.file? dentro de backups/. Traversal coberto por spec (maintenance_spec). Ação admin-only via Pundit."
     }
   ],
   "brakeman_version": "8.0.4"

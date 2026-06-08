@@ -56,6 +56,9 @@ services:
       # Admin inicial criado pelo seed (db:prepare no 1º boot). Sem senha = sem admin.
       ADMIN_EMAIL: ${ADMIN_EMAIL:-}
       ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+    volumes:
+      # Backups manuais (botão da tela de Administração) caem na MESMA pasta do sidecar.
+      - ./backups:/rails/backups
     ports:
       - "${WEB_PORT:-80}:80"   # Thruster expõe 80 dentro do container
     healthcheck:
