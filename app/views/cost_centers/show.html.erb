@@ -42,9 +42,13 @@
           <p class="text-xs text-gray-500 uppercase tracking-wide">Valor do Contrato</p>
           <p class="mt-1 font-medium text-gray-900"><%= brl(@cost_center.value || 0) %></p>
         </div>
+        <% parcial = (@cost_center.participation || 0) < 1 %>
         <div>
-          <p class="text-xs text-gray-500 uppercase tracking-wide">Saldo (valor − faturado principal)</p>
-          <p class="mt-1 font-bold <%= @cost_center.saldo < 0 ? 'text-red-600' : 'text-green-600' %>"><%= brl(@cost_center.saldo) %></p>
+          <p class="text-xs text-gray-500 uppercase tracking-wide"><%= parcial ? "Saldo UFC (participação aplicada)" : "Saldo" %></p>
+          <p class="mt-1 font-bold <%= @cost_center.saldo_ufc < 0 ? 'text-red-600' : 'text-green-600' %>"><%= brl(@cost_center.saldo_ufc) %></p>
+          <% if parcial %>
+            <p class="text-xs text-gray-400">Saldo total do contrato: <%= brl(@cost_center.saldo) %></p>
+          <% end %>
         </div>
         <% if @cost_center.object_text.present? %>
           <div class="col-span-2">

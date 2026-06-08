@@ -38,13 +38,14 @@
                   <th class="px-4 py-3 text-left">Início</th>
                   <th class="px-4 py-3 text-left">Fim</th>
                   <th class="px-4 py-3 text-right">Valor</th>
-                  <th class="px-4 py-3 text-right">Saldo</th>
+                  <th class="px-4 py-3 text-right">Saldo UFC</th>
                   <th class="px-4 py-3"></th>
                 </tr>
               </thead>
               <tbody class="divide-y divide-gray-100">
                 <% @cost_centers.each do |cc| %>
-                  <% saldo = (cc.value || 0) - (@principal_totals[cc.id] || 0) %>
+                  <% saldo_total = (cc.value || 0) - (@principal_totals[cc.id] || 0) %>
+                  <% saldo = saldo_total * (cc.participation || 0) %>
                   <tr class="hover:bg-gray-50">
                     <td class="px-4 py-3 font-mono font-medium text-gray-900"><%= cc.cr_code %></td>
                     <td class="px-4 py-3 text-gray-600"><%= cc.contract_number %></td>
