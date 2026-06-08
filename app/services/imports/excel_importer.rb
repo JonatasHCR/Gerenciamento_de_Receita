@@ -251,23 +251,41 @@ module Imports
       nil
     end
 
-    # Aceita "06/2025" (numérico) ou "JUNHO/2025" (escrito) → "JUNHO/2025".
+    # Converte o valor da célula em "JUNHO/2025". Aceita:
+    #   - Date/Time (o roo converte células formatadas como data) → usa mês/ano
+    #   - "2025-06" / "2025-06-01" (ISO, mês ou data completa)
+    #   - "06/2025" / "6-2025" (MM/AAAA) e "06/25" (MM/AA → 20AA)
+    #   - "JUNHO/2025" e "JUNHO DE 2025" (escrito)
     def parse_month_year(value)
+      # Célula que o roo entregou como data (ou datetime) — caso mais comum de bug.
+      if value.respond_to?(:month) && value.respond_to?(:year)
+        return month_year_str(value.month, value.year)
+      end
+
       s = value.to_s.strip
       return nil if s.blank?
 
-      if (m = s.match(%r{\A(\d{1,2})[/\-.](\d{4})\z}))
-        month = m[1].to_i
-        return nil unless (1..12).cover?(month)
-        return "#{PT_MONTHS[month - 1]}/#{m[2]}"
+      if (m = s.match(%r{\A(\d{4})[/\-.](\d{1,2})(?:[/\-.]\d{1,2})?\z})) # ISO: AAAA-MM[-DD]
+        return month_year_str(m[2].to_i, m[1].to_i)
+      end
+      if (m = s.match(%r{\A(\d{1,2})[/\-.](\d{4})\z}))                   # MM/AAAA
+        return month_year_str(m[1].to_i, m[2].to_i)
+      end
+      if (m = s.match(%r{\A(\d{1,2})[/\-.](\d{2})\z}))                   # MM/AA
+        return month_year_str(m[1].to_i, 2000 + m[2].to_i)
       end
 
       up = norm(s)
-      if (m = up.match(%r{\A([A-Z]+)[/\-](\d{4})\z}))
+      if (m = up.match(%r{\A([A-Z]+)(?:[ /\-]+|[ ]+DE[ ]+)(\d{4})\z}))   # JUNHO/2025, JUNHO DE 2025
         i = PT_MONTHS.map { |mo| norm(mo) }.index(m[1])
-        return "#{PT_MONTHS[i]}/#{m[2]}" if i
+        return month_year_str(i + 1, m[2].to_i) if i
       end
       nil
+    end
+
+    def month_year_str(month, year)
+      return nil unless (1..12).cover?(month) && year.to_i.positive?
+      "#{PT_MONTHS[month - 1]}/#{year}"
     end
 
     # ── Upsert / persistência ───────────────────────────────────────────────────

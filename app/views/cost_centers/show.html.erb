@@ -76,9 +76,14 @@
         <%= form_with url: cost_center_adjustments_path(@cost_center), method: :post, class: "space-y-2" do |f| %>
           <%= hidden_field_tag "adjustment[kind]", "valor" %>
           <label class="block text-xs text-gray-500">Reajuste de Valor (R$)</label>
-          <div class="flex gap-2">
-            <%= number_field_tag "adjustment[new_value]", nil, step: "0.01", min: "0", placeholder: "Novo valor",
-                  class: "flex-1 rounded-lg border border-gray-300 px-3 py-1.5 text-sm" %>
+          <div class="flex gap-2" data-controller="currency">
+            <div class="relative flex-1">
+              <span class="absolute inset-y-0 left-3 flex items-center text-sm text-gray-500 pointer-events-none">R$</span>
+              <input type="text" inputmode="numeric" placeholder="Novo valor" autocomplete="off"
+                     class="w-full rounded-lg border border-gray-300 pl-9 pr-3 py-1.5 text-sm"
+                     data-currency-target="display" data-action="input->currency#format">
+              <%= hidden_field_tag "adjustment[new_value]", nil, data: { "currency-target": "input" } %>
+            </div>
             <%= f.submit "Aplicar", class: "rounded-lg bg-red-700 px-3 py-1.5 text-sm text-white hover:bg-red-800 cursor-pointer" %>
           </div>
         <% end %>
