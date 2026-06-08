@@ -122,10 +122,14 @@ class DashboardController < ApplicationController
         }
       end
 
-      # Oculta CCs totalmente recebidos (faturado == recebido → nada em aberto;
-      # inclui o caso tudo zerado); e clientes que ficaram sem nenhum CC pendente.
+      # Oculta CC só quando NÃO há nada a mostrar: total faturado == total recebido
+      # (nada em aberto) E sem movimento no mês (faturado/recebido) E sem aberto
+      # anterior. Assim, CC com movimento no mês aparece mesmo que tenha sido quitado.
       @billing_by_client.each_value do |entries|
-        entries.reject! { |e| e[:inv_total] == e[:rec_total] }
+        entries.reject! do |e|
+          e[:inv_total] == e[:rec_total] &&
+            e[:inv_cur].zero? && e[:rec_cur].zero? && e[:open_pre].zero?
+        end
       end
       @billing_by_client.reject! { |_client, entries| entries.empty? }
     end
