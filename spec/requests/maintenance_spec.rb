@@ -68,6 +68,14 @@ RSpec.describe "Maintenance", type: :request do
       expect(Invoice.where(cost_center_id: cc1.id)).to be_empty
     end
 
+    it "limpa a auditoria (sobra só o registro da própria limpeza)" do
+      PaperTrail::Version.insert!({ item_type: "X", item_id: 1, event: "create", created_at: Time.current })
+      delete maintenance_cleanup_path, params: { target: "auditoria", password: "admin123456" }
+
+      expect(PaperTrail::Version.where(item_type: "X")).to be_empty
+      expect(PaperTrail::Version.where(item_type: "Manutenção", event: "limpeza").count).to eq(1)
+    end
+
     it "filtra previsão por mês/ano" do
       cc = create(:cost_center)
       create(:forecast_entry, cost_center: cc, month_year: "JUNHO/2026")
