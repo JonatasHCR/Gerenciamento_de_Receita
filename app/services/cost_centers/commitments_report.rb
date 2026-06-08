@@ -8,7 +8,9 @@ module CostCenters
     HEADERS = [
       "Nº DO CONTRATO", "CONTRATANTE", "CENTRO DE RESULTADO",
       "OBJETO OU NATUREZA DOS SERVIÇOS", "INÍCIO", "FIM",
-      "VALOR", "% A EXECUTAR", "SALDO"
+      "VALOR", "% A EXECUTAR", "SALDO",
+      "% UFC", "VALOR DO CONTRATO (TOTAL)", "FATURAMENTO GERAL",
+      "SALDO DO CONTRATO (TOTAL)", "VALOR CONTRATO UFC", "SALDO UFC"
     ].freeze
 
     def initialize(cost_centers)
@@ -27,37 +29,63 @@ module CostCenters
 
       wb.add_worksheet(name: "Compromissos") do |sheet|
         sheet.add_row ["RELAÇÃO DE COMPROMISSOS - MOD"], style: styles[:title]
-        sheet.merge_cells("A1:I1")
+        sheet.merge_cells("A1:O1")
         sheet.add_row [], style: styles[:title] # linha em branco
         sheet.add_row HEADERS, style: styles[:header]
 
         total_valor = total_saldo = 0
+        # Bloco UFC (colunas após o Saldo): só soma os CCs com participação < 100%,
+        # pois para 100% essas colunas ficam em branco.
+        t_valor_tot = t_fat = t_saldo_tot = t_valor_ufc = t_saldo_ufc = 0
         @cost_centers.each do |cc|
           valor = cc.value.to_f
-          saldo = valor - (principal[cc.id] || 0).to_f
+          fat   = (principal[cc.id] || 0).to_f         # faturamento geral (principal)
+          saldo = valor - fat                          # saldo total do contrato
           pct   = valor.zero? ? 0 : (saldo / valor * 100).round(2)
+          part  = cc.participation.to_f                # 0..1
+
           total_valor += valor
           total_saldo += saldo
+
+          # % UFC é SEMPRE preenchido. As demais colunas (valor/faturamento/saldo
+          # totais e valores UFC) só fazem sentido com participação < 100%;
+          # para 100% ficam em branco (já constam em Valor/Saldo).
+          pct_ufc = (part * 100).round(2)
+          if part < 1.0
+            valor_ufc = valor * part
+            saldo_ufc = saldo * part
+            ufc_cols  = [pct_ufc, valor, fat, saldo, valor_ufc, saldo_ufc]
+            t_valor_tot += valor; t_fat += fat; t_saldo_tot += saldo
+            t_valor_ufc += valor_ufc; t_saldo_ufc += saldo_ufc
+          else
+            ufc_cols = [pct_ufc, nil, nil, nil, nil, nil]
+          end
+
           sheet.add_row(
             [
               cc.contract_number, cc.client&.name, cc.cr_code, cc.object_text,
               fmt_date(cc.start_date), fmt_date(cc.end_date),
-              valor, pct, saldo
+              valor, pct, saldo, *ufc_cols
             ],
             style: [styles[:cell], styles[:cell], styles[:cell], styles[:cell],
-                    styles[:date], styles[:date], styles[:money], styles[:pct], styles[:money]],
-            types: [:string, :string, :string, :string, :string, :string, :float, :float, :float]
+                    styles[:date], styles[:date], styles[:money], styles[:pct], styles[:money],
+                    styles[:pct], styles[:money], styles[:money], styles[:money], styles[:money], styles[:money]],
+            types: [:string, :string, :string, :string, :string, :string,
+                    :float, :float, :float, :float, :float, :float, :float, :float, :float]
           )
         end
 
-        # Linha de total
+        # Linha de total (bloco UFC soma só os CCs com participação < 100%)
         sheet.add_row(
-          ["", "", "", "", "", "TOTAL", total_valor, nil, total_saldo],
+          ["", "", "", "", "", "TOTAL", total_valor, nil, total_saldo,
+           nil, t_valor_tot, t_fat, t_saldo_tot, t_valor_ufc, t_saldo_ufc],
           style: [styles[:cell], styles[:cell], styles[:cell], styles[:cell], styles[:cell],
-                  styles[:total_label], styles[:total_money], styles[:cell], styles[:total_money]]
+                  styles[:total_label], styles[:total_money], styles[:cell], styles[:total_money],
+                  styles[:cell], styles[:total_money], styles[:total_money], styles[:total_money],
+                  styles[:total_money], styles[:total_money]]
         )
 
-        sheet.column_widths 16, 30, 18, 42, 12, 12, 16, 13, 16
+        sheet.column_widths 16, 30, 18, 42, 12, 12, 16, 13, 16, 10, 22, 18, 22, 20, 16
       end
 
       package.to_stream.read

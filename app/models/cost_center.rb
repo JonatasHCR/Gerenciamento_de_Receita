@@ -52,9 +52,19 @@ class CostCenter < ApplicationRecord
     invoices.principal.sum(:value)
   end
 
-  # Saldo = valor do contrato − faturado principal.
+  # Saldo (TOTAL do contrato) = valor do contrato − faturado principal.
   def saldo
     (value || 0) - principal_invoiced
+  end
+
+  # Valor do contrato que cabe à UFC (aplica a participação).
+  def value_ufc
+    (value || 0) * (participation || 0)
+  end
+
+  # Saldo que cabe à UFC (aplica a participação). 100% → saldo total.
+  def saldo_ufc
+    saldo * (participation || 0)
   end
 
   # % a executar = saldo em relação ao valor do contrato (0 a 100, 2 casas).

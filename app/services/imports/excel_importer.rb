@@ -229,7 +229,12 @@ module Imports
 
     # Match: igualdade exata (para siglas curtas como "CR") ou inclusão (palavras).
     def match?(header, synonym)
-      header == synonym || (synonym.length > 3 && header.include?(synonym))
+      return false if header.blank? || synonym.blank?
+      return true if header == synonym
+      return true if synonym.length > 3 && header.include?(synonym)
+      # Casa quando o sinônimo é um TOKEN do cabeçalho — ex.: "MES" e "ANO" em
+      # "MÊS/ANO" (sem isso, sinônimos curtos como MES/ANO/CR/NF não casavam).
+      header.split(/[^[:alnum:]]+/).include?(synonym)
     end
 
     def each_data_row(sheet, header_row)
