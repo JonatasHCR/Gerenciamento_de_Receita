@@ -49,6 +49,35 @@ RSpec.describe "Dashboard", type: :request do
       end
     end
 
+    context "oculta zerados nos quadros" do
+      let(:user) { create(:user, :admin) }
+      before { sign_in user }
+
+      it "não exibe cliente cujos dados estão todos zerados, mas exibe os com valor" do
+        zero_cli = create(:client, name: "ZERADO LTDA")
+        zero_cc  = create(:cost_center, client: zero_cli, cr_code: "9000")
+        create(:forecast_entry, cost_center: zero_cc, month_year: "JUNHO/2026", forecasted_total: 0)
+
+        com_valor = create(:client, name: "COM VALOR SA")
+        cc_v      = create(:cost_center, client: com_valor, cr_code: "9001")
+        create(:invoice, cost_center: cc_v, issued_at: Date.new(2026, 6, 10), value: 12_345)
+
+        get root_path, params: { month: "2026-06" }
+        expect(response.body).not_to include("ZERADO LTDA")
+        expect(response.body).to include("COM VALOR SA")
+      end
+
+      it "oculta CC totalmente recebido (faturado == recebido) no Faturado × Recebido" do
+        cli = create(:client, name: "QUITADO SA")
+        cc  = create(:cost_center, client: cli, cr_code: "9100")
+        inv = create(:invoice, cost_center: cc, issued_at: Date.new(2026, 6, 5), value: 8_000)
+        create(:receipt, invoice: inv, payment_date: Date.new(2026, 6, 20), value: 8_000)
+
+        get root_path, params: { month: "2026-06" }
+        expect(response.body).not_to include("QUITADO SA")
+      end
+    end
+
     context "with month filter" do
       let(:user) { create(:user, :admin) }
       before { sign_in user }
