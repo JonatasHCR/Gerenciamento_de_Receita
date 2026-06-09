@@ -18,12 +18,14 @@ container:
   # (ex.: postgres) e com o Docker do host (socket montado no compose).
   network: ""
   privileged: false
-  # Monta no container do job:
-  #   • o socket do Docker do host — para o deploy buildar/subir a imagem;
-  #   • a pasta de deploy NO MESMO CAMINHO do host — para que os bind-mounts do
-  #     docker-compose.prod.yml (./backups, ./scripts/...) e o build context
-  #     resolvam corretamente no daemon do host (deve ser == DEPLOY_PATH).
-  options: "-v /var/run/docker.sock:/var/run/docker.sock -v /opt/gerencimento_receita:/opt/gerencimento_receita"
+  # Monta no container do job a pasta de deploy NO MESMO CAMINHO do host — para que
+  # os bind-mounts do docker-compose.prod.yml (./backups, ./scripts/...) e o build
+  # context resolvam corretamente no daemon do host (deve ser == DEPLOY_PATH).
+  #
+  # NÃO montar o /var/run/docker.sock aqui: o act_runner já injeta o socket do Docker
+  # do host em cada container de job automaticamente. Montá-lo de novo causa
+  # "Error response from daemon: Duplicate mount point: /var/run/docker.sock".
+  options: "-v /opt/gerencimento_receita:/opt/gerencimento_receita"
   valid_volumes:
     - /var/run/docker.sock
     - /opt/gerencimento_receita
