@@ -62,7 +62,9 @@
     <% elsif @version.object.present? %>
       <div class="border-t border-gray-100 pt-4">
         <p class="text-xs text-gray-500 uppercase tracking-wide mb-2">Estado Anterior</p>
-        <pre class="rounded-lg bg-gray-50 border border-gray-200 p-4 text-xs text-gray-700 overflow-auto"><%= JSON.pretty_generate(@version.object.is_a?(String) ? JSON.parse(@version.object) : @version.object) rescue @version.object.inspect %></pre>
+        <% obj = @version.object.is_a?(String) ? (JSON.parse(@version.object) rescue {}) : (@version.object || {}) %>
+        <% obj = obj.except("encrypted_password") if obj.is_a?(Hash) %>
+        <pre class="rounded-lg bg-gray-50 border border-gray-200 p-4 text-xs text-gray-700 overflow-auto"><%= JSON.pretty_generate(obj) rescue obj.inspect %></pre>
       </div>
     <% end %>
   </div>

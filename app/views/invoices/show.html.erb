@@ -4,6 +4,7 @@
   <div class="flex items-center gap-3">
     <%= link_to "← Voltar", invoices_path, class: "text-sm text-gray-500 hover:text-gray-700" %>
     <h1 class="text-xl font-semibold text-gray-900">NF <%= @invoice.number %></h1>
+    <%= invoice_kind_badge(@invoice) %>
     <span id="invoice_status_badge_<%= @invoice.id %>"><%= payment_status_badge(@invoice) %></span>
   </div>
 

@@ -33,9 +33,9 @@
 
   <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
     <div class="px-5 py-4 border-b border-gray-100">
-      <h2 class="font-semibold text-gray-700 text-sm">Centros de Custo (<%= @client.cost_centers.count %>)</h2>
+      <h2 class="font-semibold text-gray-700 text-sm">Centros de Custo (<%= @cost_centers.count %>)</h2>
     </div>
-    <% if @client.cost_centers.any? %>
+    <% if @cost_centers.any? %>
       <table class="w-full text-sm">
         <thead class="bg-gray-50 text-xs text-gray-500 uppercase tracking-wide">
           <tr>
@@ -46,7 +46,7 @@
           </tr>
         </thead>
         <tbody class="divide-y divide-gray-100">
-          <% @client.cost_centers.order(:cr_code).each do |cc| %>
+          <% @cost_centers.each do |cc| %>
             <tr class="hover:bg-gray-50">
               <td class="px-4 py-3 font-mono text-gray-700"><%= cc.cr_code %></td>
               <td class="px-4 py-3 text-gray-600"><%= cc.description %></td>
