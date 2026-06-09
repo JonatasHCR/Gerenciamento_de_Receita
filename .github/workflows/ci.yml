@@ -1,5 +1,8 @@
 name: CI
 
+# Testes/segurança. Roda no GitHub Actions (nuvem) e também no Gitea (que lê
+# .github/workflows), servindo de gate antes do deploy. O deploy fica em
+# .gitea/workflows/deploy.yml (o GitHub ignora .gitea/).
 on:
   push:
     branches: [main, master]
