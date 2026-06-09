@@ -1,29 +1,31 @@
 # Be sure to restart your server when you modify this file.
+# Política de segurança de conteúdo (CSP) — defesa em profundidade contra XSS/injeção.
+# Ver: https://guides.rubyonrails.org/security.html#content-security-policy-header
+#
+# Notas de compatibilidade deste app:
+# - script-src usa NONCE (sem unsafe-inline). O importmap (javascript_importmap_tags)
+#   e o Chartkick (que lê content_security_policy_nonce) aplicam o nonce sozinhos;
+#   o único <script> inline (anti-FOUC do tema, no layout) recebe o nonce manualmente.
+# - style-src permite unsafe-inline: o Tailwind é carregado como arquivo (:self), mas o
+#   Chartkick injeta um <div style="..."> de "Loading" e atributos style inline não são
+#   cobertos por nonce. Sem isso, esses estilos quebrariam.
+# - connect-src inclui :self (suficiente; charts/JS não chamam domínios externos).
+Rails.application.configure do
+  config.content_security_policy do |policy|
+    policy.default_src     :self
+    policy.font_src        :self, :data
+    policy.img_src         :self, :data
+    policy.object_src      :none
+    policy.script_src      :self
+    policy.style_src       :self, :unsafe_inline
+    policy.connect_src     :self
+    policy.base_uri        :self
+    policy.form_action     :self
+    policy.frame_ancestors :self
+  end
 
-# Define an application-wide content security policy.
-# See the Securing Rails Applications Guide for more information:
-# https://guides.rubyonrails.org/security.html#content-security-policy-header
-
-# Rails.application.configure do
-#   config.content_security_policy do |policy|
-#     policy.default_src :self, :https
-#     policy.font_src    :self, :https, :data
-#     policy.img_src     :self, :https, :data
-#     policy.object_src  :none
-#     policy.script_src  :self, :https
-#     policy.style_src   :self, :https
-#     # Specify URI for violation reports
-#     # policy.report_uri "/csp-violation-report-endpoint"
-#   end
-#
-#   # Generate session nonces for permitted importmap, inline scripts, and inline styles.
-#   config.content_security_policy_nonce_generator = ->(request) { request.session.id.to_s }
-#   config.content_security_policy_nonce_directives = %w(script-src style-src)
-#
-#   # Automatically add `nonce` to `javascript_tag`, `javascript_include_tag`, and `stylesheet_link_tag`
-#   # if the corresponding directives are specified in `content_security_policy_nonce_directives`.
-#   # config.content_security_policy_nonce_auto = true
-#
-#   # Report violations without enforcing the policy.
-#   # config.content_security_policy_report_only = true
-# end
+  # Nonce por sessão (estável dentro da sessão — compatível com cache de fragmento/Turbo).
+  config.content_security_policy_nonce_generator  = ->(request) { request.session.id.to_s }
+  # Aplica o nonce apenas a script-src (style-src continua usando unsafe-inline).
+  config.content_security_policy_nonce_directives = %w[script-src]
+end
