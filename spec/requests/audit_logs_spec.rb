@@ -81,4 +81,27 @@ RSpec.describe "AuditLogs", type: :request do
       expect(response).to redirect_to root_path
     end
   end
+
+  # ── Senha nunca vaza na auditoria ─────────────────────────────────────────
+  describe "password hash is never exposed" do
+    before { sign_in admin }
+
+    it "does not store encrypted_password in the user version (skip)" do
+      user = create(:user, :coordenador)
+      serialized = user.versions.last.attributes.to_s
+      expect(serialized).not_to include("encrypted_password")
+    end
+
+    it "does not render the password hash on the destroy detail page (object branch)" do
+      target = create(:user, :coordenador)
+      hash   = target.encrypted_password
+      target.destroy
+      version = PaperTrail::Version.where(item_type: "User", event: "destroy").last
+
+      get audit_log_path(version)
+      expect(response).to have_http_status(:ok)
+      expect(response.body).not_to include(hash)
+      expect(response.body).not_to include("encrypted_password")
+    end
+  end
 end

@@ -133,6 +133,15 @@ RSpec.describe "ForecastEntries", type: :request do
         patch forecast_entry_path(entry), params: { forecast_entry: { forecasted_total: 50_000 } }
         expect(response).to redirect_to forecast_entries_path
       end
+
+      it "cannot move the forecast to a cost center it does not own" do
+        UserCostCenter.create!(user: coordenador, cost_center: cost_center)
+        foreign_cc = create(:cost_center)
+        patch forecast_entry_path(entry), params: { forecast_entry: { cost_center_id: foreign_cc.id } }
+        expect(response).to redirect_to root_path
+        expect(flash[:alert]).to be_present
+        expect(entry.reload.cost_center_id).to eq(cost_center.id)
+      end
     end
   end
 

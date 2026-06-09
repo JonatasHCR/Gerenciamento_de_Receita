@@ -86,9 +86,25 @@ RSpec.describe "CostCenters", type: :request do
 
   # ── GET /cost_centers/:id ─────────────────────────────────────────────────
   describe "GET /cost_centers/:id" do
-    it "returns 200 for any authenticated role" do
-      [admin, financeiro, gestor, coordenador].each do |user|
+    it "returns 200 for admin, financeiro e gestor (veem todos)" do
+      [admin, financeiro, gestor].each do |user|
         sign_in user
+        get cost_center_path(cost_center)
+        expect(response).to have_http_status(:ok), "esperava 200 para #{user.role}"
+      end
+    end
+
+    context "coordenador" do
+      it "é bloqueado em CC que não é dele" do
+        sign_in coordenador
+        get cost_center_path(cost_center)
+        expect(response).to redirect_to root_path
+        expect(flash[:alert]).to be_present
+      end
+
+      it "vê o CC quando é o coordenador vinculado" do
+        UserCostCenter.create!(user: coordenador, cost_center: cost_center)
+        sign_in coordenador
         get cost_center_path(cost_center)
         expect(response).to have_http_status(:ok)
       end

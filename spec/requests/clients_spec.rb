@@ -46,6 +46,19 @@ RSpec.describe "Clients", type: :request do
       get client_path(client)
       expect(response).to have_http_status(:ok)
     end
+
+    it "não expõe ao coordenador os CCs do cliente que não são dele" do
+      meu_cc    = create(:cost_center, client: client, cr_code: "CR-MEU")
+      outro_cc  = create(:cost_center, client: client, cr_code: "CR-ALHEIO")
+      UserCostCenter.create!(user: coordenador, cost_center: meu_cc)
+
+      sign_in coordenador
+      get client_path(client)
+
+      expect(response.body).to include("CR-MEU")
+      expect(response.body).not_to include("CR-ALHEIO")
+      expect(response.body).not_to include(cost_center_path(outro_cc))
+    end
   end
 
   # ── POST /clients ─────────────────────────────────────────────────────────
