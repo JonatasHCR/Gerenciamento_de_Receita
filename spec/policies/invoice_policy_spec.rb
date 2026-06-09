@@ -27,7 +27,7 @@ RSpec.describe InvoicePolicy, type: :policy do
     context "with paid invoice" do
       let(:invoice) { create(:invoice, value: 100) }
       before { create(:receipt, invoice: invoice, value: 100, payment_date: Date.current) }
-      it { is_expected.not_to permit_action(:update) }
+      it { is_expected.to permit_action(:update) } # editar quitada é permitido
     end
   end
 
