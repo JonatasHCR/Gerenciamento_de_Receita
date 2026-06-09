@@ -12,11 +12,19 @@ class ImportsController < ApplicationController
       disposition: "attachment"
   end
 
+  ALLOWED_UPLOAD_EXTENSIONS = %w[.xlsx .xls].freeze
+  MAX_UPLOAD_BYTES = 10.megabytes
+
   def create
     authorize :import, :create?
     file = params[:file]
-    unless file
+    unless file.respond_to?(:original_filename)
       redirect_to new_import_path, alert: "Selecione um arquivo."
+      return
+    end
+
+    if (erro = upload_error(file))
+      redirect_to new_import_path, alert: erro
       return
     end
 
@@ -38,5 +46,21 @@ class ImportsController < ApplicationController
       @import_count = result.imported
       render :new, status: :unprocessable_entity
     end
+  end
+
+  private
+
+  # Valida a planilha enviada antes de processá-la: só aceita extensões de Excel e
+  # limita o tamanho (xlsx é um zip → evita zip-bomb/DoS). Retorna a mensagem de erro
+  # ou nil se estiver ok.
+  def upload_error(file)
+    ext = File.extname(file.original_filename.to_s).downcase
+    unless ALLOWED_UPLOAD_EXTENSIONS.include?(ext)
+      return "Formato inválido. Envie uma planilha Excel (.xlsx ou .xls)."
+    end
+    if file.size.to_i > MAX_UPLOAD_BYTES
+      return "Arquivo muito grande (máx. #{MAX_UPLOAD_BYTES / 1.megabyte} MB)."
+    end
+    nil
   end
 end
