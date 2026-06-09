@@ -45,14 +45,27 @@ module ApplicationHelper
     number_to_currency(value, unit: "R$ ", separator: ",", delimiter: ".", precision: 2)
   end
 
+  PAYMENT_STATUS_BADGE = {
+    paid:    { label: "Quitado",  dot: "bg-green-500",  classes: "bg-green-50 text-green-700 ring-green-600/20" },
+    partial: { label: "Parcial",  dot: "bg-yellow-500", classes: "bg-yellow-50 text-yellow-800 ring-yellow-600/30" },
+    unpaid:  { label: "Não pago", dot: "bg-red-500",    classes: "bg-red-50 text-red-700 ring-red-600/30" }
+  }.freeze
+
   def payment_status_badge(invoice)
-    case invoice.payment_status
-    when :paid
-      tag.span "Quitado", class: "px-2 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-700"
-    when :partial
-      tag.span "Parcial", class: "px-2 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-700"
+    cfg = PAYMENT_STATUS_BADGE[invoice.payment_status] || PAYMENT_STATUS_BADGE[:unpaid]
+    tag.span class: "inline-flex items-center gap-1.5 whitespace-nowrap rounded-full px-2.5 py-1 " \
+                    "text-xs font-medium ring-1 ring-inset #{cfg[:classes]}" do
+      concat tag.span(class: "h-1.5 w-1.5 rounded-full #{cfg[:dot]}")
+      concat cfg[:label]
+    end
+  end
+
+  # Badge do tipo da NF: principal x reajuste.
+  def invoice_kind_badge(invoice)
+    if invoice.reajuste?
+      tag.span "Reajuste", class: "px-2 py-0.5 rounded-full text-xs font-medium bg-orange-100 text-orange-700"
     else
-      tag.span "Não pago", class: "px-2 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-700"
+      tag.span "Principal", class: "px-2 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-700"
     end
   end
 
