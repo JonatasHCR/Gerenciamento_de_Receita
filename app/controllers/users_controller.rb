@@ -3,7 +3,7 @@ class UsersController < ApplicationController
 
   def index
     authorize User
-    @users = User.order(:name)
+    @users = policy_scope(User).order(:name)
   end
 
   def new

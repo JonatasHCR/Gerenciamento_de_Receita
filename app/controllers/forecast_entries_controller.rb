@@ -35,7 +35,11 @@ class ForecastEntriesController < ApplicationController
 
   def update
     authorize @entry
-    if @entry.update(entry_params)
+    @entry.assign_attributes(entry_params)
+    # Re-autoriza considerando o CC de destino: impede que um coordenador mova a
+    # previsão para um centro de custo que não é dele via troca de cost_center_id.
+    authorize @entry, :update? if @entry.cost_center_id_changed?
+    if @entry.save
       redirect_to forecast_entries_path, notice: "Previsão atualizada."
     else
       render :edit, status: :unprocessable_entity

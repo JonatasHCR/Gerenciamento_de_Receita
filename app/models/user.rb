@@ -2,7 +2,9 @@ class User < ApplicationRecord
   devise :database_authenticatable, :argon2,
          :validatable, :lockable, :timeoutable
 
-  has_paper_trail
+  # skip: o hash de senha (argon2) nunca é serializado nas versions — não vaza
+  # na auditoria nem fica armazenado no histórico.
+  has_paper_trail skip: [:encrypted_password]
 
   enum :role, { coordenador: 0, gestor: 1, financeiro: 2, admin: 3 }
 

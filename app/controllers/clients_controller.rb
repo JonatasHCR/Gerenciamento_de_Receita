@@ -8,6 +8,8 @@ class ClientsController < ApplicationController
 
   def show
     authorize @client
+    # Escopa os CCs do cliente pela policy: coordenador só vê os próprios.
+    @cost_centers = policy_scope(CostCenter).where(client_id: @client.id).order(:cr_code)
   end
 
   def new
