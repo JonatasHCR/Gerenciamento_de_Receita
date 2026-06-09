@@ -1,6 +1,11 @@
 class CostCenterPolicy < ApplicationPolicy
   def index?  = true
-  def show?   = true
+
+  # Coordenador só enxerga os CCs próprios (mesmo acessando /cost_centers/:id
+  # direto ou via página de um cliente). Gestor/financeiro/admin veem todos.
+  def show?
+    admin? || financeiro? || gestor? || (coordenador? && own_cost_center?)
+  end
 
   def create?
     admin? || financeiro? || gestor? || (coordenador? && own_cost_center?)
