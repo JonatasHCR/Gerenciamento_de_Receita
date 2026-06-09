@@ -66,7 +66,9 @@ docker compose exec web bin/rails db:prepare db:seed
 
 App em **http://localhost:3040**.
 
-**Credenciais de desenvolvimento (seed):**
+**Credenciais de desenvolvimento (seed):** o `db:seed` cria estes dados **apenas fora
+de produção** (admin + usuários e massa de dados fictícios). Em produção o seed é
+ignorado — o admin é criado pela task `admin:create` (ver seção Produção).
 
 | Email | Senha | Perfil |
 |---|---|---|
@@ -111,10 +113,29 @@ docker compose exec web bundle exec brakeman     # análise de segurança
 
 ## Produção e CI/CD
 
-- **Produção:** `docker-compose.prod.yml` + `.env` (modelo em `.env.production.example`).
+Cenário de **servidor único** (Gitea + runner + produção na mesma máquina) — a imagem
+é **construída localmente no servidor, sem registry**.
+
+- **Produção:** `docker-compose.prod.yml` (builda a imagem local) + `.env`
+  (modelo em `.env.production.example`). Fica em `/opt/gerencimento_receita` (um clone git).
 - **CI/CD (Gitea Actions):** `.gitea/workflows/` — `ci.yml` (testes + segurança a cada push)
-  e `deploy.yml` (build da imagem → push no registry → deploy via SSH com **backup,
-  migração, healthcheck e rollback automático**).
-- **Runner:** instruções e arquivos em `runner/` (act_runner).
+  e `deploy.yml` (na `main`/`master`: backup → `git reset` no commit → `up -d --build` →
+  migração → healthcheck `/up` → **rollback automático** para o commit anterior se falhar).
+- **Runner:** instruções e arquivos em `runner/` (act_runner). Único secret necessário:
+  `DEPLOY_PATH`.
+
+### Admin inicial (produção)
+
+O seed **não** cria admin em produção (e não carrega dados de demonstração). Após o
+primeiro deploy, crie o admin uma vez com a task dedicada, definindo `ADMIN_EMAIL` e
+`ADMIN_PASSWORD` (já presentes no `.env` de produção):
+
+```bash
+cd /opt/gerencimento_receita
+docker compose -f docker-compose.prod.yml exec web bin/rails admin:create
+```
+
+A task **cria** o admin se não existir ou **atualiza a senha** se já existir. Troque a
+senha no primeiro login.
 
 ---
