@@ -49,8 +49,9 @@ mkdir -p backups
 
 - O **CI** (testes + Brakeman + bundler-audit) roda em containers `ruby:3.3-slim` +
   service `postgres:16` — funciona com a config padrão.
-- O **deploy** faz `docker compose up -d --build` no host (sem registry). Por isso o
-  job monta o `docker.sock` **e** a pasta de deploy no mesmo caminho do host
-  (`config.yaml` → `container.options`). Garanta que o usuário do runner tem acesso ao
-  `/var/run/docker.sock`.
+- O **deploy** faz `docker compose up -d --build` no host (sem registry). O `docker.sock`
+  do host é injetado em cada container de job **automaticamente pelo act_runner** — NÃO
+  o monte de novo no `container.options` (causa `Duplicate mount point: /var/run/docker.sock`).
+  O `container.options` monta só a pasta de deploy no mesmo caminho do host. Garanta que o
+  usuário do runner tem acesso ao `/var/run/docker.sock`.
 - `data/` guarda o registro do runner (`.runner`) — não versionar.
