@@ -87,8 +87,13 @@ RSpec.describe "Imports", type: :request do
       end
 
       def upload
+        # O conteúdo é irrelevante (o ExcelImporter é stubbado); só precisa existir.
+        # Gerado aqui porque *.xlsx é gitignored e não vai pro checkout do CI.
+        fixture = Rails.root.join("spec/fixtures/files/sample.xlsx")
+        FileUtils.mkdir_p(fixture.dirname)
+        File.write(fixture, "stub") unless File.exist?(fixture)
         fixture_file_upload(
-          Rails.root.join("spec/fixtures/files/sample.xlsx"),
+          fixture,
           "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"
         )
       end
