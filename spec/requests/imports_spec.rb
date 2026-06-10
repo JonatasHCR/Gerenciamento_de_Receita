@@ -81,6 +81,26 @@ RSpec.describe "Imports", type: :request do
         expect(flash[:alert]).to be_present
       end
 
+      it "rejeita upload com extensão inválida (não .xlsx/.xls)" do
+        Tempfile.create(["nota", ".txt"]) do |tmp|
+          tmp.write("x"); tmp.rewind
+          post imports_path, params: { file: Rack::Test::UploadedFile.new(tmp.path, "text/plain") }
+        end
+        expect(response).to redirect_to new_import_path
+        expect(flash[:alert]).to include("Formato inválido")
+      end
+
+      it "rejeita upload acima do limite de tamanho" do
+        Tempfile.create(["grande", ".xlsx"]) do |tmp|
+          tmp.write("0" * (ImportsController::MAX_UPLOAD_BYTES + 1)); tmp.rewind
+          post imports_path, params: {
+            file: Rack::Test::UploadedFile.new(tmp.path, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+          }
+        end
+        expect(response).to redirect_to new_import_path
+        expect(flash[:alert]).to include("muito grande")
+      end
+
       def stub_importer(result)
         importer = instance_double(Imports::ExcelImporter, call: result)
         allow(Imports::ExcelImporter).to receive(:new).and_return(importer)
