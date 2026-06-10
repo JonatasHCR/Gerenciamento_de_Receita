@@ -11,7 +11,7 @@
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
     <%# Details %>
     <div class="lg:col-span-2 bg-white rounded-xl border border-gray-200 p-6 space-y-4">
-      <div class="grid grid-cols-2 gap-4 text-sm">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
         <div>
           <p class="text-xs text-gray-500 uppercase tracking-wide">Cliente</p>
           <p class="mt-1 font-medium text-gray-900"><%= @cost_center.client&.name %></p>
@@ -51,7 +51,7 @@
           <% end %>
         </div>
         <% if @cost_center.object_text.present? %>
-          <div class="col-span-2">
+          <div class="sm:col-span-2">
             <p class="text-xs text-gray-500 uppercase tracking-wide">Objeto</p>
             <p class="mt-1 text-gray-700 leading-relaxed"><%= @cost_center.object_text %></p>
           </div>
@@ -141,6 +141,7 @@
     </div>
     <% recent_invoices = @cost_center.invoices.ordered.limit(10) %>
     <% if recent_invoices.any? %>
+      <div class="overflow-x-auto">
       <table class="w-full text-sm">
         <thead class="bg-gray-50 text-xs text-gray-500 uppercase tracking-wide">
           <tr>
@@ -163,6 +164,7 @@
           <% end %>
         </tbody>
       </table>
+      </div>
     <% else %>
       <p class="py-8 text-center text-sm text-gray-400">Nenhuma nota fiscal para este CC.</p>
     <% end %>

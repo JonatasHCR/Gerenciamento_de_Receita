@@ -7,7 +7,7 @@
   </div>
 
   <div class="bg-white rounded-xl border border-gray-200 p-6 space-y-4 text-sm">
-    <div class="grid grid-cols-2 gap-4">
+    <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
       <div>
         <p class="text-xs text-gray-500 uppercase tracking-wide">Data/Hora</p>
         <p class="mt-1 font-medium text-gray-900"><%= @version.created_at.strftime("%d/%m/%Y às %H:%M:%S") %></p>
@@ -36,7 +36,7 @@
     <% if @version.object_changes.present? %>
       <div class="border-t border-gray-100 pt-4">
         <p class="text-xs text-gray-500 uppercase tracking-wide mb-3">Alterações</p>
-        <div class="rounded-lg border border-gray-200 overflow-hidden">
+        <div class="rounded-lg border border-gray-200 overflow-hidden overflow-x-auto">
           <table class="w-full text-xs">
             <thead class="bg-gray-50">
               <tr>

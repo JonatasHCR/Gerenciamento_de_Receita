@@ -11,6 +11,7 @@
 
   <div class="bg-white rounded-xl border border-gray-200 overflow-hidden">
     <% if @clients.any? %>
+      <div class="overflow-x-auto">
       <table class="w-full text-sm">
         <thead class="bg-gray-50 text-xs text-gray-500 uppercase tracking-wide">
           <tr>
@@ -36,6 +37,7 @@
           <% end %>
         </tbody>
       </table>
+      </div>
     <% else %>
       <p class="py-12 text-center text-sm text-gray-400">Nenhum cliente cadastrado.</p>
     <% end %>

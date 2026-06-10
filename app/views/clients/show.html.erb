@@ -36,6 +36,7 @@
       <h2 class="font-semibold text-gray-700 text-sm">Centros de Custo (<%= @cost_centers.count %>)</h2>
     </div>
     <% if @cost_centers.any? %>
+      <div class="overflow-x-auto">
       <table class="w-full text-sm">
         <thead class="bg-gray-50 text-xs text-gray-500 uppercase tracking-wide">
           <tr>
@@ -58,6 +59,7 @@
           <% end %>
         </tbody>
       </table>
+      </div>
     <% else %>
       <p class="py-8 text-center text-sm text-gray-400">Nenhum centro de custo associado.</p>
     <% end %>
