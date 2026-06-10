@@ -41,8 +41,8 @@
 
       <%= turbo_frame_tag "invoice_results", data: { "search-target": "frame" } do %>
         <% if @invoices&.any? %>
-          <div class="border border-gray-100 rounded-lg overflow-hidden">
-            <table class="w-full text-sm table-fixed">
+          <div class="border border-gray-100 rounded-lg overflow-hidden overflow-x-auto">
+            <table class="w-full text-sm">
               <thead class="bg-gray-50 text-xs text-gray-500 uppercase tracking-wide">
                 <tr>
                   <th class="px-3 py-2 text-left w-20">NF</th>

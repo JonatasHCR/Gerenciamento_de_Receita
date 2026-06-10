@@ -11,7 +11,7 @@
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
     <%# Invoice details %>
     <div class="lg:col-span-2 bg-white rounded-xl border border-gray-200 p-6 space-y-4">
-      <div class="grid grid-cols-2 gap-4 text-sm">
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-4 text-sm">
         <div>
           <p class="text-xs text-gray-500 uppercase tracking-wide">Centro de Custo</p>
           <p class="mt-1 font-medium text-gray-900">
@@ -43,7 +43,7 @@
           </p>
         </div>
         <% if @invoice.observations.present? %>
-          <div class="col-span-2">
+          <div class="sm:col-span-2">
             <p class="text-xs text-gray-500 uppercase tracking-wide">Observações</p>
             <p class="mt-1 text-gray-700"><%= @invoice.observations %></p>
           </div>
@@ -86,6 +86,7 @@
     </div>
 
     <%= turbo_frame_tag "receipts_#{@invoice.id}" do %>
+      <div class="overflow-x-auto">
       <table class="w-full text-sm">
         <thead class="bg-gray-50 text-xs text-gray-500 uppercase tracking-wide">
           <tr>
@@ -109,6 +110,7 @@
           <% end %>
         </tbody>
       </table>
+      </div>
     <% end %>
   </div>
 </div>

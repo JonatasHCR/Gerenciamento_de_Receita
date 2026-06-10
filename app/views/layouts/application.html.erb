@@ -199,7 +199,12 @@
               </svg>
             </button>
             <span class="font-bold text-red-700 text-sm">UFC Engenharia</span>
-            <div class="w-9 h-9"></div><%# spacer para centralizar o título %>
+            <button data-controller="theme"
+                    data-action="click->theme#toggle"
+                    title="Alternar tema"
+                    class="p-2 rounded-md text-gray-500 hover:text-gray-700 hover:bg-gray-100 transition-colors text-sm leading-none">
+              <span data-theme-target="icon">🌙</span>
+            </button>
           </div>
 
           <%# Flash + conteúdo %>

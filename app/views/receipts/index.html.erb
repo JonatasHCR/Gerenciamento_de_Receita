@@ -21,7 +21,7 @@
       <%= f.select :cost_center_id,
             policy_scope(CostCenter).order(:cr_code).map { |cc| ["#{cc.cr_code} — #{cc.description}", cc.id] },
             { include_blank: "Todos", selected: params[:cost_center_id] },
-            class: "rounded-lg border border-gray-300 px-3 py-1.5 text-sm" %>
+            class: "w-40 sm:w-56 max-w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm" %>
     </div>
     <div class="flex items-end gap-2">
       <%= f.submit "Filtrar", class: "rounded-lg bg-red-800 px-4 py-1.5 text-sm text-white hover:bg-red-900 cursor-pointer" %>

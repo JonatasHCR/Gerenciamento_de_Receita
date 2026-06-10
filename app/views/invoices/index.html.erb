@@ -15,7 +15,7 @@
   <%= form_with url: invoices_path, method: :get,
         data: { turbo_frame: "invoices_list", turbo_action: "advance", controller: "filter" },
         class: "bg-white rounded-xl border border-gray-200 p-4 flex flex-wrap gap-3 items-end" do |f| %>
-    <div class="flex-1 min-w-[200px]">
+    <div class="flex-1 min-w-[140px]">
       <%= f.label :q, "Buscar NF", class: "block text-xs text-gray-500 mb-1" %>
       <%= f.search_field :q, value: params[:q], placeholder: "Número da NF...",
             autocomplete: "off", data: { action: "input->filter#submit" },
@@ -31,7 +31,7 @@
       <%= f.select :cost_center_id,
             CostCenter.order(:cr_code).map { |cc| ["#{cc.cr_code} — #{cc.description}", cc.id] },
             { include_blank: "Todos", selected: params[:cost_center_id] },
-            class: "rounded-lg border border-gray-300 px-3 py-1.5 text-sm" %>
+            class: "w-40 sm:w-56 max-w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm" %>
     </div>
     <div>
       <%= f.label :status, "Situação", class: "block text-xs text-gray-500 mb-1" %>
