@@ -15,6 +15,7 @@ class UsersController < ApplicationController
     authorize User
     @user = User.new(user_params)
     if @user.save
+      apply_cost_center_ids(@user)
       redirect_to users_path, notice: "Usuário criado com sucesso."
     else
       render :new, status: :unprocessable_entity
@@ -28,6 +29,7 @@ class UsersController < ApplicationController
   def update
     authorize @user
     if @user.update(build_update_params)
+      apply_cost_center_ids(@user)
       redirect_to users_path, notice: "Usuário atualizado."
     else
       render :edit, status: :unprocessable_entity
@@ -75,5 +77,12 @@ class UsersController < ApplicationController
   def build_update_params
     p = user_params
     p[:password].blank? ? p.except(:password, :password_confirmation) : p
+  end
+
+  # Só admin gerencia vínculos, e só para coordenadores (demais papéis veem tudo).
+  def apply_cost_center_ids(user)
+    return unless current_user.admin? && user.coordenador?
+    return unless params[:user].key?(:cost_center_ids)
+    user.assign_coordinated_cost_centers(params[:user][:cost_center_ids])
   end
 end

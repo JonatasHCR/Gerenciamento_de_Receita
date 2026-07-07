@@ -8,6 +8,9 @@ class CostCenter < ApplicationRecord
   has_many :forecast_entries, dependent: :destroy
   has_many :adjustments, dependent: :destroy
 
+  # Deriva os vínculos (user_cost_centers) do campo texto `coordinator`.
+  after_save :sync_coordinator_links!, if: :saved_change_to_coordinator?
+
   validates :cr_code, presence: true, uniqueness: true
   validates :description, presence: true
   validates :participation, presence: true,
@@ -71,5 +74,20 @@ class CostCenter < ApplicationRecord
   def percent_to_execute
     return 0 if value.to_f.zero?
     (saldo / value * 100).round(2)
+  end
+
+  # Reconcilia user_cost_centers com os coordenadores (User de papel coordenador)
+  # nomeados no texto `coordinator`. Público para reuso no backfill.
+  def sync_coordinator_links!
+    names   = coordinator_list
+    matched = names.empty? ? User.none : User.coordenador.where(name: names)
+
+    matched.where.not(id: users.select(:id)).find_each do |u|
+      user_cost_centers.create!(user: u)
+    end
+
+    user_cost_centers.where(user: User.coordenador)
+                     .where.not(user_id: matched.pluck(:id))
+                     .destroy_all
   end
 end

@@ -37,6 +37,7 @@ class CostCentersController < ApplicationController
   def create
     authorize CostCenter
     @cost_center = CostCenter.new(cost_center_params)
+    @cost_center.coordinator_list = [current_user.name] if current_user.coordenador?
     if @cost_center.save
       redirect_to @cost_center, notice: "Centro de custo criado."
     else
