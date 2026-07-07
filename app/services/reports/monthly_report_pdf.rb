@@ -17,15 +17,18 @@ module Reports
     GREEN      = "15803D".freeze
     MUTED      = "6B7280".freeze
 
-    COLUMNS = [
-      "CR", "Part. UFC", "Descrição", "Previsto no Mês", "Faturado no Mês",
-      "Em Aberto Mês Ant.", "Recebido no Mês", "Faturas em Aberto"
-    ].freeze
-
-    def initialize(report_data:, month_label:, generated_by: nil)
+    def initialize(report_data:, period_label:, ranged: false, generated_by: nil)
       @data         = report_data
-      @month_label  = month_label
+      @month_label  = period_label
+      @ranged       = ranged
       @generated_by = generated_by
+    end
+
+    def columns
+      suffix = @ranged ? "no Período" : "no Mês"
+      ["CR", "Part. UFC", "Descrição", "Previsto #{suffix}", "Faturado #{suffix}",
+       @ranged ? "Em Aberto Anterior" : "Em Aberto Mês Ant.",
+       "Recebido #{suffix}", "Faturas em Aberto"]
     end
 
     def render
@@ -70,7 +73,7 @@ module Reports
       @pdf.fill_color "000000"
       @pdf.move_down 4
 
-      table_data = [COLUMNS]
+      table_data = [columns]
 
       rows.each do |r|
         table_data << [

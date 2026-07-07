@@ -29,8 +29,11 @@ module Imports
 
     PT_MONTHS = ForecastEntry::PT_MONTHS
 
-    def initialize(file_path)
+    # only: array de abas a importar (:cost_centers, :forecasts, :invoices, :receipts).
+    # nil = todas (importação geral).
+    def initialize(file_path, only: nil)
       @file_path = file_path
+      @only      = only
       @errors    = []
       @created   = 0
       @updated   = 0
@@ -38,10 +41,10 @@ module Imports
 
     def call
       workbook = Roo::Spreadsheet.open(@file_path.to_s)
-      import_cost_centers(workbook)
-      import_forecasts(workbook)
-      import_invoices(workbook)
-      import_receipts(workbook)
+      import_cost_centers(workbook) if include?(:cost_centers)
+      import_forecasts(workbook)    if include?(:forecasts)
+      import_invoices(workbook)     if include?(:invoices)
+      import_receipts(workbook)     if include?(:receipts)
       Result.new(created: @created, updated: @updated, errors: @errors, fatal_error: nil)
     rescue => e
       Result.new(created: @created, updated: @updated, errors: @errors,
@@ -49,6 +52,10 @@ module Imports
     end
 
     private
+
+    def include?(key)
+      @only.nil? || @only.include?(key)
+    end
 
     # ── CADASTRO (CR, Part, Descrição, Cliente, Objeto, Data Final, Coordenador) ──
     def import_cost_centers(wb)

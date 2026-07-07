@@ -16,19 +16,18 @@ module Reports
   #     ...
   #   ]
   class MonthlyReportQuery
-    def initialize(month:, month_year:, scope: CostCenter.all)
-      @month      = month.beginning_of_month
-      @month_end  = month.end_of_month
-      @month_year = month_year
-      @scope      = scope
+    def initialize(period_start:, period_end:, scope: CostCenter.all)
+      @period_start = period_start
+      @period_end   = period_end
+      @scope        = scope
     end
 
     def call
       data = Hash.new { |h, k| h[k] = {} }
-      q_start = connection.quote(@month)
-      q_end   = connection.quote(@month_end)
+      q_start = connection.quote(@period_start)
+      q_end   = connection.quote(@period_end)
 
-      ForecastEntry.where(month_year: @month_year)
+      ForecastEntry.where(month_year: month_year_labels)
                    .group(:cost_center_id).sum(:forecasted_total)
                    .each { |id, v| data[id][:previsto] = v }
 
@@ -91,6 +90,17 @@ module Reports
     end
 
     private
+
+    # Rótulos "MÊS/AAAA" de cada mês do intervalo (previsto é acumulado no período).
+    def month_year_labels
+      labels = []
+      cursor = @period_start.beginning_of_month
+      while cursor <= @period_end
+        labels << ForecastEntry.month_year_for(cursor)
+        cursor = cursor.next_month
+      end
+      labels
+    end
 
     def connection
       ActiveRecord::Base.connection

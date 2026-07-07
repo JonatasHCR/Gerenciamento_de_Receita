@@ -8,19 +8,42 @@ module Imports
   class TemplateGenerator
     PT_MONTHS = %w[JANEIRO FEVEREIRO MARÇO ABRIL MAIO JUNHO JULHO AGOSTO SETEMBRO OUTUBRO NOVEMBRO DEZEMBRO].freeze
 
+    SHEETS = %i[cost_centers forecasts invoices receipts users].freeze
+
+    # only: abas a incluir (subconjunto de SHEETS). nil = todas.
+    def initialize(only: nil)
+      @only = only
+    end
+
     def call
       package = Axlsx::Package.new
       wb = package.workbook
 
-      add_cost_centers_sheet(wb)
-      add_forecasts_sheet(wb)
-      add_invoices_sheet(wb)
-      add_receipts_sheet(wb)
+      add_cost_centers_sheet(wb) if include?(:cost_centers)
+      add_forecasts_sheet(wb)    if include?(:forecasts)
+      add_invoices_sheet(wb)     if include?(:invoices)
+      add_receipts_sheet(wb)     if include?(:receipts)
+      add_users_sheet(wb)        if include?(:users)
 
       package.to_stream.read
     end
 
     private
+
+    def include?(key)
+      @only.nil? || @only.include?(key)
+    end
+
+    # Usuários (só admin importa). Papel: coordenador/gestor/financeiro/admin.
+    def add_users_sheet(wb)
+      wb.add_worksheet(name: "USUARIOS") do |sheet|
+        sheet.add_row ["USUARIOS"]
+        sheet.add_row []
+        sheet.add_row []
+        sheet.add_row ["NOME", "EMAIL", "PAPEL", "SENHA"]
+        sheet.add_row ["Carlos Almeida", "carlos@ufc.com.br", "coordenador", "senha123456"]
+      end
+    end
 
     def add_cost_centers_sheet(wb)
       wb.add_worksheet(name: "CADASTRO CENTRO DE CUSTO") do |sheet|
