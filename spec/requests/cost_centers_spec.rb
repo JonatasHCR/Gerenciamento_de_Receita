@@ -140,16 +140,12 @@ RSpec.describe "CostCenters", type: :request do
     context "coordenador" do
       before { sign_in coordenador }
 
-      it "cannot create a new cost center (not in own_cost_center? for new record)" do
+      it "cria um CC já vinculado a si mesmo" do
         post cost_centers_path, params: valid_params
-        expect(response).to redirect_to root_path
-        expect(flash[:alert]).to be_present
-      end
-
-      it "can create when linked to the cost center" do
-        UserCostCenter.create!(user: coordenador, cost_center: cost_center)
-        patch cost_center_path(cost_center), params: { cost_center: { coordinator: "Novo" } }
-        expect(response).to redirect_to cost_center_path(cost_center)
+        cc = CostCenter.last
+        expect(response).to redirect_to cost_center_path(cc)
+        expect(cc.coordinator_list).to eq([coordenador.name])
+        expect(cc.users).to include(coordenador)
       end
     end
   end

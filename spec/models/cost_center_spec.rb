@@ -72,6 +72,34 @@ RSpec.describe CostCenter, type: :model do
     end
   end
 
+  describe "vínculo coordenador↔CC derivado do campo coordinator" do
+    it "cria o vínculo para User coordenador nomeado" do
+      u  = create(:user, :coordenador, name: "Carlos Almeida")
+      cc = create(:cost_center, coordinator: "Carlos Almeida")
+      expect(cc.users).to include(u)
+    end
+
+    it "não vincula nome sem User (coordenador externo)" do
+      cc = create(:cost_center, coordinator: "Construtora Externa XYZ")
+      expect(cc.users).to be_empty
+    end
+
+    it "não vincula usuário que não é coordenador" do
+      create(:user, :gestor, name: "Fulano Gestor")
+      cc = create(:cost_center, coordinator: "Fulano Gestor")
+      expect(cc.users).to be_empty
+    end
+
+    it "remove o vínculo ao retirar o nome do coordinator" do
+      u  = create(:user, :coordenador, name: "Ana Pereira")
+      cc = create(:cost_center, coordinator: "Ana Pereira")
+      expect(cc.users).to include(u)
+
+      cc.update!(coordinator: "Outra Pessoa")
+      expect(cc.reload.users).to be_empty
+    end
+  end
+
   describe "participation_percent" do
     it "converte percentual (0–100) para decimal (0–1) ao atribuir" do
       cc = build(:cost_center, participation_percent: 50)

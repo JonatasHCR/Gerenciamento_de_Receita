@@ -25,7 +25,8 @@ RSpec.describe ClientPolicy, type: :policy do
     let(:user) { build(:user, :gestor) }
     it { is_expected.to permit_action(:index) }
     it { is_expected.to permit_action(:show) }
-    it { is_expected.not_to permit_action(:create) }
+    it { is_expected.to permit_action(:create) }
+    it { is_expected.not_to permit_action(:update) }
     it { is_expected.not_to permit_action(:destroy) }
   end
 
@@ -33,7 +34,8 @@ RSpec.describe ClientPolicy, type: :policy do
     let(:user) { build(:user, :coordenador) }
     it { is_expected.to permit_action(:index) }
     it { is_expected.to permit_action(:show) }
-    it { is_expected.not_to permit_action(:create) }
+    it { is_expected.to permit_action(:create) }
+    it { is_expected.not_to permit_action(:update) }
     it { is_expected.not_to permit_action(:destroy) }
   end
 end
