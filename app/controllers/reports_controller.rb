@@ -27,6 +27,25 @@ class ReportsController < ApplicationController
               disposition: "attachment"
   end
 
+  def open_invoices
+    authorize :report, :open_invoices?
+
+    data = Reports::OpenInvoicesReportQuery.new(client_ids: params[:client_ids]).call
+    stamp = Date.current.strftime("%Y%m%d")
+
+    if params[:output] == "xlsx"
+      send_data Reports::OpenInvoicesXlsx.new(data).call,
+                filename: "faturas_em_aberto_#{stamp}.xlsx",
+                type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+                disposition: "attachment"
+    else
+      send_data Reports::OpenInvoicesPdf.new(report_data: data, generated_by: current_user.name).render,
+                filename: "faturas_em_aberto_#{stamp}.pdf",
+                type: "application/pdf",
+                disposition: "attachment"
+    end
+  end
+
   private
 
   # Modo período (start + end válidos) ou mês (default = mês atual).
