@@ -51,6 +51,47 @@
             class: "inline-block rounded-lg border border-green-600 px-4 py-1.5 text-sm font-medium text-green-700 hover:bg-green-50" %>
     </div>
 
+    <% if current_user.admin_or_financeiro? %>
+      <div class="bg-white rounded-xl border border-gray-200 p-5 space-y-4" data-controller="check-all">
+        <div>
+          <h2 class="text-sm font-semibold text-gray-800">Relação das Faturas em Aberto (PDF / Excel)</h2>
+          <p class="text-xs text-gray-500 mt-1">
+            NFs com saldo em aberto por cliente → centro de custo (CLIENTE, NF, emissão, CC, contrato, valor).
+            Marque <strong>um ou mais clientes</strong> (nenhum = todos).
+          </p>
+        </div>
+
+        <%= form_with url: open_invoices_report_path, method: :get, data: { turbo: false }, class: "space-y-3" do %>
+          <div class="flex items-center justify-between">
+            <span class="block text-xs text-gray-500">Clientes</span>
+            <label class="flex items-center gap-1 text-xs text-gray-500 cursor-pointer">
+              <input type="checkbox" data-action="change->check-all#toggle"
+                     class="rounded border-gray-300 text-red-600 focus:ring-red-500">
+              marcar/desmarcar todos
+            </label>
+          </div>
+          <%= hidden_field_tag "client_ids[]", "" %>
+          <div class="max-h-56 overflow-y-auto rounded-lg border border-gray-200 divide-y divide-gray-100">
+            <% Client.order(:name).each do |client| %>
+              <label class="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer">
+                <%= check_box_tag "client_ids[]", client.id, false,
+                      data: { "check-all-target": "item" },
+                      class: "rounded border-gray-300 text-red-600 focus:ring-red-500" %>
+                <span><%= client.name %></span>
+              </label>
+            <% end %>
+          </div>
+
+          <div class="flex gap-2 pt-1">
+            <button type="submit" name="output" value="pdf"
+                    class="rounded-lg bg-orange-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-orange-700 cursor-pointer">📄 PDF</button>
+            <button type="submit" name="output" value="xlsx"
+                    class="rounded-lg border border-green-600 px-4 py-1.5 text-sm font-medium text-green-700 hover:bg-green-50 cursor-pointer">📊 Excel</button>
+          </div>
+        <% end %>
+      </div>
+    <% end %>
+
     <%# Novos relatórios entram como cards aqui. %>
   </div>
 </div>
