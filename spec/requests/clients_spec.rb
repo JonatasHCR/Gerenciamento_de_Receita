@@ -78,17 +78,16 @@ RSpec.describe "Clients", type: :request do
       end
     end
 
-    it "blocks gestor" do
+    it "permite gestor criar cliente" do
       sign_in gestor
       post clients_path, params: valid_params
-      expect(response).to redirect_to root_path
-      expect(flash[:alert]).to be_present
+      expect(response).to redirect_to client_path(Client.last)
     end
 
-    it "blocks coordenador" do
+    it "permite coordenador criar cliente" do
       sign_in coordenador
       post clients_path, params: valid_params
-      expect(response).to redirect_to root_path
+      expect(response).to redirect_to client_path(Client.last)
     end
   end
 
