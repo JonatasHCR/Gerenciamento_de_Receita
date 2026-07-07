@@ -1,6 +1,16 @@
 require 'rails_helper'
 
 RSpec.describe "Reports", type: :request do
+  describe "GET /reports" do
+    it "abre para qualquer papel autenticado" do
+      [:admin, :financeiro, :gestor, :coordenador].each do |role|
+        sign_in create(:user, role)
+        get reports_path
+        expect(response).to have_http_status(:ok)
+      end
+    end
+  end
+
   describe "GET /reports/monthly" do
     context "unauthenticated" do
       it "redireciona para login" do
@@ -17,7 +27,7 @@ RSpec.describe "Reports", type: :request do
         get monthly_report_path, params: { month: "2026-06" }
         expect(response).to have_http_status(:ok)
         expect(response.media_type).to eq("application/pdf")
-        expect(response.headers["Content-Disposition"]).to include("relatorio_2026_06.pdf")
+        expect(response.headers["Content-Disposition"]).to include("relatorio_20260601_20260630.pdf")
         expect(response.body[0, 4]).to eq("%PDF")
       end
 
@@ -25,6 +35,13 @@ RSpec.describe "Reports", type: :request do
         get monthly_report_path
         expect(response).to have_http_status(:ok)
         expect(response.media_type).to eq("application/pdf")
+      end
+
+      it "gera PDF por período quando start e end são informados" do
+        get monthly_report_path, params: { start: "2026-05-01", end: "2026-06-30" }
+        expect(response).to have_http_status(:ok)
+        expect(response.media_type).to eq("application/pdf")
+        expect(response.headers["Content-Disposition"]).to include("relatorio_20260501_20260630.pdf")
       end
     end
 

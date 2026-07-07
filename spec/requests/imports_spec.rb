@@ -44,11 +44,31 @@ RSpec.describe "Imports", type: :request do
 
   # ── GET /imports/template ─────────────────────────────────────────────────
   describe "GET /imports/template" do
-    before do
-      allow_any_instance_of(Imports::TemplateGenerator)
-        .to receive(:call)
-        .and_return("fake xlsx binary data")
+    it "gera o modelo só com as abas dos alvos marcados" do
+      sign_in admin
+      get template_imports_path, params: { targets: %w[faturamento recebimento] }
+      expect(response).to have_http_status(:ok)
+      path = Rails.root.join("tmp", "tmpl_req_#{SecureRandom.hex(4)}.xlsx")
+      File.binwrite(path, response.body)
+      expect(Roo::Spreadsheet.open(path.to_s).sheets).to contain_exactly("FATURAMENTO", "RECEBIMENTO")
+      File.delete(path)
     end
+
+    it "não inclui a aba USUARIOS para financeiro" do
+      sign_in financeiro
+      get template_imports_path, params: { targets: %w[centros usuarios] }
+      path = Rails.root.join("tmp", "tmpl_req_#{SecureRandom.hex(4)}.xlsx")
+      File.binwrite(path, response.body)
+      expect(Roo::Spreadsheet.open(path.to_s).sheets).to eq(["CADASTRO CENTRO DE CUSTO"])
+      File.delete(path)
+    end
+
+    context "com o gerador stubbado" do
+      before do
+        allow_any_instance_of(Imports::TemplateGenerator)
+          .to receive(:call)
+          .and_return("fake xlsx binary data")
+      end
 
     it "returns xlsx file for admin" do
       sign_in admin
@@ -67,6 +87,7 @@ RSpec.describe "Imports", type: :request do
       sign_in gestor
       get template_imports_path
       expect(response).to redirect_to root_path
+    end
     end
   end
 
@@ -147,6 +168,33 @@ RSpec.describe "Imports", type: :request do
         expect(response).to have_http_status(:unprocessable_entity)
         expect(response.body).to include("Não foi possível processar")
       end
+
+      it "importação parcial chama o ExcelImporter só com as abas marcadas" do
+        clean = Imports::ExcelImporter::Result.new(created: 1, updated: 0, errors: [], fatal_error: nil)
+        importer = instance_double(Imports::ExcelImporter, call: clean)
+        expect(Imports::ExcelImporter).to receive(:new).with(anything, only: [:invoices]).and_return(importer)
+        post imports_path, params: { file: upload, targets: ["faturamento"] }
+        expect(response).to redirect_to root_path
+      end
+
+      it "importa usuários (só admin) via UserImporter" do
+        clean = Imports::ExcelImporter::Result.new(created: 2, updated: 0, errors: [], fatal_error: nil)
+        importer = instance_double(Imports::UserImporter, call: clean)
+        expect(Imports::UserImporter).to receive(:new).and_return(importer)
+        post imports_path, params: { file: upload, targets: ["usuarios"] }
+        expect(response).to redirect_to root_path
+      end
+    end
+
+    it "barra importação de usuários para financeiro" do
+      sign_in financeiro
+      fixture = Rails.root.join("spec/fixtures/files/sample.xlsx")
+      FileUtils.mkdir_p(fixture.dirname)
+      File.write(fixture, "stub") unless File.exist?(fixture)
+      upload = fixture_file_upload(fixture, "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+      expect(Imports::UserImporter).not_to receive(:new)
+      post imports_path, params: { file: upload, targets: ["usuarios"] }
+      expect(response).to redirect_to root_path
     end
 
     it "blocks gestor" do
