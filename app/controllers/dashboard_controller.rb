@@ -63,6 +63,11 @@ class DashboardController < ApplicationController
         .sum(:value)
         .transform_keys { |k| pt_month_label(k) }
 
+      # Soma corrida (running total) sobre os meses já ordenados: cada ponto acumula
+      # de janeiro até aquele mês. Mantém todos os meses, sem juntar/excluir.
+      running = 0
+      @receipts_accumulated = @receipts_by_month.transform_values { |v| running += v }
+
       # ── Faturado × Recebido por cliente/CC ─────────────────────────────────
       # Faturamento agregado por CC numa única query (mês atual × anteriores).
       invoice_rows = Invoice

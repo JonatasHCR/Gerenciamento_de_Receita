@@ -28,6 +28,14 @@ class ApplicationController < ActionController::Base
     fallback
   end
 
+  # Converte "AAAA-MM-DD" (input date_field) em Date. Nil/inválido → fallback.
+  def parse_date(value, fallback = nil)
+    return fallback if value.blank?
+    Date.parse(value.to_s)
+  rescue ArgumentError, Date::Error
+    fallback
+  end
+
   # "06/2026" → "Jun/2026" em português abreviado para os gráficos
   def pt_month_label(mm_yyyy)
     parts = mm_yyyy.split("/")
