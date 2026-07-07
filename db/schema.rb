@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_06_05_165312) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_07_150000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -64,7 +64,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_05_165312) do
     t.text "observations"
     t.datetime "updated_at", null: false
     t.index ["cost_center_id", "month_year"], name: "index_forecast_entries_on_cost_center_id_and_month_year", unique: true
-    t.index ["cost_center_id"], name: "index_forecast_entries_on_cost_center_id"
     t.index ["month_year"], name: "index_forecast_entries_on_month_year"
   end
 
@@ -79,9 +78,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_05_165312) do
     t.datetime "updated_at", null: false
     t.decimal "value", precision: 15, scale: 2, null: false
     t.index ["cost_center_id", "number"], name: "index_invoices_on_cost_center_id_and_number", unique: true
-    t.index ["cost_center_id"], name: "index_invoices_on_cost_center_id"
     t.index ["issued_at", "cost_center_id"], name: "index_invoices_on_issued_at_and_cost_center_id"
-    t.index ["issued_at"], name: "index_invoices_on_issued_at"
     t.index ["kind"], name: "index_invoices_on_kind"
     t.index ["number"], name: "idx_invoices_number_trgm", opclass: :gin_trgm_ops, using: :gin
   end
@@ -94,7 +91,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_05_165312) do
     t.datetime "updated_at", null: false
     t.decimal "value", precision: 15, scale: 2, null: false
     t.index ["invoice_id", "value"], name: "index_receipts_on_invoice_id_and_value"
-    t.index ["invoice_id"], name: "index_receipts_on_invoice_id"
     t.index ["payment_date"], name: "index_receipts_on_payment_date"
   end
 
@@ -105,7 +101,6 @@ ActiveRecord::Schema[8.1].define(version: 2026_06_05_165312) do
     t.bigint "user_id", null: false
     t.index ["cost_center_id"], name: "index_user_cost_centers_on_cost_center_id"
     t.index ["user_id", "cost_center_id"], name: "index_user_cost_centers_on_user_id_and_cost_center_id", unique: true
-    t.index ["user_id"], name: "index_user_cost_centers_on_user_id"
   end
 
   create_table "users", force: :cascade do |t|
