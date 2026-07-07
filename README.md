@@ -29,6 +29,9 @@ contratos (centros de custo) e relatórios — tudo com controle de acesso e aud
     de datas) — no período, os valores são acumulados e o "em aberto" reflete o fim do período.
   - **Relação de Compromissos em Excel** (por CC): contrato, contratante, objeto, início,
     fim, valor, % a executar e saldo.
+  - **Relação das Faturas em Aberto** (PDF **e** Excel): NFs com saldo em aberto agrupadas por
+    cliente → centro de custo (CLIENTE, NF, emissão, CC, contrato, valor), com subtotais por CC
+    e total. Escolha **um ou mais clientes**; as faturas **parcialmente pagas** ficam destacadas.
 - **Importação de planilha (.xlsx):** importe tudo de uma vez ou **por partes** — marque o
   que quer importar (centros de custo, faturamento, recebimentos, previsão) e o **modelo
   baixado reflete a escolha**. Admins também podem **importar usuários**. Tolerante a erros:
