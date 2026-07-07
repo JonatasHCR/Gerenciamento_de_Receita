@@ -13,19 +13,26 @@ contratos (centros de custo) e relatórios — tudo com controle de acesso e aud
 - **Centros de Custo (contratos):** cadastro com nº do contrato, cliente, objeto, datas de
   início/fim, valor, participação UFC e coordenador(es). Mostra **saldo** (valor − faturado
   principal) e permite registrar **reajustes** de valor/prazo com histórico.
+- **Coordenadores (internos × externos):** um CC pode ter coordenadores **internos**
+  (usuários do sistema) e **externos** (apenas o nome, sem login). Os internos são
+  **vinculados automaticamente** aos seus centros de custo pelo nome — passam a enxergá-los
+  e a lançar previsão. O vínculo também pode ser gerido na tela de **Usuários** (admin).
 - **Faturamento (Notas Fiscais):** lançamento de NFs, classificadas em **Principal** ou
   **Reajuste** (só o principal abate o saldo do contrato). Busca por número e filtro por
   situação (em aberto / quitadas / todas).
 - **Recebimentos:** baixa de pagamentos vinculados às NFs (com pagamento parcial).
 - **Previsão de Faturamento:** previsto por mês/centro de custo; o **realizado é calculado
   automaticamente** a partir do faturamento (não é digitado).
-- **Relatórios:**
-  - **Mensal em PDF** (por cliente → CC): previsto, faturado no mês, em aberto de meses
-    anteriores, recebido e faturas em aberto.
+- **Relatórios** (aba dedicada que centraliza todos):
+  - **Mensal em PDF** (por cliente → CC): previsto, faturado, em aberto de meses anteriores,
+    recebido e faturas em aberto. Pode ser gerado por **mês** ou por **período** (intervalo
+    de datas) — no período, os valores são acumulados e o "em aberto" reflete o fim do período.
   - **Relação de Compromissos em Excel** (por CC): contrato, contratante, objeto, início,
     fim, valor, % a executar e saldo.
-- **Importação de planilha (.xlsx):** importa centros de custo, faturamento, recebimentos e
-  previsão a partir do modelo; tolerante a erros (importa o que é válido e sinaliza o resto).
+- **Importação de planilha (.xlsx):** importe tudo de uma vez ou **por partes** — marque o
+  que quer importar (centros de custo, faturamento, recebimentos, previsão) e o **modelo
+  baixado reflete a escolha**. Admins também podem **importar usuários**. Tolerante a erros:
+  importa as linhas válidas e sinaliza as demais.
 - **Usuários e perfis** (Devise + Pundit) e **auditoria** de todas as alterações (PaperTrail).
 
 ---
@@ -34,10 +41,10 @@ contratos (centros de custo) e relatórios — tudo com controle de acesso e aud
 
 | Perfil | Acesso |
 |---|---|
-| **admin** | Tudo — inclui usuários e auditoria |
-| **financeiro** | Faturamento, recebimentos, previsão, centros de custo |
-| **gestor** | Previsão e centros de custo |
-| **coordenador** | Previsão e centros de custo próprios |
+| **admin** | Tudo — inclui usuários, auditoria e importação de usuários |
+| **financeiro** | Faturamento, recebimentos, previsão, centros de custo, importação |
+| **gestor** | Previsão e centros de custo; cria clientes e centros de custo |
+| **coordenador** | Previsão e centros de custo **próprios**; cria clientes e centros de custo (o CC criado já fica vinculado a ele) |
 
 ---
 
@@ -93,8 +100,10 @@ docker compose exec web bundle exec brakeman     # análise de segurança
 5. Acompanhe tudo no **Dashboard** e gere os **relatórios** (PDF mensal / Excel de compromissos).
 6. Reajustes de contrato (valor/prazo) ficam no **detalhe do Centro de Custo**, com histórico.
 
-> **Importação:** em *Importar*, baixe o modelo `.xlsx`, preencha e envie. O sistema importa
-> as linhas válidas, atualiza registros existentes e lista as linhas com erro.
+> **Importação:** em *Importar*, escolha **o que** importar (tudo ou só alguns tipos),
+> baixe o modelo `.xlsx` correspondente, preencha e envie. O sistema importa as linhas
+> válidas, atualiza registros existentes e lista as linhas com erro. Admins também podem
+> importar **usuários** (aba `USUARIOS` do modelo).
 
 ---
 
