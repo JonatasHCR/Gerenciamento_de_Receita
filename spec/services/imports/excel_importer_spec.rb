@@ -54,6 +54,16 @@ RSpec.describe Imports::ExcelImporter do
 
   after { Dir.glob(Rails.root.join("tmp", "import_test_*.xlsx")).each { |f| File.delete(f) } }
 
+  it "com only: importa apenas as abas selecionadas" do
+    path = build_xlsx(
+      cost_center_rows: [cc_row(cr: "CR-ONLY", desc: "Contrato A")],
+      invoice_rows:     [inv_row(nf: "NF-1", cr: "CR-ONLY", value: 1_000)]
+    )
+    described_class.new(path, only: [:cost_centers]).call
+    expect(CostCenter.find_by(cr_code: "CR-ONLY")).to be_present
+    expect(Invoice.find_by(number: "NF-1")).to be_nil
+  end
+
   it "importa CCs válidos e pula linhas de seção" do
     path = build_xlsx(cost_center_rows: [
       cc_row(cr: "CR-OK1", desc: "Contrato A"),

@@ -10,7 +10,8 @@ RSpec.describe Reports::MonthlyReportQuery do
   let(:cc_b)     { create(:cost_center, client: client_b, cr_code: "2001") }
 
   subject(:result) do
-    described_class.new(month: month, month_year: month_year, scope: CostCenter.all).call
+    described_class.new(period_start: month.beginning_of_month,
+                        period_end: month.end_of_month, scope: CostCenter.all).call
   end
 
   before do
@@ -110,5 +111,34 @@ RSpec.describe Reports::MonthlyReportQuery do
     crs   = group[:cost_centers].map { |r| r[:cc].cr_code }
     expect(crs).to include("1001")
     expect(crs).not_to include("1002")
+  end
+
+  describe "modo período (intervalo de datas)" do
+    subject(:period_result) do
+      described_class.new(period_start: Date.new(2026, 5, 1),
+                          period_end: Date.new(2026, 6, 30), scope: CostCenter.all).call
+    end
+
+    before do
+      # Previsão de julho não deve entrar no período mai-jun.
+      create(:forecast_entry, cost_center: cc_a, month_year: "MAIO/2026", forecasted_total: 40_000)
+      create(:forecast_entry, cost_center: cc_a, month_year: "JULHO/2026", forecasted_total: 99_000)
+    end
+
+    it "acumula previsto de todos os meses do período (jun 50k + mai 40k)" do
+      row = period_result.find { |g| g[:client] == client_a }[:cost_centers].first
+      expect(row[:previsto]).to eq(90_000)
+    end
+
+    it "acumula faturado no período (mai 20k + jun 30k) e não há anterior" do
+      row = period_result.find { |g| g[:client] == client_a }[:cost_centers].first
+      expect(row[:inv_cur]).to eq(50_000)
+      expect(row[:inv_pre]).to eq(0)
+    end
+
+    it "em aberto é snapshot no fim do período (50k faturado - 10k recebido)" do
+      row = period_result.find { |g| g[:client] == client_a }[:cost_centers].first
+      expect(row[:open]).to eq(40_000)
+    end
   end
 end
