@@ -24,8 +24,12 @@ Rails.application.configure do
     policy.frame_ancestors :self
   end
 
-  # Nonce por sessão (estável dentro da sessão — compatível com cache de fragmento/Turbo).
-  config.content_security_policy_nonce_generator  = ->(request) { request.session.id.to_s }
+  # Nonce por sessão: aleatório, estável dentro da sessão (compatível com Turbo/cache de
+  # fragmento) e NUNCA vazio. Um `session.id` vazio (ex.: página de login sem sessão) gerava
+  # `'nonce-'` inválido → o navegador ignorava a diretiva e bloqueava TODO script inline.
+  config.content_security_policy_nonce_generator  = ->(request) {
+    request.session[:csp_nonce] ||= SecureRandom.base64(16)
+  }
   # Aplica o nonce apenas a script-src (style-src continua usando unsafe-inline).
   config.content_security_policy_nonce_directives = %w[script-src]
 end

@@ -31,6 +31,7 @@ Rails.application.routes.draw do
       get :template
     end
   end
+  get "reports",         to: "reports#index",   as: :reports
   get "reports/monthly", to: "reports#monthly", as: :monthly_report
 
   get "audit_logs", to: "audit_logs#index"
@@ -42,4 +43,7 @@ Rails.application.routes.draw do
   delete "maintenance/cleanup",  to: "maintenance#cleanup",  as: :maintenance_cleanup
   post   "maintenance/restore",  to: "maintenance#restore",  as: :maintenance_restore
   get    "maintenance/download", to: "maintenance#download", as: :maintenance_download
+
+  # Rota inexistente → 404 limpo (evita a página de debug do dev listando as rotas).
+  match "*unmatched", to: "errors#not_found", via: :all
 end
