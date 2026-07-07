@@ -45,6 +45,23 @@
     <div>
       <%= password_field_with_toggle f, :password_confirmation, "Confirmar senha", autocomplete: "new-password" %>
     </div>
+
+    <% if current_user.admin? && (user.new_record? || user.coordenador?) %>
+      <div class="sm:col-span-2">
+        <span class="block text-sm font-medium text-gray-700 mb-1">Centros de custo coordenados</span>
+        <p class="text-xs text-gray-400 mb-2">Aplica-se a coordenadores. Marque os CCs que este usuário coordena.</p>
+        <%= hidden_field_tag "user[cost_center_ids][]", "" %>
+        <div class="max-h-56 overflow-y-auto rounded-lg border border-gray-200 divide-y divide-gray-100">
+          <% CostCenter.ordered.includes(:client).each do |cc| %>
+            <label class="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer">
+              <%= check_box_tag "user[cost_center_ids][]", cc.id, user.cost_center_ids.include?(cc.id),
+                    class: "rounded border-gray-300 text-red-600 focus:ring-red-500" %>
+              <span><span class="font-medium"><%= cc.cr_code %></span> — <%= cc.description %></span>
+            </label>
+          <% end %>
+        </div>
+      </div>
+    <% end %>
   </div>
 
   <div class="flex gap-3 pt-2">

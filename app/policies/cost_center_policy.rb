@@ -7,8 +7,10 @@ class CostCenterPolicy < ApplicationPolicy
     admin? || financeiro? || gestor? || (coordenador? && own_cost_center?)
   end
 
+  # Coordenador pode criar CC — o controller fixa o coordenador no próprio nome,
+  # então o CC nasce vinculado a ele.
   def create?
-    admin? || financeiro? || gestor? || (coordenador? && own_cost_center?)
+    admin? || financeiro? || gestor? || coordenador?
   end
 
   def update?
