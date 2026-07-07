@@ -14,24 +14,6 @@
   </div>
 
   <% if current_user.admin_or_financeiro? %>
-    <%# Exportar relatório em PDF %>
-    <%= form_with url: monthly_report_path, method: :get,
-          data: { turbo: false },
-          class: "bg-white rounded-xl border border-gray-200 p-4 flex flex-wrap items-end gap-3" do |f| %>
-      <div>
-        <label class="block text-xs text-gray-500 mb-1">Mês do relatório</label>
-        <%= f.month_field :month, value: @month.strftime("%Y-%m"),
-              class: "rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:ring-2 focus:ring-red-500" %>
-      </div>
-      <%= f.submit "📄 Exportar Relatório (PDF)",
-            class: "rounded-lg bg-orange-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-orange-700 cursor-pointer" %>
-      <span class="text-xs text-gray-400 self-center">
-        Previsto · Faturado no mês e mês anterior · Recebido · Faturas em aberto, por cliente e CC.
-      </span>
-    <% end %>
-  <% end %>
-
-  <% if current_user.admin_or_financeiro? %>
     <%# KPI Cards %>
     <%= turbo_frame_tag "kpi_cards" do %>
       <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -105,7 +87,10 @@
           Recebimentos Acumulados — <%= @chart_year %>
           (<%= @chart_months %> <%= @chart_months == 1 ? "mês" : "meses" %>)
         </h2>
-        <%= line_chart @receipts_by_month,
+        <%# discrete: eixo categórico — sem isso o Chartkick trata "Jan/2026" como data
+            (eixo de tempo), parseia errado e embaralha os meses. %>
+        <%= line_chart @receipts_accumulated,
+              discrete: true,
               color: "#22c55e",
               thousands: ".",
               decimal: ",",

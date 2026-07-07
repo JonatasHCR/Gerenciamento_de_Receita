@@ -4,9 +4,6 @@
   <div class="flex items-center justify-between">
     <h1 class="text-xl font-semibold text-gray-900">Centros de Custo</h1>
     <div class="flex items-center gap-2">
-      <%= link_to "📊 Relatório (Excel)", report_cost_centers_path,
-            data: { turbo: false },
-            class: "rounded-lg border border-green-600 px-4 py-2 text-sm font-medium text-green-700 hover:bg-green-50" %>
       <% if policy(CostCenter).create? %>
         <%= link_to "Novo CC", new_cost_center_path,
               class: "rounded-lg bg-red-700 px-4 py-2 text-sm font-medium text-white hover:bg-red-800" %>

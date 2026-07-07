@@ -1,0 +1,56 @@
+<% content_for :title, "Relatórios" %>
+
+<div class="space-y-6">
+  <h1 class="text-xl font-semibold text-gray-900">Relatórios</h1>
+
+  <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
+    <% if current_user.admin_or_financeiro? %>
+      <div class="bg-white rounded-xl border border-gray-200 p-5 space-y-4">
+        <div>
+          <h2 class="text-sm font-semibold text-gray-800">Relatório Mensal de Receitas (PDF)</h2>
+          <p class="text-xs text-gray-500 mt-1">
+            Previsto · Faturado · Em aberto anterior · Recebido · Faturas em aberto, por cliente e CC.
+            Por mês (padrão) ou por período.
+          </p>
+        </div>
+
+        <%= form_with url: monthly_report_path, method: :get, data: { turbo: false }, class: "space-y-3" do |f| %>
+          <div>
+            <label class="block text-xs text-gray-500 mb-1">Por mês</label>
+            <%= f.month_field :month, value: Date.current.strftime("%Y-%m"),
+                  class: "rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:ring-2 focus:ring-red-500" %>
+          </div>
+
+          <div class="border-t border-gray-100 pt-3">
+            <label class="block text-xs text-gray-500 mb-1">Ou por período (preencha as duas datas)</label>
+            <div class="flex flex-wrap items-center gap-2">
+              <%= f.date_field :start,
+                    class: "rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:ring-2 focus:ring-red-500" %>
+              <span class="text-xs text-gray-400">até</span>
+              <%= f.date_field :end,
+                    class: "rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:ring-2 focus:ring-red-500" %>
+            </div>
+            <p class="text-xs text-gray-400 mt-1">Com as datas preenchidas, o período prevalece sobre o mês.</p>
+          </div>
+
+          <%= f.submit "📄 Gerar PDF",
+                class: "rounded-lg bg-orange-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-orange-700 cursor-pointer" %>
+        <% end %>
+      </div>
+    <% end %>
+
+    <div class="bg-white rounded-xl border border-gray-200 p-5 space-y-4">
+      <div>
+        <h2 class="text-sm font-semibold text-gray-800">Relação de Compromissos (Excel)</h2>
+        <p class="text-xs text-gray-500 mt-1">
+          Nº Contrato, Contratante, Centro de Resultado, Objeto, Início, Fim, Valor, % a Executar e Saldo.
+        </p>
+      </div>
+      <%= link_to "📊 Baixar Excel", report_cost_centers_path,
+            data: { turbo: false },
+            class: "inline-block rounded-lg border border-green-600 px-4 py-1.5 text-sm font-medium text-green-700 hover:bg-green-50" %>
+    </div>
+
+    <%# Novos relatórios entram como cards aqui. %>
+  </div>
+</div>

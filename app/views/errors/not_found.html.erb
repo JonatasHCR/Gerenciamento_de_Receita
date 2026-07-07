@@ -1,0 +1,19 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Página não encontrada — UFC Engenharia</title>
+  <%= csp_meta_tag %>
+  <%= stylesheet_link_tag "tailwind", "data-turbo-track": "reload" %>
+</head>
+<body class="min-h-screen bg-gray-50 flex items-center justify-center p-6">
+  <div class="max-w-md w-full bg-white rounded-2xl border border-gray-200 shadow-sm p-8 text-center">
+    <div class="mx-auto mb-4 w-14 h-14 rounded-full bg-red-50 text-red-700 flex items-center justify-center text-2xl font-bold">404</div>
+    <h1 class="text-lg font-semibold text-gray-900">Página não encontrada</h1>
+    <p class="mt-2 text-sm text-gray-500">O endereço que você acessou não existe ou foi movido.</p>
+    <%= link_to "Voltar ao início", root_path,
+          class: "inline-block mt-6 rounded-lg bg-red-700 px-5 py-2 text-sm font-medium text-white hover:bg-red-800" %>
+  </div>
+</body>
+</html>

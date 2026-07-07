@@ -98,6 +98,14 @@
               <span class="truncate" data-sidebar-target="label">Previsão</span>
             <% end %>
 
+            <%= link_to reports_path, title: "Relatórios", class: sidebar_nav_class(reports_path) do %>
+              <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                      d="M9 17v-2m3 2v-4m3 4v-6m2 10H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+              </svg>
+              <span class="truncate" data-sidebar-target="label">Relatórios</span>
+            <% end %>
+
             <%= link_to clients_path, title: "Clientes", class: sidebar_nav_class(clients_path) do %>
               <svg class="w-5 h-5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
