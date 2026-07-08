@@ -83,11 +83,52 @@ RSpec.describe "Letters", type: :request do
         .to eq("CA-#{cc.cr_code}-001/2027")
     end
 
+    it "usa o nº do ofício digitado e o próximo auto continua dele" do
+      add_template
+      sign_in admin
+      get letter_cost_center_path(cc), params: { kind: "principal", output: "docx", oficio_seq: "50" }
+      expect(Letter.last.number).to eq("CA-#{cc.cr_code}-050/#{Date.current.year}")
+
+      # Sem digitar → auto continua de 51.
+      get letter_cost_center_path(cc), params: { kind: "principal", output: "docx" }
+      expect(Letter.last.number).to eq("CA-#{cc.cr_code}-051/#{Date.current.year}")
+    end
+
+    it "nº do ofício digitado que já existe → alerta (não duplica)" do
+      add_template
+      sign_in admin
+      get letter_cost_center_path(cc), params: { kind: "principal", output: "docx", oficio_seq: "7" }
+      expect { get letter_cost_center_path(cc), params: { kind: "principal", output: "docx", oficio_seq: "7" } }
+        .not_to change(Letter, :count)
+      expect(response).to redirect_to(cost_center_path(cc))
+      expect(flash[:alert]).to include("já existe")
+    end
+
     it "sem modelo do tipo → alerta" do
       sign_in admin
       get letter_cost_center_path(cc), params: { kind: "principal", output: "docx" }
       expect(response).to redirect_to(cost_center_path(cc))
       expect(flash[:alert]).to be_present
+    end
+
+    it "preview sem modelo → texto simples (não carrega o sistema na iframe)" do
+      sign_in admin
+      get letter_cost_center_path(cc), params: { kind: "principal", output: "pdf", preview: "1" }
+      expect(response).to have_http_status(:unprocessable_entity)
+      expect(response.media_type).to eq("text/plain")
+      expect(response.body).to include("Envie o modelo")
+      expect(Letter.count).to eq(0)
+    end
+
+    it "assunto e tipo digitados entram na carta (e não gravam no preview)" do
+      add_template
+      sign_in admin
+      get letter_cost_center_path(cc), params: {
+        kind: "principal", output: "docx", assunto: "Cobrança da 3ª medição", tipo: "medição extraordinária"
+      }
+      txt = document_xml(response.body).force_encoding("UTF-8")
+      expect(txt).to include("Cobrança da 3ª medição")
+      expect(txt).to include("medição extraordinária")
     end
 
     # Opt-in: a conversão via LibreOffice é pesada e pode desestabilizar o container
