@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_07_07_150000) do
+ActiveRecord::Schema[8.1].define(version: 2026_07_08_130000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -83,6 +83,34 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_07_150000) do
     t.index ["number"], name: "idx_invoices_number_trgm", opclass: :gin_trgm_ops, using: :gin
   end
 
+  create_table "letter_templates", force: :cascade do |t|
+    t.binary "content", null: false
+    t.string "content_type"
+    t.bigint "cost_center_id", null: false
+    t.datetime "created_at", null: false
+    t.string "filename"
+    t.integer "kind", null: false
+    t.datetime "updated_at", null: false
+    t.index ["cost_center_id", "kind"], name: "index_letter_templates_on_cost_center_id_and_kind", unique: true
+    t.index ["cost_center_id"], name: "index_letter_templates_on_cost_center_id"
+  end
+
+  create_table "letters", force: :cascade do |t|
+    t.bigint "cost_center_id", null: false
+    t.datetime "created_at", null: false
+    t.bigint "invoice_id"
+    t.integer "kind", default: 0, null: false
+    t.string "number", null: false
+    t.integer "sequence", null: false
+    t.datetime "updated_at", null: false
+    t.bigint "user_id"
+    t.integer "year", null: false
+    t.index ["cost_center_id", "year", "sequence"], name: "index_letters_on_cost_center_id_and_year_and_sequence", unique: true
+    t.index ["cost_center_id"], name: "index_letters_on_cost_center_id"
+    t.index ["invoice_id"], name: "index_letters_on_invoice_id"
+    t.index ["user_id"], name: "index_letters_on_user_id"
+  end
+
   create_table "receipts", force: :cascade do |t|
     t.datetime "created_at", null: false
     t.bigint "invoice_id", null: false
@@ -136,6 +164,10 @@ ActiveRecord::Schema[8.1].define(version: 2026_07_07_150000) do
   add_foreign_key "cost_centers", "clients"
   add_foreign_key "forecast_entries", "cost_centers"
   add_foreign_key "invoices", "cost_centers"
+  add_foreign_key "letter_templates", "cost_centers"
+  add_foreign_key "letters", "cost_centers"
+  add_foreign_key "letters", "invoices"
+  add_foreign_key "letters", "users"
   add_foreign_key "receipts", "invoices"
   add_foreign_key "user_cost_centers", "cost_centers"
   add_foreign_key "user_cost_centers", "users"
