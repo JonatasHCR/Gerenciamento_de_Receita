@@ -16,8 +16,13 @@ Rails.application.routes.draw do
   resources :clients
   resources :cost_centers do
     resources :adjustments, only: [:create], module: :cost_centers
+    resources :letter_templates, only: [:create, :destroy], module: :cost_centers
+    member do
+      get :letter, to: "letters#generate"   # gera a carta (docx/pdf/preview)
+    end
     collection do
-      get :report   # relatório Excel (RELAÇÃO DE COMPROMISSOS)
+      get :report                            # relatório Excel (RELAÇÃO DE COMPROMISSOS)
+      get :letter_base, to: "letters#letter_base"  # baixa o modelo-base .docx
     end
   end
   resources :receipts, only: [:index, :new]
