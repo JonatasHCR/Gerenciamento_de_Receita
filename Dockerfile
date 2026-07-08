@@ -23,7 +23,9 @@ RUN apt-get update -qq && \
       libvips \
       libpq5 \
       libargon2-1 \
-      postgresql-client && \
+      postgresql-client \
+      libreoffice-writer \
+      fonts-liberation && \
     ln -s /usr/lib/$(uname -m)-linux-gnu/libjemalloc.so.2 /usr/local/lib/libjemalloc.so && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 

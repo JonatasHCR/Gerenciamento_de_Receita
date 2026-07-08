@@ -9,6 +9,8 @@ RUN apt-get update -qq && \
       libyaml-dev \
       libargon2-dev \
       postgresql-client \
+      libreoffice-writer \
+      fonts-liberation \
     && rm -rf /var/lib/apt/lists/*
 
 ENV BUNDLE_PATH=/usr/local/bundle \
