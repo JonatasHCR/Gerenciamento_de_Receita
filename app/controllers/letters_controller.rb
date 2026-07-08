@@ -4,22 +4,26 @@ class LettersController < ApplicationController
   def generate
     authorize :letter, :generate?
     kind = params[:kind].presence_in(%w[principal reajuste]) || "principal"
+    preview = params[:preview].present?
 
     tpl = @cost_center.letter_template_for(kind)
     unless tpl
+      return preview_error("Envie o modelo de #{kind} deste CR antes de gerar a carta.") if preview
       redirect_to @cost_center, alert: "Envie o modelo de #{kind} deste CR antes de gerar a carta."
       return
     end
 
     invoice = @cost_center.invoices.find_by(id: params[:invoice_id])
-    preview = params[:preview].present?
 
-    # Preview mostra o próximo nº sem gravar; a geração final grava e consome a sequência.
+    # Nº do ofício: em branco = auto-incremento; digitado = usa o nº (o próximo auto segue dele).
+    # Preview mostra o nº sem gravar; a geração final grava e consome a sequência.
+    year = Date.current.year
     oficio =
       if preview
-        Letter.oficio_number(@cost_center, Letter.next_sequence(@cost_center, Date.current.year), Date.current.year)
+        Letter.oficio_number(@cost_center, Letter.resolve_sequence(@cost_center, year, params[:oficio_seq]), year)
       else
-        Letter.record!(cost_center: @cost_center, kind: kind, invoice: invoice, user: current_user).number
+        Letter.record!(cost_center: @cost_center, kind: kind, invoice: invoice,
+                       user: current_user, sequence: params[:oficio_seq]).number
       end
 
     data = Letters::LetterData.new(
@@ -28,6 +32,8 @@ class LettersController < ApplicationController
       invoice:        invoice,
       periodo_inicio: params[:periodo_inicio],
       periodo_fim:    params[:periodo_fim],
+      assunto:        params[:assunto],
+      tipo:           params[:tipo],
       oficio:         oficio
     ).to_h
 
@@ -44,6 +50,9 @@ class LettersController < ApplicationController
                      disposition: "attachment"
     end
   rescue Letters::PdfConverter::ConversionError => e
+    return preview_error(e.message) if preview
+    redirect_to @cost_center, alert: e.message
+  rescue Letter::SequenceTaken => e
     redirect_to @cost_center, alert: e.message
   end
 
@@ -57,6 +66,12 @@ class LettersController < ApplicationController
   end
 
   private
+
+  # Mensagem para a iframe de pré-visualização: texto simples, sem layout — evita carregar
+  # o sistema inteiro dentro do preview quando falta o modelo ou a conversão falha.
+  def preview_error(message)
+    render plain: message, status: :unprocessable_entity, layout: false
+  end
 
   def set_cost_center
     @cost_center = CostCenter.find(params[:id])

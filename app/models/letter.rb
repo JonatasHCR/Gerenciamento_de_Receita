@@ -1,4 +1,7 @@
 class Letter < ApplicationRecord
+  # Nº digitado que já existe para o CR/ano (índice único violado).
+  class SequenceTaken < StandardError; end
+
   belongs_to :cost_center
   belongs_to :invoice, optional: true
   belongs_to :user, optional: true
@@ -18,14 +21,28 @@ class Letter < ApplicationRecord
     where(cost_center_id: cost_center.id, year: year).maximum(:sequence).to_i + 1
   end
 
+  # Converte um nº digitado em inteiro válido (> 0) ou nil. String vazia/lixo → nil (auto).
+  def self.typed_sequence(value)
+    n = value.to_s.strip.to_i
+    n.positive? ? n : nil
+  end
+
+  # Sequência a exibir/usar: a digitada (se válida) ou a próxima automática. Como
+  # next_sequence = maior+1, gravar um nº digitado N faz o próximo auto continuar de N+1.
+  def self.resolve_sequence(cost_center, year, typed)
+    typed_sequence(typed) || next_sequence(cost_center, year)
+  end
+
   # Grava a geração da carta e devolve o registro com o nº do ofício atribuído.
-  # O índice único (cost_center, year, sequence) protege contra concorrência — repete
-  # com a próxima sequência se houver colisão.
-  def self.record!(cost_center:, kind:, invoice: nil, user: nil, year: Date.current.year)
-    seq = next_sequence(cost_center, year)
+  # `sequence` digitada = usa esse nº (erro se já existir); vazia = próxima automática
+  # (o índice único protege contra concorrência — repete o auto se colidir).
+  def self.record!(cost_center:, kind:, invoice: nil, user: nil, year: Date.current.year, sequence: nil)
+    typed = typed_sequence(sequence)
+    seq = typed || next_sequence(cost_center, year)
     create!(cost_center: cost_center, kind: kind, invoice: invoice, user: user,
             year: year, sequence: seq, number: oficio_number(cost_center, seq, year))
   rescue ActiveRecord::RecordNotUnique
+    raise SequenceTaken, "O ofício nº #{format('%03d', seq)} já existe para este CR em #{year}." if typed
     retry
   end
 end
