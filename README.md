@@ -32,6 +32,14 @@ contratos (centros de custo) e relatórios — tudo com controle de acesso e aud
   - **Relação das Faturas em Aberto** (PDF **e** Excel): NFs com saldo em aberto agrupadas por
     cliente → centro de custo (CLIENTE, NF, emissão, CC, contrato, valor), com subtotais por CC
     e total. Escolha **um ou mais clientes**; as faturas **parcialmente pagas** ficam destacadas.
+- **Cartas de encaminhamento (ofícios):** gere a carta de encaminhamento da fatura
+  (**medição principal** ou **reajuste**) em **Word (.docx)** ou **PDF**, a partir de um
+  **modelo `.docx` enviado por centro de custo**. O sistema preenche os campos automaticamente
+  (cliente, contrato, objeto, nº da fatura, valor por extenso, período, data de emissão) e
+  **numera o ofício** no formato `CA-{CR}-{sequência}/{ano}` — a sequência é **por centro de
+  custo e reinicia a cada ano** (com 3 dígitos: `001`, `002`…). A **pré-visualização** mostra
+  o próximo número sem consumi-lo; só a geração final grava. Baixe o **modelo-base** com os
+  marcadores para adaptar no Word e reenviar.
 - **Importação de planilha (.xlsx):** importe tudo de uma vez ou **por partes** — marque o
   que quer importar (centros de custo, faturamento, recebimentos, previsão) e o **modelo
   baixado reflete a escolha**. Admins também podem **importar usuários**. Tolerante a erros:
@@ -102,6 +110,8 @@ docker compose exec web bundle exec brakeman     # análise de segurança
 4. **Informe a Previsão** mensal (previsto); o realizado vem sozinho do faturamento.
 5. Acompanhe tudo no **Dashboard** e gere os **relatórios** (PDF mensal / Excel de compromissos).
 6. Reajustes de contrato (valor/prazo) ficam no **detalhe do Centro de Custo**, com histórico.
+7. Envie o **modelo `.docx`** de carta no Centro de Custo e gere a **carta de encaminhamento**
+   (ofício numerado) da fatura em Word ou PDF.
 
 > **Importação:** em *Importar*, escolha **o que** importar (tudo ou só alguns tipos),
 > baixe o modelo `.xlsx` correspondente, preencha e envie. O sistema importa as linhas
