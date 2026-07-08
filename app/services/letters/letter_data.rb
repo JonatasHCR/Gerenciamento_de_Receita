@@ -4,13 +4,16 @@ module Letters
     MESES = %w[janeiro fevereiro março abril maio junho julho agosto setembro outubro
                novembro dezembro].freeze
 
-    def initialize(cost_center:, kind:, invoice: nil, periodo_inicio: nil, periodo_fim: nil, oficio: "")
+    def initialize(cost_center:, kind:, invoice: nil, periodo_inicio: nil, periodo_fim: nil,
+                   oficio: "", assunto: nil, tipo: nil)
       @cc = cost_center
       @kind = kind.to_s
       @invoice = invoice
       @periodo_inicio = periodo_inicio
       @periodo_fim = periodo_fim
       @oficio = oficio
+      @assunto = assunto
+      @tipo = tipo
     end
 
     def to_h
@@ -28,8 +31,9 @@ module Letters
         "periodo_inicio"   => data_curta(@periodo_inicio),
         "periodo_fim"      => data_curta(@periodo_fim),
         "data"             => data_extenso(Date.current), # só a data; a cidade fica no modelo
-        "tipo"             => (@kind == "reajuste" ? "medição de reajuste" : "medição principal"),
-        "assunto"          => "Encaminhamento de #{@kind == 'reajuste' ? 'reajuste' : 'medição'}",
+        # Tipo e assunto podem ser digitados no form; em branco caem no padrão derivado do kind.
+        "tipo"             => @tipo.presence || (@kind == "reajuste" ? "medição de reajuste" : "medição principal"),
+        "assunto"          => @assunto.presence || "Encaminhamento de #{@kind == 'reajuste' ? 'reajuste' : 'medição'}",
         "saudacao"         => "Prezados Senhores",
         "oficio"           => @oficio.to_s # nº do ofício: CA-{CR}-{sequência}/{ano}
       }

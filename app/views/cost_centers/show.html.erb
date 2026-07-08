@@ -235,6 +235,12 @@
             </select>
           </div>
           <div>
+            <label class="block text-xs text-gray-500 mb-1">Nº do ofício</label>
+            <input type="number" min="1" step="1" data-letter-preview-target="oficioSeq" data-action="input->letter-preview#update"
+                   placeholder="auto (próximo)"
+                   class="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm">
+          </div>
+          <div>
             <label class="block text-xs text-gray-500 mb-1">Nota Fiscal</label>
             <select data-letter-preview-target="invoice" data-action="change->letter-preview#update"
                     class="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm">
@@ -252,6 +258,18 @@
           <div>
             <label class="block text-xs text-gray-500 mb-1">Período — fim</label>
             <input type="date" data-letter-preview-target="fim" data-action="change->letter-preview#update"
+                   class="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm">
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-xs text-gray-500 mb-1">Assunto</label>
+            <input type="text" data-letter-preview-target="assunto" data-action="input->letter-preview#update"
+                   placeholder="Encaminhamento de medição (padrão se vazio)"
+                   class="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm">
+          </div>
+          <div class="sm:col-span-2">
+            <label class="block text-xs text-gray-500 mb-1">Tipo (texto da carta)</label>
+            <input type="text" data-letter-preview-target="tipo" data-action="input->letter-preview#update"
+                   placeholder="medição principal (padrão se vazio)"
                    class="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm">
           </div>
         </div>
