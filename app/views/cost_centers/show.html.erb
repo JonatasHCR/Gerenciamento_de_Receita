@@ -169,4 +169,107 @@
       <p class="py-8 text-center text-sm text-gray-400">Nenhuma nota fiscal para este CC.</p>
     <% end %>
   </div>
+
+  <% if current_user.admin_or_financeiro? %>
+    <%# Cartas de Medição (modelos Word do usuário → Word/PDF) %>
+    <div class="bg-white rounded-xl border border-gray-200 p-5 space-y-5">
+      <div class="flex items-center justify-between">
+        <h2 class="font-semibold text-gray-700 text-sm">Cartas de Medição</h2>
+        <div class="flex gap-2 text-xs">
+          <%= link_to "Baixar modelo-base (Principal)", letter_base_cost_centers_path(kind: "principal"),
+                data: { turbo: false }, class: "text-red-600 hover:underline" %>
+          <%= link_to "Reajuste", letter_base_cost_centers_path(kind: "reajuste"),
+                data: { turbo: false }, class: "text-red-600 hover:underline" %>
+        </div>
+      </div>
+
+      <p class="text-xs text-gray-400">
+        Marcadores disponíveis no modelo:
+        <code class="text-gray-500">{{cliente}} {{cliente_completo}} {{cr}} {{contrato}} {{objeto}}
+        {{fatura}} {{valor}} {{valor_extenso}} {{data_emissao}} {{periodo_inicio}} {{periodo_fim}}
+        {{data}} {{tipo}} {{coordenador}} {{assunto}} {{saudacao}} {{oficio}}</code>
+      </p>
+
+      <%# Modelos (upload) por tipo %>
+      <div class="grid grid-cols-1 sm:grid-cols-2 gap-3">
+        <% %w[principal reajuste].each do |kind| %>
+          <% tpl = @cost_center.letter_template_for(kind) %>
+          <div class="rounded-lg border border-gray-200 p-3 space-y-2">
+            <div class="flex items-center justify-between">
+              <span class="text-sm font-medium text-gray-700 capitalize"><%= kind %></span>
+              <% if tpl %>
+                <span class="text-xs px-1.5 py-0.5 rounded-full bg-green-100 text-green-700">enviado</span>
+              <% else %>
+                <span class="text-xs px-1.5 py-0.5 rounded-full bg-gray-100 text-gray-500">sem modelo</span>
+              <% end %>
+            </div>
+            <% if tpl %>
+              <p class="text-xs text-gray-500 truncate"><%= tpl.filename %></p>
+            <% end %>
+            <%= form_with url: cost_center_letter_templates_path(@cost_center), method: :post, multipart: true, class: "flex items-center gap-2" do %>
+              <%= hidden_field_tag "kind", kind %>
+              <%= file_field_tag "file", accept: ".docx,.doc",
+                    class: "w-full text-xs text-gray-600 file:mr-2 file:py-1 file:px-2 file:rounded file:border-0 file:text-xs file:bg-red-50 file:text-red-700" %>
+              <%= submit_tag(tpl ? "Trocar" : "Enviar", class: "rounded-lg bg-red-700 px-3 py-1 text-xs text-white hover:bg-red-800 cursor-pointer") %>
+            <% end %>
+            <% if tpl %>
+              <%= button_to "Remover modelo", cost_center_letter_template_path(@cost_center, tpl), method: :delete,
+                    data: { turbo_confirm: "Remover o modelo de #{kind}?" },
+                    class: "text-xs text-red-600 hover:underline" %>
+            <% end %>
+          </div>
+        <% end %>
+      </div>
+
+      <%# Gerar carta + preview %>
+      <div class="border-t border-gray-100 pt-4"
+           data-controller="letter-preview"
+           data-letter-preview-url-value="<%= letter_cost_center_path(@cost_center) %>">
+        <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
+          <div>
+            <label class="block text-xs text-gray-500 mb-1">Tipo</label>
+            <select data-letter-preview-target="kind" data-action="change->letter-preview#update"
+                    class="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm">
+              <option value="principal">Principal</option>
+              <option value="reajuste">Reajuste</option>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs text-gray-500 mb-1">Nota Fiscal</label>
+            <select data-letter-preview-target="invoice" data-action="change->letter-preview#update"
+                    class="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm">
+              <option value="">— selecione —</option>
+              <% @cost_center.invoices.ordered.each do |inv| %>
+                <option value="<%= inv.id %>"><%= inv.number %> — <%= brl(inv.value) %></option>
+              <% end %>
+            </select>
+          </div>
+          <div>
+            <label class="block text-xs text-gray-500 mb-1">Período — início</label>
+            <input type="date" data-letter-preview-target="inicio" data-action="change->letter-preview#update"
+                   class="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm">
+          </div>
+          <div>
+            <label class="block text-xs text-gray-500 mb-1">Período — fim</label>
+            <input type="date" data-letter-preview-target="fim" data-action="change->letter-preview#update"
+                   class="w-full rounded-lg border border-gray-300 px-2 py-1.5 text-sm">
+          </div>
+        </div>
+
+        <div class="flex flex-wrap gap-2 mt-3">
+          <button type="button" data-action="letter-preview#preview"
+                  class="rounded-lg bg-gray-800 px-4 py-1.5 text-sm font-medium text-white hover:bg-gray-900 cursor-pointer">👁 Pré-visualizar</button>
+          <%= link_to "📄 Baixar Word", "#", data: { "letter-preview-target": "wordLink", turbo: false },
+                class: "rounded-lg border border-blue-600 px-4 py-1.5 text-sm font-medium text-blue-700 hover:bg-blue-50" %>
+          <%= link_to "📕 Baixar PDF", "#", data: { "letter-preview-target": "pdfLink", turbo: false },
+                class: "rounded-lg border border-red-600 px-4 py-1.5 text-sm font-medium text-red-700 hover:bg-red-50" %>
+        </div>
+
+        <iframe data-letter-preview-target="frame"
+                class="w-full h-[600px] mt-3 rounded-lg border border-gray-200 bg-gray-50"
+                title="Pré-visualização da carta"></iframe>
+        <p class="text-xs text-gray-400 mt-1">Envie o modelo do tipo escolhido, preencha os campos e clique em Pré-visualizar.</p>
+      </div>
+    </div>
+  <% end %>
 </div>
