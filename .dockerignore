@@ -36,6 +36,14 @@
 !/app/assets/builds/.keep
 /public/assets
 
+# Ignore database backups (dumps) — nunca devem entrar na imagem (bloat + dados sensíveis).
+# Em produção a pasta é um bind-mount; no build o COPY . . os assaria na imagem.
+/backups/*
+!/backups/.gitkeep
+
+# Ignore modelos de carta (.docx de referência) — os templates de runtime ficam no banco.
+/modelos/
+
 # Ignore CI service files.
 /.github
 

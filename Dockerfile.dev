@@ -20,8 +20,5 @@ ENV BUNDLE_PATH=/usr/local/bundle \
 
 WORKDIR /rails
 
-COPY Gemfile Gemfile.lock ./
-RUN bundle install
-
 EXPOSE 3000
 CMD ["bin/dev"]
