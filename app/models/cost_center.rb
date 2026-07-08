@@ -7,6 +7,12 @@ class CostCenter < ApplicationRecord
   has_many :invoices, dependent: :restrict_with_error
   has_many :forecast_entries, dependent: :destroy
   has_many :adjustments, dependent: :destroy
+  has_many :letter_templates, dependent: :destroy
+  has_many :letters, dependent: :destroy
+
+  def letter_template_for(kind)
+    letter_templates.find_by(kind: kind)
+  end
 
   # Deriva os vínculos (user_cost_centers) do campo texto `coordinator`.
   after_save :sync_coordinator_links!, if: :saved_change_to_coordinator?
