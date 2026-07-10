@@ -44,7 +44,7 @@ jobs:
             build-essential git curl libpq-dev libyaml-dev libargon2-dev pkg-config
 
       - name: Cache de gems
-        uses: actions/cache@v5
+        uses: actions/cache@v6
         with:
           path: vendor/bundle
           key: gems-${{ runner.os }}-${{ hashFiles('Gemfile.lock') }}
