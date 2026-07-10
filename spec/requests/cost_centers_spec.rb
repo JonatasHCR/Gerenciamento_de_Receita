@@ -56,13 +56,22 @@ RSpec.describe "CostCenters", type: :request do
     end
   end
 
-  # ── GET /cost_centers/report (Excel) ──────────────────────────────────────
+  # ── GET /cost_centers/report (Excel / PDF) ────────────────────────────────
   describe "GET /cost_centers/report" do
-    it "gera um Excel para admin" do
+    it "gera um Excel para admin (padrão)" do
       sign_in admin
       get report_cost_centers_path
       expect(response).to have_http_status(:ok)
       expect(response.media_type).to eq("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    end
+
+    it "gera um PDF quando output=pdf" do
+      create(:cost_center, client: client, value: 100_000)
+      sign_in admin
+      get report_cost_centers_path(output: "pdf")
+      expect(response).to have_http_status(:ok)
+      expect(response.media_type).to eq("application/pdf")
+      expect(response.body[0, 4]).to eq("%PDF")
     end
   end
 
