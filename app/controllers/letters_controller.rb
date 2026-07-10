@@ -15,8 +15,7 @@ class LettersController < ApplicationController
 
     invoice = @cost_center.invoices.find_by(id: params[:invoice_id])
 
-    # Nº do ofício: em branco = auto-incremento; digitado = usa o nº (o próximo auto segue dele).
-    # Preview mostra o nº sem gravar; a geração final grava e consome a sequência.
+    # Preview mostra o nº sem gravar; a geração final grava (e consome a sequência).
     year = Date.current.year
     oficio =
       if preview

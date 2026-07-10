@@ -41,14 +41,20 @@
 
     <div class="bg-white rounded-xl border border-gray-200 p-5 space-y-4">
       <div>
-        <h2 class="text-sm font-semibold text-gray-800">Relação de Compromissos (Excel)</h2>
+        <h2 class="text-sm font-semibold text-gray-800">Relação de Compromissos</h2>
         <p class="text-xs text-gray-500 mt-1">
           Nº Contrato, Contratante, Centro de Resultado, Objeto, Início, Fim, Valor, % a Executar e Saldo.
+          O Excel traz ainda o detalhamento UFC.
         </p>
       </div>
-      <%= link_to "📊 Baixar Excel", report_cost_centers_path,
-            data: { turbo: false },
-            class: "inline-block rounded-lg border border-green-600 px-4 py-1.5 text-sm font-medium text-green-700 hover:bg-green-50" %>
+      <div class="flex flex-wrap gap-2">
+        <%= link_to "📊 Baixar Excel", report_cost_centers_path(output: "xlsx"),
+              data: { turbo: false },
+              class: "inline-block rounded-lg border border-green-600 px-4 py-1.5 text-sm font-medium text-green-700 hover:bg-green-50" %>
+        <%= link_to "📕 Baixar PDF", report_cost_centers_path(output: "pdf"),
+              data: { turbo: false },
+              class: "inline-block rounded-lg border border-red-600 px-4 py-1.5 text-sm font-medium text-red-700 hover:bg-red-50" %>
+      </div>
     </div>
 
     <% if current_user.admin_or_financeiro? %>

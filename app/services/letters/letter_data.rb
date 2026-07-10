@@ -35,7 +35,7 @@ module Letters
         "tipo"             => @tipo.presence || (@kind == "reajuste" ? "medição de reajuste" : "medição principal"),
         "assunto"          => @assunto.presence || "Encaminhamento de #{@kind == 'reajuste' ? 'reajuste' : 'medição'}",
         "saudacao"         => "Prezados Senhores",
-        "oficio"           => @oficio.to_s # nº do ofício: CA-{CR}-{sequência}/{ano}
+        "oficio"           => @oficio.to_s
       }
     end
 

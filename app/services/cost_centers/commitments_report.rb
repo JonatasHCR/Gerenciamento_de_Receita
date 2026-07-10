@@ -30,7 +30,7 @@ module CostCenters
       wb.add_worksheet(name: "Compromissos") do |sheet|
         sheet.add_row ["RELAÇÃO DE COMPROMISSOS - MOD"], style: styles[:title]
         sheet.merge_cells("A1:O1")
-        sheet.add_row [], style: styles[:title] # linha em branco
+        sheet.add_row [], style: styles[:title]
         sheet.add_row HEADERS, style: styles[:header]
 
         total_valor = total_saldo = 0

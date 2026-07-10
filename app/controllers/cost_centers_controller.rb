@@ -21,11 +21,17 @@ class CostCentersController < ApplicationController
   def report
     authorize CostCenter, :index?
     scope = policy_scope(CostCenter).includes(:client).ordered
-    xlsx = CostCenters::CommitmentsReport.new(scope).call
-    send_data xlsx,
-      filename: "relacao_compromissos_#{Date.current.strftime('%Y_%m_%d')}.xlsx",
-      type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-      disposition: "attachment"
+    base  = "relacao_compromissos_#{Date.current.strftime('%Y_%m_%d')}"
+
+    if params[:output] == "pdf"
+      send_data CostCenters::CommitmentsPdf.new(scope, generated_by: current_user.name).render,
+        filename: "#{base}.pdf", type: "application/pdf", disposition: "attachment"
+    else
+      send_data CostCenters::CommitmentsReport.new(scope).call,
+        filename: "#{base}.xlsx",
+        type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        disposition: "attachment"
+    end
   end
 
   def new
