@@ -15,15 +15,12 @@ class LettersController < ApplicationController
 
     invoice = @cost_center.invoices.find_by(id: params[:invoice_id])
 
-    # Preview mostra o nº sem gravar; a geração final grava (e consome a sequência).
+    # Preview mostra o nº sem consumir a sequência; a geração final avança o contador.
+    # Repetir um nº já usado é permitido (só não faz a contagem retroceder).
     year = Date.current.year
-    oficio =
-      if preview
-        Letter.oficio_number(@cost_center, Letter.resolve_sequence(@cost_center, year, params[:oficio_seq]), year)
-      else
-        Letter.record!(cost_center: @cost_center, kind: kind, invoice: invoice,
-                       user: current_user, sequence: params[:oficio_seq]).number
-      end
+    seq = LetterSequence.resolve_sequence(@cost_center, year, params[:oficio_seq])
+    LetterSequence.bump!(@cost_center, year, seq) unless preview
+    oficio = LetterSequence.oficio_number(@cost_center, seq, year)
 
     data = Letters::LetterData.new(
       cost_center:    @cost_center,
@@ -50,8 +47,6 @@ class LettersController < ApplicationController
     end
   rescue Letters::PdfConverter::ConversionError => e
     return preview_error(e.message) if preview
-    redirect_to @cost_center, alert: e.message
-  rescue Letter::SequenceTaken => e
     redirect_to @cost_center, alert: e.message
   end
 

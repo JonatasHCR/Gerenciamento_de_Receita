@@ -8,7 +8,7 @@ class CostCenter < ApplicationRecord
   has_many :forecast_entries, dependent: :destroy
   has_many :adjustments, dependent: :destroy
   has_many :letter_templates, dependent: :destroy
-  has_many :letters, dependent: :destroy
+  has_many :letter_sequences, dependent: :destroy
 
   def letter_template_for(kind)
     letter_templates.find_by(kind: kind)

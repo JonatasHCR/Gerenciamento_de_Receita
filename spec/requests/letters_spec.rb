@@ -63,46 +63,60 @@ RSpec.describe "Letters", type: :request do
     end
 
     it "numera o ofício sequencialmente e o preview não consome número" do
-      skip "defina RUN_PDF_SPECS=1 (e tenha o LibreOffice)" unless soffice? && ENV["RUN_PDF_SPECS"]
       add_template
       sign_in admin
+      year = Date.current.year
 
-      # Preview não grava nem consome sequência.
+      # Preview não avança o contador.
       get letter_cost_center_path(cc), params: { kind: "principal", output: "docx", preview: "1" }
-      expect(Letter.count).to eq(0)
+      expect(LetterSequence.count).to eq(0)
 
       get letter_cost_center_path(cc), params: { kind: "principal", output: "docx" }
+      expect(document_xml(response.body)).to include("CA-#{cc.cr_code}-001/#{year}")
+
       get letter_cost_center_path(cc), params: { kind: "principal", output: "docx" }
-      expect(Letter.pluck(:number)).to eq(["CA-#{cc.cr_code}-001/#{Date.current.year}",
-                                           "CA-#{cc.cr_code}-002/#{Date.current.year}"])
+      expect(document_xml(response.body)).to include("CA-#{cc.cr_code}-002/#{year}")
+
+      # Só o último nº fica guardado — uma linha por CR/ano, sem histórico de cartas.
+      expect(LetterSequence.count).to eq(1)
+      expect(LetterSequence.last.last_sequence).to eq(2)
     end
 
     it "reinicia a sequência a cada ano, por CR (3 dígitos)" do
-      Letter.record!(cost_center: cc, kind: "principal", year: 2026)
-      Letter.record!(cost_center: cc, kind: "principal", year: 2026)
-      expect(Letter.record!(cost_center: cc, kind: "principal", year: 2027).number)
+      LetterSequence.bump!(cc, 2026, 5)
+      expect(LetterSequence.next_sequence(cc, 2026)).to eq(6)
+      expect(LetterSequence.oficio_number(cc, LetterSequence.next_sequence(cc, 2027), 2027))
         .to eq("CA-#{cc.cr_code}-001/2027")
     end
 
     it "usa o nº do ofício digitado e o próximo auto continua dele" do
       add_template
       sign_in admin
+      year = Date.current.year
+
       get letter_cost_center_path(cc), params: { kind: "principal", output: "docx", oficio_seq: "50" }
-      expect(Letter.last.number).to eq("CA-#{cc.cr_code}-050/#{Date.current.year}")
+      expect(document_xml(response.body)).to include("CA-#{cc.cr_code}-050/#{year}")
 
       # Sem digitar → auto continua de 51.
       get letter_cost_center_path(cc), params: { kind: "principal", output: "docx" }
-      expect(Letter.last.number).to eq("CA-#{cc.cr_code}-051/#{Date.current.year}")
+      expect(document_xml(response.body)).to include("CA-#{cc.cr_code}-051/#{year}")
     end
 
-    it "nº do ofício digitado que já existe → alerta (não duplica)" do
+    it "permite repetir um nº já usado (baixa a carta) e não retrocede a contagem" do
       add_template
       sign_in admin
+      year = Date.current.year
+
       get letter_cost_center_path(cc), params: { kind: "principal", output: "docx", oficio_seq: "7" }
-      expect { get letter_cost_center_path(cc), params: { kind: "principal", output: "docx", oficio_seq: "7" } }
-        .not_to change(Letter, :count)
-      expect(response).to redirect_to(cost_center_path(cc))
-      expect(flash[:alert]).to include("já existe")
+      get letter_cost_center_path(cc), params: { kind: "principal", output: "docx", oficio_seq: "7" }
+
+      expect(response).to have_http_status(:ok)
+      expect(response.media_type).to include("wordprocessingml")
+      expect(document_xml(response.body)).to include("CA-#{cc.cr_code}-007/#{year}")
+
+      get letter_cost_center_path(cc), params: { kind: "principal", output: "docx", oficio_seq: "3" }
+      expect(document_xml(response.body)).to include("CA-#{cc.cr_code}-003/#{year}")
+      expect(LetterSequence.next_sequence(cc, year)).to eq(8)
     end
 
     it "sem modelo do tipo → alerta" do
@@ -118,7 +132,7 @@ RSpec.describe "Letters", type: :request do
       expect(response).to have_http_status(:unprocessable_entity)
       expect(response.media_type).to eq("text/plain")
       expect(response.body).to include("Envie o modelo")
-      expect(Letter.count).to eq(0)
+      expect(LetterSequence.count).to eq(0)
     end
 
     it "assunto e tipo digitados entram na carta (e não gravam no preview)" do

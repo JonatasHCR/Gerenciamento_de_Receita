@@ -87,6 +87,7 @@ module Maintenance
         adjustments:       Adjustment.where(cost_center_id: ids).delete_all,
         user_cost_centers: UserCostCenter.where(cost_center_id: ids).delete_all,
         letter_templates:  LetterTemplate.where(cost_center_id: ids).delete_all,
+        letter_sequences:  LetterSequence.where(cost_center_id: ids).delete_all,
         cost_centers:      CostCenter.where(id: ids).delete_all
       }
     end
@@ -99,6 +100,7 @@ module Maintenance
         adjustments:       Adjustment.delete_all,
         user_cost_centers: UserCostCenter.delete_all,
         letter_templates:  LetterTemplate.delete_all,
+        letter_sequences:  LetterSequence.delete_all,
         cost_centers:      CostCenter.delete_all,
         clients:           Client.delete_all
       }
