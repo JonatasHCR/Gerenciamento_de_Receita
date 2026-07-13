@@ -63,6 +63,7 @@ RSpec.describe "Letters", type: :request do
     end
 
     it "numera o ofício sequencialmente e o preview não consome número" do
+      skip "defina RUN_PDF_SPECS=1 (e tenha o LibreOffice)" unless soffice? && ENV["RUN_PDF_SPECS"]
       add_template
       sign_in admin
 
