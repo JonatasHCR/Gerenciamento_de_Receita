@@ -15,7 +15,7 @@ module CostCenters
     private
 
     def adjustment_params
-      params.require(:adjustment).permit(:kind, :new_value, :new_date, :note)
+      params.require(:adjustment).permit(:kind, :amount, :new_value, :new_date, :note)
     end
   end
 end

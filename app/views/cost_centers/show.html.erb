@@ -79,14 +79,14 @@
         <%# Reajuste de VALOR %>
         <%= form_with url: cost_center_adjustments_path(@cost_center), method: :post, class: "space-y-2" do |f| %>
           <%= hidden_field_tag "adjustment[kind]", "valor" %>
-          <label class="block text-xs text-gray-500">Reajuste de Valor (R$)</label>
+          <label class="block text-xs text-gray-500">Reajuste de Valor (R$) — acrescentado ao valor do contrato</label>
           <div class="flex gap-2" data-controller="currency">
             <div class="relative flex-1">
               <span class="absolute inset-y-0 left-3 flex items-center text-sm text-gray-500 pointer-events-none">R$</span>
-              <input type="text" inputmode="numeric" placeholder="Novo valor" autocomplete="off"
+              <input type="text" inputmode="numeric" placeholder="Valor do reajuste" autocomplete="off"
                      class="w-full rounded-lg border border-gray-300 pl-9 pr-3 py-1.5 text-sm"
                      data-currency-target="display" data-action="input->currency#format">
-              <%= hidden_field_tag "adjustment[new_value]", nil, data: { "currency-target": "input" } %>
+              <%= hidden_field_tag "adjustment[amount]", nil, data: { "currency-target": "input" } %>
             </div>
             <%= f.submit "Aplicar", class: "rounded-lg bg-red-700 px-3 py-1.5 text-sm text-white hover:bg-red-800 cursor-pointer" %>
           </div>
@@ -116,7 +116,12 @@
                 </span>
                 <div class="flex-1">
                   <% if adj.valor? %>
-                    <span class="text-gray-700"><%= brl(adj.previous_value || 0) %> → <strong><%= brl(adj.new_value) %></strong></span>
+                    <span class="text-gray-700">
+                      <%= brl(adj.previous_value || 0) %> → <strong><%= brl(adj.new_value) %></strong>
+                      <% if adj.value_delta&.positive? %>
+                        <span class="text-xs font-medium text-green-700">(+<%= brl(adj.value_delta) %>)</span>
+                      <% end %>
+                    </span>
                   <% else %>
                     <span class="text-gray-700"><%= adj.previous_date&.strftime("%d/%m/%Y") || "—" %> → <strong><%= adj.new_date&.strftime("%d/%m/%Y") %></strong></span>
                   <% end %>
