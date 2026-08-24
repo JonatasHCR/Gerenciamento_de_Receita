@@ -127,6 +127,18 @@
                   <% end %>
                   <span class="block text-xs text-gray-400"><%= l(adj.created_at, format: :short) %><%= " — #{adj.note}" if adj.note.present? %></span>
                 </div>
+                <% if policy(adj).update? || policy(adj).destroy? %>
+                  <div class="flex items-center gap-2 shrink-0">
+                    <% if policy(adj).update? %>
+                      <%= link_to "Editar", edit_adjustment_path(adj), class: "text-xs text-gray-500 hover:text-red-700" %>
+                    <% end %>
+                    <% if policy(adj).destroy? %>
+                      <%= button_to "Excluir", adjustment_path(adj), method: :delete,
+                            form: { data: { turbo_confirm: "Excluir este reajuste? O #{adj.valor? ? 'valor' : 'prazo'} do contrato será revertido." } },
+                            class: "text-xs text-gray-500 hover:text-red-700 cursor-pointer" %>
+                    <% end %>
+                  </div>
+                <% end %>
               </li>
             <% end %>
           </ul>

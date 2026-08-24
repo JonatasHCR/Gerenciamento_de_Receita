@@ -15,7 +15,7 @@ Rails.application.routes.draw do
 
   resources :clients
   resources :cost_centers do
-    resources :adjustments, only: [:create], module: :cost_centers
+    resources :adjustments, only: [:create, :edit, :update, :destroy], module: :cost_centers, shallow: true
     resources :letter_templates, only: [:create, :destroy], module: :cost_centers
     member do
       get :letter, to: "letters#generate"   # gera a carta (docx/pdf/preview)

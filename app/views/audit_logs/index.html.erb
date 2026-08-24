@@ -9,7 +9,7 @@
     <div>
       <%= f.label :item_type, "Recurso", class: "block text-xs text-gray-500 mb-1" %>
       <%= f.select :item_type,
-            [["Todos", ""], "Invoice", "Receipt", "CostCenter", "ForecastEntry", "Client", "User"],
+            [["Todos", ""], "Invoice", "Receipt", "CostCenter", "Adjustment", "ForecastEntry", "Client", "User"],
             { selected: params[:item_type] },
             class: "rounded-lg border border-gray-300 px-3 py-1.5 text-sm" %>
     </div>
