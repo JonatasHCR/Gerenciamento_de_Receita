@@ -79,16 +79,16 @@ RSpec.describe "CostCenters", type: :request do
   describe "POST /cost_centers/:id/adjustments" do
     let(:cc) { create(:cost_center, client: client, value: 50_000) }
 
-    it "registra reajuste de valor e aplica ao CC (admin)" do
+    it "soma o reajuste de valor ao valor do CC (admin)" do
       sign_in admin
-      post cost_center_adjustments_path(cc), params: { adjustment: { kind: "valor", new_value: 60_000 } }
+      post cost_center_adjustments_path(cc), params: { adjustment: { kind: "valor", amount: "10000.00" } }
       expect(response).to redirect_to(cost_center_path(cc))
       expect(cc.reload.value).to eq(60_000)
     end
 
     it "bloqueia coordenador sem vínculo" do
       sign_in coordenador
-      post cost_center_adjustments_path(cc), params: { adjustment: { kind: "valor", new_value: 60_000 } }
+      post cost_center_adjustments_path(cc), params: { adjustment: { kind: "valor", amount: "10000.00" } }
       expect(response).to redirect_to(root_path)
     end
   end
