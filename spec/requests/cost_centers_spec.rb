@@ -73,6 +73,23 @@ RSpec.describe "CostCenters", type: :request do
       expect(response.media_type).to eq("application/pdf")
       expect(response.body[0, 4]).to eq("%PDF")
     end
+
+    it "agrupa por coordenador e filtra a seleção" do
+      cc = create(:cost_center, client: client, value: 100_000, coordinator: "Bruno Lima")
+      sign_in admin
+      get report_cost_centers_path(output: "pdf", group_by: "coordenador",
+                                   coordinator_names: ["Bruno Lima"], cost_center_ids: [cc.id])
+      expect(response).to have_http_status(:ok)
+      expect(response.body[0, 4]).to eq("%PDF")
+    end
+
+    it "agrupa por cliente no Excel" do
+      create(:cost_center, client: client, value: 100_000, participation: 0.5)
+      sign_in admin
+      get report_cost_centers_path(group_by: "cliente")
+      expect(response).to have_http_status(:ok)
+      expect(response.media_type).to eq("application/vnd.openxmlformats-officedocument.spreadsheetml.sheet")
+    end
   end
 
   # ── POST /cost_centers/:id/adjustments (reajuste) ─────────────────────────

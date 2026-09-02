@@ -6,20 +6,24 @@ RSpec.describe ReportPolicy, type: :policy do
   context "when admin" do
     let(:user) { build(:user, :admin) }
     it { is_expected.to permit_action(:monthly) }
+    it { is_expected.to permit_action(:movement) }
   end
 
   context "when financeiro" do
     let(:user) { build(:user, :financeiro) }
     it { is_expected.to permit_action(:monthly) }
+    it { is_expected.to permit_action(:movement) }
   end
 
   context "when gestor" do
     let(:user) { build(:user, :gestor) }
     it { is_expected.not_to permit_action(:monthly) }
+    it { is_expected.not_to permit_action(:movement) }
   end
 
   context "when coordenador" do
     let(:user) { build(:user, :coordenador) }
     it { is_expected.not_to permit_action(:monthly) }
+    it { is_expected.not_to permit_action(:movement) }
   end
 end
