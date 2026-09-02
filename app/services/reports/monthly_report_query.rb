@@ -1,38 +1,52 @@
 module Reports
-  # Agrega os dados do relatório mensal por cliente → centros de custo.
+  # Agrega os dados do relatório mensal por centro de custo e monta a árvore de
+  # agrupamento (cliente, coordenador → cliente, ou lista plana) via GroupTree.
   #
-  # Para cada centro de custo retorna:
-  #   previsto   → ForecastEntry.forecasted_total do mês
-  #   inv_cur    → faturamento emitido no mês
-  #   inv_pre    → faturamento emitido em meses anteriores
-  #   open_pre   → em aberto das NFs anteriores (inv_pre − recebido pago até o mês anterior)
-  #   rec_cur    → recebimentos no mês
-  #   open       → saldo em aberto até o fim do mês (faturado − recebido)
+  # Para cada centro de custo:
+  #   previsto   → ForecastEntry.forecasted_total do período
+  #   inv_cur    → faturamento emitido no período
+  #   inv_pre    → faturamento emitido antes do período
+  #   open_pre   → em aberto das NFs anteriores (inv_pre − recebido pago antes do período)
+  #   rec_cur    → recebimentos no período
+  #   open       → saldo em aberto até o fim do período (faturado − recebido)
   #
-  # Estrutura de retorno:
-  #   [
-  #     { client:, cost_centers: [ {cc:, previsto:, inv_cur:, inv_pre:, rec_cur:, open:}, ... ],
-  #       totals: {...} },
-  #     ...
-  #   ]
+  # #rows  → linhas planas [{ cc:, client:, previsto:, ... }, ...]
+  # #call  → { levels:, groups: [...], totals: {...} }  (ver Reports::GroupTree)
   class MonthlyReportQuery
-    def initialize(period_start:, period_end:, scope: CostCenter.all)
+    # Colunas monetárias exibidas no relatório (PDF). "Tudo zerado" = todas elas 0.
+    DISPLAY_KEYS = %i[previsto inv_cur open_pre rec_cur open].freeze
+    SUM_KEYS     = (DISPLAY_KEYS + %i[inv_pre]).freeze
+
+    def initialize(period_start:, period_end:, scope: CostCenter.all, levels: [:cliente])
       @period_start = period_start
       @period_end   = period_end
       @scope        = scope
+      @levels       = Array(levels)
     end
 
     def call
-      data = Hash.new { |h, k| h[k] = {} }
+      GroupTree.build(rows, levels: @levels, sum_keys: SUM_KEYS)
+    end
+
+    def rows
+      @rows ||= build_rows
+    end
+
+    private
+
+    def build_rows
+      data    = Hash.new { |h, k| h[k] = {} }
       q_start = connection.quote(@period_start)
       q_end   = connection.quote(@period_end)
+      cc_ids  = @scope.reselect(:id)
 
-      ForecastEntry.where(month_year: month_year_labels)
+      ForecastEntry.where(cost_center_id: cc_ids, month_year: month_year_labels)
                    .group(:cost_center_id).sum(:forecasted_total)
                    .each { |id, v| data[id][:previsto] = v }
 
-      # Faturamento (<= fim do mês) por CC: mês atual × meses anteriores numa query.
-      Invoice.where("issued_at <= #{q_end}")
+      # Faturamento (<= fim do período) por CC: no período × antes dele, numa query.
+      Invoice.where(cost_center_id: cc_ids)
+             .where("issued_at <= #{q_end}")
              .group(:cost_center_id)
              .pluck(
                :cost_center_id,
@@ -41,10 +55,11 @@ module Reports
              )
              .each { |id, cur, pre| data[id].merge!(inv_cur: cur, inv_pre: pre) }
 
-      # Recebimentos (<= fim do mês) por CC: no mês, total, e sobre NFs anteriores.
-      # rec_on_pre conta só pagamentos ATÉ o mês anterior (payment_date < início do mês),
-      # ignorando pagamentos no mês selecionado/futuro.
+      # Recebimentos (<= fim do período) por CC: no período, total, e sobre NFs
+      # anteriores. rec_on_pre conta só pagamentos ATÉ antes do período,
+      # ignorando pagamentos no período selecionado/futuro.
       Receipt.joins(:invoice)
+             .where(invoices: { cost_center_id: cc_ids })
              .where("receipts.payment_date <= #{q_end}")
              .group("invoices.cost_center_id")
              .pluck(
@@ -55,41 +70,30 @@ module Reports
              )
              .each { |id, cur, until_end, on_pre| data[id].merge!(rec_cur: cur, rec_until: until_end, rec_on_pre: on_pre) }
 
-      grouped = Hash.new { |h, k| h[k] = [] }
-
       @scope.includes(:client).joins(:client)
             .where(id: data.keys)
             .order("clients.name", "cost_centers.cr_code")
-            .each do |cc|
-        d        = data[cc.id]
-        inv_cur  = d[:inv_cur] || 0
-        inv_pre  = d[:inv_pre] || 0
-        grouped[cc.client] << {
-          cc:       cc,
-          previsto: d[:previsto] || 0,
-          inv_cur:  inv_cur,
-          inv_pre:  inv_pre,
-          open_pre: inv_pre - (d[:rec_on_pre] || 0),
-          rec_cur:  d[:rec_cur] || 0,
-          open:     (inv_cur + inv_pre) - (d[:rec_until] || 0)
-        }
-      end
-
-      # Omite CCs com TODOS os valores exibidos zerados; e clientes cujos CCs
-      # ficaram todos zerados. Se algum CC tiver valor, o cliente aparece.
-      grouped.filter_map do |client, rows|
-        visible = rows.reject { |r| display_all_zero?(r) }
-        next if visible.empty?
-
-        {
-          client:       client,
-          cost_centers: visible,
-          totals:       sum_rows(visible)
-        }
-      end
+            .filter_map { |cc| build_row(cc, data[cc.id]) }
     end
 
-    private
+    def build_row(cost_center, d)
+      inv_cur = d[:inv_cur] || 0
+      inv_pre = d[:inv_pre] || 0
+
+      row = {
+        cc:       cost_center,
+        client:   cost_center.client,
+        previsto: d[:previsto] || 0,
+        inv_cur:  inv_cur,
+        inv_pre:  inv_pre,
+        open_pre: inv_pre - (d[:rec_on_pre] || 0),
+        rec_cur:  d[:rec_cur] || 0,
+        open:     (inv_cur + inv_pre) - (d[:rec_until] || 0)
+      }
+
+      # Omite CCs com TODOS os valores exibidos zerados.
+      row unless DISPLAY_KEYS.all? { |k| row[k].to_d.zero? }
+    end
 
     # Rótulos "MÊS/AAAA" de cada mês do intervalo (previsto é acumulado no período).
     def month_year_labels
@@ -104,24 +108,6 @@ module Reports
 
     def connection
       ActiveRecord::Base.connection
-    end
-
-    # Colunas monetárias exibidas no relatório (PDF). "Tudo zerado" = todas elas 0.
-    DISPLAY_KEYS = %i[previsto inv_cur open_pre rec_cur open].freeze
-
-    def display_all_zero?(row)
-      DISPLAY_KEYS.all? { |k| row[k].to_d.zero? }
-    end
-
-    def sum_rows(rows)
-      {
-        previsto: rows.sum { |r| r[:previsto] },
-        inv_cur:  rows.sum { |r| r[:inv_cur] },
-        inv_pre:  rows.sum { |r| r[:inv_pre] },
-        open_pre: rows.sum { |r| r[:open_pre] },
-        rec_cur:  rows.sum { |r| r[:rec_cur] },
-        open:     rows.sum { |r| r[:open] }
-      }
     end
   end
 end

@@ -1,0 +1,42 @@
+<%#
+  Um nível da cascata de filtros. Locals: level, title, param, id_prefix,
+  order (posição na coluna flex) e items [{ value:, label:, data: {} }].
+%>
+<div data-scope-filter-target="level" data-level="<%= level %>" style="order: <%= order %>">
+  <div class="flex items-center justify-between mb-1">
+    <span class="block text-xs font-medium text-gray-600"><%= title %></span>
+    <span class="text-xs text-gray-400" data-role="count"></span>
+  </div>
+
+  <%# Aviso enquanto o nível anterior não tem seleção. %>
+  <p class="text-xs text-gray-400 rounded-lg border border-dashed border-gray-200 px-3 py-2"
+     data-role="hint" hidden></p>
+
+  <div data-role="body">
+    <div class="flex items-center gap-2 mb-1">
+      <input type="search" placeholder="Buscar <%= title.downcase %>..."
+             data-role="search" data-action="input->scope-filter#refresh"
+             class="flex-1 rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:ring-2 focus:ring-red-500">
+      <button type="button" data-action="scope-filter#selectAll"
+              class="text-xs text-gray-500 hover:text-red-700 cursor-pointer">todos</button>
+      <span class="text-xs text-gray-300">/</span>
+      <button type="button" data-action="scope-filter#selectNone"
+              class="text-xs text-gray-500 hover:text-red-700 cursor-pointer">nenhum</button>
+    </div>
+
+    <div class="max-h-44 overflow-y-auto rounded-lg border border-gray-200 divide-y divide-gray-100"
+         data-role="items">
+      <% items.each do |item| %>
+        <label class="flex items-center gap-2 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer"
+               data-role="item" <%= tag.attributes(data: item[:data]) %>>
+          <%= check_box_tag param, item[:value], false, id: nil,
+                data: { action: "change->scope-filter#refresh" },
+                class: "rounded border-gray-300 text-red-600 focus:ring-red-500" %>
+          <span><%= item[:label] %></span>
+        </label>
+      <% end %>
+      <p class="px-3 py-2 text-xs text-gray-400" data-role="empty" hidden>Nada encontrado.</p>
+    </div>
+    <p class="text-xs text-gray-400 mt-1" data-role="footnote">Nenhum marcado = todos.</p>
+  </div>
+</div>

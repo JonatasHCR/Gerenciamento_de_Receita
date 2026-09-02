@@ -25,6 +25,20 @@ class CostCenter < ApplicationRecord
 
   scope :ordered, -> { order(:cr_code) }
 
+  # Filtra pelos NOMES de coordenador presentes no texto `coordinator`
+  # ("Nome A / Nome B"). Casamento EXATO por item da lista — ILIKE '%Ana%'
+  # pegaria "Ana Maria". Cobre coordenador externo (sem User cadastrado).
+  scope :coordinated_by_names, ->(names) {
+    list = Array(names).map { |n| n.to_s.strip }.reject(&:blank?)
+    next none if list.empty?
+
+    where(
+      "EXISTS (SELECT 1 FROM unnest(string_to_array(COALESCE(cost_centers.coordinator, ''), '/')) AS cn(nome) " \
+      "WHERE btrim(cn.nome) = ANY (ARRAY[:names]))",
+      names: list
+    )
+  }
+
   # Um CC pode ter mais de um coordenador/gestor. Armazenado no campo string
   # `coordinator` com os nomes separados por " / " (mesmo formato da planilha).
   COORDINATOR_SEP = " / ".freeze

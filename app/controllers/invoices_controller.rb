@@ -5,10 +5,10 @@ class InvoicesController < ApplicationController
     authorize Invoice
     # Padrão: mostra apenas notas EM ABERTO (esconde quitadas).
     @status = params[:status].presence || "open"
-    scope = policy_scope(Invoice)
-              .preload(:cost_center)
-              .select("invoices.*, COALESCE(r.received, 0) AS preloaded_received")
-              .joins("LEFT JOIN (SELECT invoice_id, SUM(value) AS received FROM receipts GROUP BY invoice_id) r ON r.invoice_id = invoices.id")
+    @month  = parse_month(params[:month]) if params[:month].present?
+    # SNAPSHOT no mês filtrado: baixa posterior ao fim do mês não conta, então a
+    # NF paga depois continua aparecendo como em aberto naquele mês.
+    scope = policy_scope(Invoice).preload(:cost_center).with_received(@month&.end_of_month)
     scope = apply_filters(scope)
     @pagy, @invoices = pagy(scope.ordered)
   end
@@ -65,7 +65,7 @@ class InvoicesController < ApplicationController
   def apply_filters(scope)
     scope = scope.where("invoices.number ILIKE ?", "%#{params[:q].strip}%") if params[:q].present?
     scope = scope.where(cost_center_id: params[:cost_center_id]) if params[:cost_center_id].present?
-    scope = scope.for_month(parse_month(params[:month]))  if params[:month].present?
+    scope = scope.for_month(@month) if @month
 
     # Status: open (em aberto) é o padrão; paid (quitadas); all (todas).
     case @status

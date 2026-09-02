@@ -38,7 +38,7 @@ Rails.application.routes.draw do
   end
   get "reports",               to: "reports#index",         as: :reports
   get "reports/monthly",       to: "reports#monthly",       as: :monthly_report
-  get "reports/open_invoices", to: "reports#open_invoices", as: :open_invoices_report
+  get "reports/movement",      to: "reports#movement",      as: :movement_report
 
   get "audit_logs", to: "audit_logs#index"
   get "audit_logs/:id", to: "audit_logs#show", as: :audit_log

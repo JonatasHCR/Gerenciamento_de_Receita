@@ -1,0 +1,54 @@
+<%#
+  Filtro/agrupamento compartilhado pelos relatórios, em CASCATA.
+  A dimensão escolhida em "Agrupar por" define a cadeia de níveis:
+    coordenador → coordenador ▸ cliente ▸ centro de custo
+    cliente     → cliente ▸ centro de custo
+    centro_custo→ centro de custo
+  Cada nível só aparece depois que o anterior tem alguma seleção; nível sem
+  seleção = todos. Cada lista tem busca e "todos/nenhum" (só os visíveis).
+
+  Locals: default_group_by (String), id_prefix (String).
+  Params: group_by, client_ids[], coordinator_names[], cost_center_ids[].
+%>
+<div class="space-y-3 border-t border-gray-100 pt-3"
+     data-controller="scope-filter"
+     data-scope-filter-group-by-value="<%= default_group_by %>">
+  <div>
+    <label class="block text-xs text-gray-500 mb-1" for="<%= id_prefix %>_group_by">Agrupar por</label>
+    <%= select_tag "group_by",
+          options_for_select([["Cliente", "cliente"],
+                              ["Centro de Custo (lista plana)", "centro_custo"],
+                              ["Coordenador", "coordenador"]], default_group_by),
+          id: "#{id_prefix}_group_by",
+          data: { "scope-filter-target": "groupBy", action: "change->scope-filter#groupChanged" },
+          class: "w-full rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:ring-2 focus:ring-red-500" %>
+  </div>
+
+  <%# Campos vazios garantem que "desmarcar tudo" chegue ao servidor como "todos". %>
+  <%= hidden_field_tag "coordinator_names[]", "", id: nil %>
+  <%= hidden_field_tag "client_ids[]", "", id: nil %>
+  <%= hidden_field_tag "cost_center_ids[]", "", id: nil %>
+
+  <div class="flex flex-col gap-3">
+    <%= render "reports/scope_filter_level",
+          level: "coordenador", title: "Coordenadores", param: "coordinator_names[]",
+          id_prefix: id_prefix, order: 1,
+          items: @scope_coordinators.map { |name| { value: name, label: name, data: {} } } %>
+
+    <%= render "reports/scope_filter_level",
+          level: "cliente", title: "Clientes", param: "client_ids[]",
+          id_prefix: id_prefix, order: 2,
+          items: @scope_clients.map { |c|
+            { value: c.id, label: c.name,
+              data: { client_id: c.id, coordinators: (@client_coordinators[c.id] || []).to_json } }
+          } %>
+
+    <%= render "reports/scope_filter_level",
+          level: "centro_custo", title: "Centros de custo", param: "cost_center_ids[]",
+          id_prefix: id_prefix, order: 3,
+          items: @scope_cost_centers.map { |cc|
+            { value: cc.id, label: "#{cc.cr_code} — #{cc.description}",
+              data: { client_id: cc.client_id, coordinators: cc.coordinator_list.to_json } }
+          } %>
+  </div>
+</div>

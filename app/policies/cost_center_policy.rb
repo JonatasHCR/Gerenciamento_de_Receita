@@ -22,7 +22,7 @@ class CostCenterPolicy < ApplicationPolicy
   class Scope < ApplicationPolicy::Scope
     def resolve
       return scope.all unless user.coordenador?
-      scope.joins(:user_cost_centers).where(user_cost_centers: { user_id: user.id })
+      scope.joins(:user_cost_centers).where(user_cost_centers: { user_id: user.id }).distinct
     end
   end
 

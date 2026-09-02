@@ -9,7 +9,7 @@
         <div>
           <h2 class="text-sm font-semibold text-gray-800">Relatório Mensal de Receitas (PDF)</h2>
           <p class="text-xs text-gray-500 mt-1">
-            Previsto · Faturado · Em aberto anterior · Recebido · Faturas em aberto, por cliente e CC.
+            Previsto · Faturado · Em aberto anterior · Recebido · Faturas em aberto, por centro de custo.
             Por mês (padrão) ou por período.
           </p>
         </div>
@@ -33,6 +33,8 @@
             <p class="text-xs text-gray-400 mt-1">Com as datas preenchidas, o período prevalece sobre o mês.</p>
           </div>
 
+          <%= render "reports/scope_filter", default_group_by: "cliente", id_prefix: "monthly" %>
+
           <%= f.submit "📄 Gerar PDF",
                 class: "rounded-lg bg-orange-600 px-4 py-1.5 text-sm font-medium text-white hover:bg-orange-700 cursor-pointer" %>
         <% end %>
@@ -47,46 +49,70 @@
           O Excel traz ainda o detalhamento UFC.
         </p>
       </div>
-      <div class="flex flex-wrap gap-2">
-        <%= link_to "📊 Baixar Excel", report_cost_centers_path(output: "xlsx"),
-              data: { turbo: false },
-              class: "inline-block rounded-lg border border-green-600 px-4 py-1.5 text-sm font-medium text-green-700 hover:bg-green-50" %>
-        <%= link_to "📕 Baixar PDF", report_cost_centers_path(output: "pdf"),
-              data: { turbo: false },
-              class: "inline-block rounded-lg border border-red-600 px-4 py-1.5 text-sm font-medium text-red-700 hover:bg-red-50" %>
-      </div>
+
+      <%= form_with url: report_cost_centers_path, method: :get, data: { turbo: false }, class: "space-y-3" do %>
+        <%= render "reports/scope_filter", default_group_by: "centro_custo", id_prefix: "commitments" %>
+
+        <div class="flex flex-wrap gap-2 pt-1">
+          <button type="submit" name="output" value="xlsx"
+                  class="rounded-lg border border-green-600 px-4 py-1.5 text-sm font-medium text-green-700 hover:bg-green-50 cursor-pointer">📊 Baixar Excel</button>
+          <button type="submit" name="output" value="pdf"
+                  class="rounded-lg border border-red-600 px-4 py-1.5 text-sm font-medium text-red-700 hover:bg-red-50 cursor-pointer">📕 Baixar PDF</button>
+        </div>
+      <% end %>
     </div>
 
     <% if current_user.admin_or_financeiro? %>
-      <div class="bg-white rounded-xl border border-gray-200 p-5 space-y-4" data-controller="check-all">
+      <div class="bg-white rounded-xl border border-gray-200 p-5 space-y-4 lg:col-span-2">
         <div>
-          <h2 class="text-sm font-semibold text-gray-800">Relação das Faturas em Aberto (PDF / Excel)</h2>
+          <h2 class="text-sm font-semibold text-gray-800">Relatório de Movimentação (PDF / Excel)</h2>
           <p class="text-xs text-gray-500 mt-1">
-            NFs com saldo em aberto por cliente → centro de custo (CLIENTE, NF, emissão, CC, contrato, valor).
-            Marque <strong>um ou mais clientes</strong> (nenhum = todos).
+            Faturamento (por <strong>data de emissão</strong>) e/ou recebimento (por <strong>data de baixa</strong>),
+            destacando e totalizando o que está <strong>em aberto</strong>. Subtotais em cada nível do agrupamento.
           </p>
         </div>
 
-        <%= form_with url: open_invoices_report_path, method: :get, data: { turbo: false }, class: "space-y-3" do %>
-          <div class="flex items-center justify-between">
-            <span class="block text-xs text-gray-500">Clientes</span>
-            <label class="flex items-center gap-1 text-xs text-gray-500 cursor-pointer">
-              <input type="checkbox" data-action="change->check-all#toggle"
-                     class="rounded border-gray-300 text-red-600 focus:ring-red-500">
-              marcar/desmarcar todos
-            </label>
+        <%= form_with url: movement_report_path, method: :get,
+              data: { turbo: false, controller: "movement-options" }, class: "space-y-3" do |f| %>
+          <fieldset>
+            <legend class="block text-xs text-gray-500 mb-1">Tipo</legend>
+            <div class="flex flex-wrap gap-4">
+              <% [["ambos", "Ambos"], ["faturamento", "Faturamento"], ["recebimento", "Recebimento"]].each do |value, label| %>
+                <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+                  <%= radio_button_tag "tipo", value, value == "ambos", id: nil,
+                        data: { "movement-options-target": "tipo",
+                                action: "change->movement-options#toggle" },
+                        class: "border-gray-300 text-red-600 focus:ring-red-500" %>
+                  <%= label %>
+                </label>
+              <% end %>
+            </div>
+          </fieldset>
+
+          <%# Só faz sentido com faturamento — some no tipo "recebimento". %>
+          <label class="flex items-center gap-2 text-sm text-gray-700 cursor-pointer"
+                 data-movement-options-target="onlyOpen">
+            <%= check_box_tag "only_open", "1", false, id: nil,
+                  data: { "movement-options-target": "onlyOpenBox" },
+                  class: "rounded border-gray-300 text-red-600 focus:ring-red-500" %>
+            Somente faturas em aberto
+          </label>
+
+          <div>
+            <label class="block text-xs text-gray-500 mb-1">Período (opcional — vazio = tudo)</label>
+            <div class="flex flex-wrap items-center gap-2">
+              <%= f.date_field :start,
+                    class: "rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:ring-2 focus:ring-red-500" %>
+              <span class="text-xs text-gray-400">até</span>
+              <%= f.date_field :end,
+                    class: "rounded-lg border border-gray-300 px-3 py-1.5 text-sm focus:ring-2 focus:ring-red-500" %>
+            </div>
+            <p class="text-xs text-gray-400 mt-1">
+              Faturamento é recortado pela data de emissão; recebimento, pela data de baixa.
+            </p>
           </div>
-          <%= hidden_field_tag "client_ids[]", "" %>
-          <div class="max-h-56 overflow-y-auto rounded-lg border border-gray-200 divide-y divide-gray-100">
-            <% Client.order(:name).each do |client| %>
-              <label class="flex items-center gap-2 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 cursor-pointer">
-                <%= check_box_tag "client_ids[]", client.id, false,
-                      data: { "check-all-target": "item" },
-                      class: "rounded border-gray-300 text-red-600 focus:ring-red-500" %>
-                <span><%= client.name %></span>
-              </label>
-            <% end %>
-          </div>
+
+          <%= render "reports/scope_filter", default_group_by: "cliente", id_prefix: "movement" %>
 
           <div class="flex gap-2 pt-1">
             <button type="submit" name="output" value="pdf"

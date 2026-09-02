@@ -20,14 +20,19 @@ class CostCentersController < ApplicationController
 
   def report
     authorize CostCenter, :index?
-    scope = policy_scope(CostCenter).includes(:client).ordered
-    base  = "relacao_compromissos_#{Date.current.strftime('%Y_%m_%d')}"
+    filter = Reports::ScopeFilter.from_params(params, scope: policy_scope(CostCenter),
+                                              default_group_by: :centro_custo)
+    scope  = filter.cost_centers.includes(:client).ordered
+    levels = filter.levels(row_is_cost_center: true)
+    label  = filter.filtered? || levels.any? ? filter.label : nil
+    base   = "relacao_compromissos_#{Date.current.strftime('%Y_%m_%d')}"
 
     if params[:output] == "pdf"
-      send_data CostCenters::CommitmentsPdf.new(scope, generated_by: current_user.name).render,
+      send_data CostCenters::CommitmentsPdf.new(scope, levels: levels, filter_label: label,
+                                                generated_by: current_user.name).render,
         filename: "#{base}.pdf", type: "application/pdf", disposition: "attachment"
     else
-      send_data CostCenters::CommitmentsReport.new(scope).call,
+      send_data CostCenters::CommitmentsReport.new(scope, levels: levels, filter_label: label).call,
         filename: "#{base}.xlsx",
         type: "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         disposition: "attachment"
