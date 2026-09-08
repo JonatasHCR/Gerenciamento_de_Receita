@@ -25,8 +25,10 @@ while true; do
   sleep "$((next - now))"
 
   ts="$(date +%Y%m%d_%H%M%S)"
-  file="${DIR}/receita_${ts}.dump"
-  if pg_dump -h "$DB_HOST" -U "$POSTGRES_USER" -d "$POSTGRES_DB" -Fc > "$file"; then
+  file="${DIR}/receita_${ts}.sql"
+  # Texto puro. --clean/--if-exists embutem os DROP no arquivo, que e o que
+  # permite restaurar sobre um banco povoado com psql.
+  if pg_dump -h "$DB_HOST" -U "$POSTGRES_USER" -d "$POSTGRES_DB" --clean --if-exists --no-owner --no-privileges > "$file"; then
     echo "[backup] OK ${file} ($(du -h "$file" | cut -f1))"
   else
     echo "[backup] FALHOU em ${ts}" >&2
@@ -34,5 +36,5 @@ while true; do
   fi
 
   # Retenção: mantém apenas os $KEEP mais recentes (apenas os automáticos).
-  ls -1t "${DIR}"/receita_*.dump 2>/dev/null | tail -n +"$((KEEP + 1))" | xargs -r rm --
+  ls -1t "${DIR}"/receita_*.sql 2>/dev/null | tail -n +"$((KEEP + 1))" | xargs -r rm --
 done

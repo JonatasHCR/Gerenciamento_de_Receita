@@ -1,7 +1,7 @@
 require "fileutils"
 
 module Maintenance
-  # Gera um dump pg_dump -Fc no MESMO diretório (./backups) usado pelo sidecar e
+  # Gera um dump .sql em texto puro no MESMO diretório (./backups) usado pelo sidecar e
   # pelo scripts/restore.sh. Roda dentro do container web (que tem pg_dump e
   # alcança o serviço "db"). É a mesma operação do scripts/backup.sh, só disparada
   # pela aplicação em vez do host.
@@ -16,12 +16,14 @@ module Maintenance
     def call
       dir = Rails.root.join("backups")
       FileUtils.mkdir_p(dir)
-      file = dir.join("manual_#{Time.current.strftime('%Y%m%d_%H%M%S')}.dump")
+      file = dir.join("manual_#{Time.current.strftime('%Y%m%d_%H%M%S')}.sql")
 
       cfg = ActiveRecord::Base.connection_db_config.configuration_hash
       env = { "PGPASSWORD" => cfg[:password].to_s }
       args = [
-        "pg_dump", "-Fc",
+        # --clean/--if-exists embutem os DROP no arquivo: e o que permite
+        # restaurar sobre um banco ja povoado usando psql.
+        "pg_dump", "--clean", "--if-exists", "--no-owner", "--no-privileges",
         "-h", (cfg[:host] || "localhost").to_s,
         "-p", (cfg[:port] || 5432).to_s,
         "-U", cfg[:username].to_s,
