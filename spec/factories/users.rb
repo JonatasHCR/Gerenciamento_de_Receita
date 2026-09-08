@@ -2,8 +2,10 @@ FactoryBot.define do
   factory :user do
     name { Faker::Name.name }
     sequence(:email) { |n| "user#{n}@example.com" }
-    password { "password123" }
-    password_confirmation { "password123" }
+    # Sem password/password_confirmation: o :database_authenticatable saiu do
+    # modelo. `sign_in` dos helpers do Devise usa Warden direto, entao os specs
+    # de request continuam funcionando sem senha.
+    sequence(:external_id) { |n| "sub-teste-#{n}" }
     role { :coordenador }
 
     trait :admin do

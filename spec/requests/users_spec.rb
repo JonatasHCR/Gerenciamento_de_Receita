@@ -11,9 +11,9 @@ RSpec.describe "Users", type: :request do
       user: {
         name:                  "Novo Usuário",
         email:                 "novo@ufc.com.br",
-        role:                  "financeiro",
-        password:              "senha12345",
-        password_confirmation: "senha12345"
+        # Sem senha: o `user_params` do controller nao permite mais esses
+        # campos, e o modelo nao tem :database_authenticatable.
+        role:                  "financeiro"
       }
     }
   end

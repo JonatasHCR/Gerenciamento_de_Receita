@@ -25,9 +25,12 @@ RSpec.describe Reports::MovementReportQuery do
     result[:sections].find { |s| s[:kind] == kind }
   end
 
-  it "tipo ambos devolve as duas seções" do
+  it "tipo ambos devolve UMA seção — a de faturamento já traz o recebimento" do
+    # A seção de faturamento em `ambos` lista Faturado / Recebido / Em aberto e
+    # separa em blocos o que teve baixa do que falta receber. A de recebimento
+    # repetia as mesmas notas sob outro recorte de data.
     result = run(tipo: :ambos)
-    expect(result[:sections].map { |s| s[:kind] }).to eq(%i[faturamento recebimento])
+    expect(result[:sections].map { |s| s[:kind] }).to eq(%i[faturamento])
   end
 
   it "tipo faturamento lista as NFs por data de emissão com saldo e destaque" do
@@ -187,10 +190,19 @@ RSpec.describe Reports::MovementReportQuery do
   end
 
   it "recorta faturamento por emissão e recebimento por baixa, de forma independente" do
+    # Os dois recortes continuam independentes; o do recebimento chega pelo
+    # resumo, já que a seção não é mais renderizada em `ambos`.
     result = run(tipo: :ambos, period_start: Date.new(2026, 6, 1), period_end: Date.new(2026, 6, 30))
 
     expect(section(result, :faturamento)[:tree][:totals][:value]).to eq(30_000)
-    expect(section(result, :recebimento)[:tree][:totals][:value]).to eq(10_000)
+    expect(result[:summary][:recebido]).to eq(10_000)
+  end
+
+  it "em ambos, o resumo mantém o recebido e a contagem de baixas" do
+    # A seção some da tela, mas os números do rodapé continuam vindo dela.
+    s = run(tipo: :ambos)[:summary]
+    expect(s[:recebido]).to eq(30_000)
+    expect(s[:baixas]).to be_positive
   end
 
   it "sem período traz tudo" do

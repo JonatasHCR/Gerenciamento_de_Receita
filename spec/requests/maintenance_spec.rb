@@ -1,8 +1,21 @@
 require "rails_helper"
 
 RSpec.describe "Maintenance", type: :request do
-  let(:admin)      { create(:user, :admin, password: "admin123456", password_confirmation: "admin123456") }
+  let(:admin)      { create(:user, :admin) }
   let(:financeiro) { create(:user, :financeiro) }
+
+  # A confirmação por senha do admin deu lugar à autenticação recente no
+  # Keycloak: `session[:auth_time]` guarda quando a pessoa digitou a senha, e o
+  # controller só libera limpeza/restauração dentro da janela.
+  def confirmar_identidade
+    allow_any_instance_of(MaintenanceController)
+      .to receive(:autenticacao_recente?).and_return(true)
+  end
+
+  def identidade_expirada
+    allow_any_instance_of(MaintenanceController)
+      .to receive(:autenticacao_recente?).and_return(false)
+  end
 
   describe "autorização (somente admin)" do
     it "redireciona não-admin do index" do
@@ -21,27 +34,29 @@ RSpec.describe "Maintenance", type: :request do
       sign_in financeiro
       create(:forecast_entry)
       expect {
-        delete maintenance_cleanup_path, params: { target: "previsao", password: "x" }
+        delete maintenance_cleanup_path, params: { target: "previsao" }
       }.not_to change(ForecastEntry, :count)
     end
   end
 
   describe "limpeza" do
-    before { sign_in admin }
+    # Confirmada por padrão; o teste do gate desliga explicitamente.
+    before { sign_in admin; confirmar_identidade }
 
-    it "NÃO apaga com senha incorreta e avisa" do
+    it "NÃO apaga sem identidade confirmada e avisa" do
+      identidade_expirada
       create(:forecast_entry)
       expect {
-        delete maintenance_cleanup_path, params: { target: "previsao", password: "errada" }
+        delete maintenance_cleanup_path, params: { target: "previsao" }
       }.not_to change(ForecastEntry, :count)
       follow_redirect!
-      expect(response.body).to include("Senha incorreta")
+      expect(response.body).to include("Confirme sua identidade")
     end
 
-    it "apaga previsões com senha correta e registra na auditoria" do
+    it "apaga previsões com identidade confirmada e registra na auditoria" do
       create_list(:forecast_entry, 2)
       expect {
-        delete maintenance_cleanup_path, params: { target: "previsao", password: "admin123456" }
+        delete maintenance_cleanup_path, params: { target: "previsao" }
       }.to change(ForecastEntry, :count).to(0)
 
       v = PaperTrail::Version.where(item_type: "Manutenção", event: "limpeza").last
@@ -50,7 +65,7 @@ RSpec.describe "Maintenance", type: :request do
     end
 
     it "rejeita alvo inválido" do
-      delete maintenance_cleanup_path, params: { target: "qualquer", password: "admin123456" }
+      delete maintenance_cleanup_path, params: { target: "qualquer" }
       follow_redirect!
       expect(response.body).to include("inválido")
     end
@@ -62,7 +77,7 @@ RSpec.describe "Maintenance", type: :request do
       create(:invoice, cost_center: cc1)
 
       delete maintenance_cleanup_path,
-        params: { target: "faturamento", cost_center_id: cc1.id, password: "admin123456" }
+        params: { target: "faturamento", cost_center_id: cc1.id }
 
       expect(Invoice.exists?(keep.id)).to be(true)
       expect(Invoice.where(cost_center_id: cc1.id)).to be_empty
@@ -70,7 +85,7 @@ RSpec.describe "Maintenance", type: :request do
 
     it "limpa a auditoria (sobra só o registro da própria limpeza)" do
       PaperTrail::Version.insert!({ item_type: "X", item_id: 1, event: "create", created_at: Time.current })
-      delete maintenance_cleanup_path, params: { target: "auditoria", password: "admin123456" }
+      delete maintenance_cleanup_path, params: { target: "auditoria" }
 
       expect(PaperTrail::Version.where(item_type: "X")).to be_empty
       expect(PaperTrail::Version.where(item_type: "Manutenção", event: "limpeza").count).to eq(1)
@@ -82,7 +97,7 @@ RSpec.describe "Maintenance", type: :request do
       keep = create(:forecast_entry, cost_center: cc, month_year: "JULHO/2026")
 
       delete maintenance_cleanup_path,
-        params: { target: "previsao", month: "2026-06", password: "admin123456" }
+        params: { target: "previsao", month: "2026-06" }
 
       expect(ForecastEntry.where(month_year: "JUNHO/2026")).to be_empty
       expect(ForecastEntry.exists?(keep.id)).to be(true)
@@ -99,22 +114,23 @@ RSpec.describe "Maintenance", type: :request do
   end
 
   describe "restore" do
-    before { sign_in admin }
+    before { sign_in admin; confirmar_identidade }
 
-    it "não restaura com senha incorreta" do
+    it "não restaura sem identidade confirmada" do
+      identidade_expirada
       expect_any_instance_of(Maintenance::DatabaseRestore).not_to receive(:call)
-      post maintenance_restore_path, params: { file: "x.dump", password: "errada" }
+      post maintenance_restore_path, params: { file: "x.dump" }
       follow_redirect!
-      expect(response.body).to include("Senha incorreta")
+      expect(response.body).to include("Confirme sua identidade")
     end
 
-    it "restaura com senha correta e registra na auditoria" do
+    it "restaura com identidade confirmada e registra na auditoria" do
       allow_any_instance_of(Maintenance::DatabaseRestore).to receive(:call) do |svc|
         Maintenance::Audit.record(event: "restauração", user: admin, details: { "Arquivo" => "x.dump" })
         Rails.root.join("backups", "x.dump")
       end
       expect {
-        post maintenance_restore_path, params: { file: "x.dump", password: "admin123456" }
+        post maintenance_restore_path, params: { file: "x.dump" }
       }.to change { PaperTrail::Version.where(item_type: "Manutenção", event: "restauração").count }.by(1)
       expect(response).to redirect_to(maintenance_path)
     end

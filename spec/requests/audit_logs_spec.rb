@@ -94,7 +94,11 @@ RSpec.describe "AuditLogs", type: :request do
 
     it "does not render the password hash on the destroy detail page (object branch)" do
       target = create(:user, :coordenador)
-      hash   = target.encrypted_password
+      # Com o SSO ninguém mais grava hash, então o teste precisa plantar um —
+      # linhas antigas ainda têm o valor, e a garantia (não vazar na auditoria)
+      # continua valendo para elas.
+      target.update_column(:encrypted_password, "$argon2id$v=19$hash-legado")
+      hash = target.reload.encrypted_password
       target.destroy
       version = PaperTrail::Version.where(item_type: "User", event: "destroy").last
 
