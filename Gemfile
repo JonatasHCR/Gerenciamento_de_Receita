@@ -19,7 +19,12 @@ gem "image_processing", "~> 1.2"
 
 # Auth
 gem "devise"
-gem "devise-argon2", require: "devise-argon2"
+# SSO via Keycloak. O :database_authenticatable saiu do User, entao nao ha mais
+# senha local para hashear — a devise-argon2 foi junto.
+gem "omniauth_openid_connect"
+# Exige que o inicio do fluxo OmniAuth seja um POST com token CSRF. Sem ela o
+# OmniAuth 2 recusa o GET /users/auth/keycloak e o login nao comeca.
+gem "omniauth-rails_csrf_protection"
 gem "pundit"
 
 # Audit trail

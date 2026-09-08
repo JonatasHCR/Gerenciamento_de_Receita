@@ -1,12 +1,26 @@
 class MaintenanceController < ApplicationController
-  # Backup: auditado, SEM confirmação de senha.
-  # Limpezas e restauração: auditadas E exigem confirmação da senha do admin.
+  # Backup: auditado, SEM reconfirmação.
+  # Limpezas e restauração: auditadas E exigem autenticação RECENTE.
+  #
+  # Antes isto pedia a senha do admin (`current_user.valid_password?`). Com o
+  # SSO não há mais senha local para conferir — e simplesmente remover a
+  # checagem tiraria uma proteção real: são as duas únicas operações que apagam
+  # dados de forma irreversível.
+  #
+  # A substituição é a reautenticação do próprio Keycloak: `prompt=login` obriga
+  # a digitar a senha de novo mesmo com sessão ativa, e o `auth_time` do token
+  # diz quando isso aconteceu. É mais forte que a senha local era, porque quem
+  # senta numa máquina destravada não consegue passar sem saber a senha —
+  # e mais forte que uma confirmação digitada, que se lê na própria tela.
+  JANELA_REAUTENTICACAO = 5.minutes
+
   def index
     authorize :maintenance, :index?
     @targets       = Maintenance::DataCleanup::TARGETS
     @clients       = Client.order(:name)
     @cost_centers  = CostCenter.includes(:client).order(:cr_code)
     @backups       = Maintenance::BackupList.all
+    @identidade_confirmada = autenticacao_recente?
   end
 
   def backup
@@ -20,7 +34,7 @@ class MaintenanceController < ApplicationController
 
   def cleanup
     authorize :maintenance, :cleanup?
-    return redirect_with_wrong_password unless valid_admin_password?
+    return exigir_reautenticacao unless autenticacao_recente?
 
     counts = Maintenance::DataCleanup.new(
       target: params[:target], user: current_user,
@@ -35,7 +49,7 @@ class MaintenanceController < ApplicationController
 
   def restore
     authorize :maintenance, :restore?
-    return redirect_with_wrong_password unless valid_admin_password?
+    return exigir_reautenticacao unless autenticacao_recente?
 
     path = Maintenance::DatabaseRestore.new(file: params[:file], user: current_user).call
     redirect_to maintenance_path, notice: "Banco restaurado a partir de #{File.basename(path)}."
@@ -53,11 +67,17 @@ class MaintenanceController < ApplicationController
 
   private
 
-  def valid_admin_password?
-    current_user.valid_password?(params[:password].to_s)
+  def autenticacao_recente?
+    inicio = session[:auth_time]
+    inicio.present? && Time.zone.at(inicio.to_i) > JANELA_REAUTENTICACAO.ago
   end
 
-  def redirect_with_wrong_password
-    redirect_to maintenance_path, alert: "Senha incorreta — nenhuma ação foi executada."
+  # Guarda para onde voltar e manda a pessoa reautenticar. O redirect NÃO pode
+  # apontar direto para o authorize: a gem omniauth-rails_csrf_protection exige
+  # que o fluxo comece por POST, então a tela de manutenção mostra um botão.
+  def exigir_reautenticacao
+    session[:apos_reautenticacao] = maintenance_path
+    redirect_to maintenance_path,
+      alert: "Confirme sua identidade antes de executar esta operação."
   end
 end

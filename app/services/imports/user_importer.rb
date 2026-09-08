@@ -1,13 +1,19 @@
 require "roo"
 
 module Imports
-  # Importa usuários da aba USUARIOS (NOME, EMAIL, PAPEL, SENHA). Só admin usa.
-  # Upsert por email: novo exige senha; existente atualiza nome/papel (senha só se vier).
+  # Importa usuários da aba USUARIOS (NOME, EMAIL, PAPEL). Só admin usa.
+  # Upsert por email: cria ou atualiza nome/papel.
+  #
+  # A coluna SENHA deixou de existir: quem guarda credencial é o Keycloak. Esta
+  # importação cria apenas o PAPEL local; para a pessoa conseguir entrar, ela
+  # precisa existir no realm e no grupo /apps/receita. Planilhas antigas com a
+  # coluna SENHA continuam sendo aceitas — a coluna é simplesmente ignorada, o
+  # que evita quebrar arquivos que já circulam.
   class UserImporter
     Result = Imports::ExcelImporter::Result
 
     SHEET   = "USUARIOS".freeze
-    COLUMNS = { name: %w[NOME], email: %w[EMAIL], role: %w[PAPEL PERFIL ROLE], password: %w[SENHA] }.freeze
+    COLUMNS = { name: %w[NOME], email: %w[EMAIL], role: %w[PAPEL PERFIL ROLE] }.freeze
     ROLES   = { "COORDENADOR" => :coordenador, "GESTOR" => :gestor,
                 "FINANCEIRO" => :financeiro, "ADMIN" => :admin }.freeze
 
@@ -24,7 +30,7 @@ module Imports
 
       header_row, idx = detect_columns(sheet)
       if header_row.nil?
-        @errors << "Aba \"#{SHEET}\": cabeçalho não reconhecido (esperado NOME, EMAIL, PAPEL, SENHA)."
+        @errors << "Aba \"#{SHEET}\": cabeçalho não reconhecido (esperado NOME, EMAIL, PAPEL)."
         return Result.new(created: @created, updated: @updated, errors: @errors, fatal_error: nil)
       end
 
@@ -86,13 +92,6 @@ module Imports
         @errors << "Usuários — linha #{line} (#{email}): papel inválido (use coordenador/gestor/financeiro/admin)."
         return
       end
-
-      password = val(row, idx[:password])
-      if was_new && password.blank?
-        @errors << "Usuários — linha #{line} (#{email}): senha é obrigatória para novo usuário (mín. 6)."
-        return
-      end
-      user.password = password if password.present?
 
       return unless was_new || user.changed?
 

@@ -1,15 +1,19 @@
-# Be sure to restart your server when you modify this file.
-# Política de segurança de conteúdo (CSP) — defesa em profundidade contra XSS/injeção.
-# Ver: https://guides.rubyonrails.org/security.html#content-security-policy-header
+# Content Security Policy.
 #
-# Notas de compatibilidade deste app:
-# - script-src usa NONCE (sem unsafe-inline). O importmap (javascript_importmap_tags)
-#   e o Chartkick (que lê content_security_policy_nonce) aplicam o nonce sozinhos;
-#   o único <script> inline (anti-FOUC do tema, no layout) recebe o nonce manualmente.
-# - style-src permite unsafe-inline: o Tailwind é carregado como arquivo (:self), mas o
-#   Chartkick injeta um <div style="..."> de "Loading" e atributos style inline não são
-#   cobertos por nonce. Sem isso, esses estilos quebrariam.
-# - connect-src inclui :self (suficiente; charts/JS não chamam domínios externos).
+# Ver https://guides.rubyonrails.org/security.html#content-security-policy-header
+
+# Origens externas que o SSO exige. Vêm do ambiente pelo mesmo motivo que o
+# resto: o IP e as portas são configuração, não constante de código.
+def self.origem(porta_env, porta_padrao)
+  host = ENV.fetch("HOST_IP", nil)
+  return nil if host.blank?
+
+  "http://#{host}:#{ENV.fetch(porta_env, porta_padrao)}"
+end
+
+KEYCLOAK_ORIGEM = origem("KEYCLOAK_PORT", "8080")
+PORTAL_ORIGEM   = origem("PORTAL_PORT", "3080")
+
 Rails.application.configure do
   config.content_security_policy do |policy|
     policy.default_src     :self
@@ -20,16 +24,24 @@ Rails.application.configure do
     policy.style_src       :self, :unsafe_inline
     policy.connect_src     :self
     policy.base_uri        :self
-    policy.form_action     :self
+
+    # `form_action` precisa listar o Keycloak.
+    #
+    # O botão "Entrar" faz um POST para /users/auth/keycloak (que é `self`), e o
+    # Rails responde com um 302 para o Keycloak. O navegador aplica
+    # `form-action` TAMBÉM ao destino do redirect — então, com apenas `self`,
+    # ele bloqueia a ida ao Keycloak e o clique simplesmente não faz nada. Sem
+    # erro na tela: só uma violação de CSP no console.
+    #
+    # Vale igual para o "Confirmar identidade" da tela de manutenção, que refaz
+    # o login com prompt=login, e para o logout, que termina no portal.
+    policy.form_action(*[:self, KEYCLOAK_ORIGEM, PORTAL_ORIGEM].compact)
+
     policy.frame_ancestors :self
   end
 
-  # Nonce por sessão: aleatório, estável dentro da sessão (compatível com Turbo/cache de
-  # fragmento) e NUNCA vazio. Um `session.id` vazio (ex.: página de login sem sessão) gerava
-  # `'nonce-'` inválido → o navegador ignorava a diretiva e bloqueava TODO script inline.
-  config.content_security_policy_nonce_generator  = ->(request) {
+  config.content_security_policy_nonce_generator = ->(request) {
     request.session[:csp_nonce] ||= SecureRandom.base64(16)
   }
-  # Aplica o nonce apenas a script-src (style-src continua usando unsafe-inline).
   config.content_security_policy_nonce_directives = %w[script-src]
 end

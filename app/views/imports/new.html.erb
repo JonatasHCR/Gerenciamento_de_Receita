@@ -21,7 +21,8 @@
             <li><strong>FATURAMENTO</strong>: NF, CR, Cliente, Data de Emissão, Valor, Observação.</li>
             <li><strong>RECEBIMENTO</strong>: NF, CR, Data de Baixa, Valor, Observação.</li>
             <% if current_user.admin? %>
-              <li><strong>USUARIOS</strong> (só admin): NOME, EMAIL, PAPEL, SENHA. Papel = coordenador/gestor/financeiro/admin.</li>
+              <li><strong>USUARIOS</strong> (só admin): NOME, EMAIL, PAPEL. Papel = coordenador/gestor/financeiro/admin.
+                  Não há coluna de senha: a importação define o papel, e o acesso é liberado no Keycloak.</li>
             <% end %>
           </ul>
           <p class="font-medium mt-2 mb-1">Instruções de preenchimento</p>

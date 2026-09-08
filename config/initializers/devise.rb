@@ -276,6 +276,39 @@ Devise.setup do |config|
   # up on your models and hooks.
   # config.omniauth :github, 'APP_ID', 'APP_SECRET', scope: 'user,public_repo'
 
+  # ==> OmniAuth / Keycloak
+  # Toda a configuracao vem do ambiente: o HOST_IP e a porta entram no issuer e
+  # no redirect URI, e o realm precisa concordar com os dois.
+  keycloak_host = ENV.fetch("HOST_IP")
+  keycloak_port = ENV.fetch("KEYCLOAK_PORT", "8080")
+  receita_port  = ENV.fetch("RECEITA_PORT", "3040")
+
+  # `setup` permite ajustar a requisicao de authorize por chamada. Usamos so
+  # para o `prompt=login`, que forca o Keycloak a pedir a senha DE NOVO mesmo
+  # com sessao ativa — e o que sustenta a reautenticacao antes das operacoes
+  # destrutivas de manutencao (ver MaintenanceController).
+  config.omniauth :openid_connect,
+    name: :keycloak,
+    setup: lambda { |env|
+      pedido = Rack::Request.new(env)
+      if pedido.params["prompt"] == "login"
+        env["omniauth.strategy"].options[:prompt] = "login"
+      end
+    },
+    scope: [:openid, :profile, :email],
+    response_type: :code,
+    issuer: "http://#{keycloak_host}:#{keycloak_port}/realms/ufc",
+    # Le authorization/token/jwks endpoints do .well-known do proprio realm.
+    discovery: true,
+    client_options: {
+      identifier: ENV.fetch("OIDC_CLIENT_ID", "receita-web"),
+      secret: ENV.fetch("OIDC_CLIENT_SECRET"),
+      redirect_uri: "http://#{keycloak_host}:#{receita_port}/users/auth/keycloak/callback",
+      scheme: "http",
+      host: keycloak_host,
+      port: keycloak_port.to_i
+    }
+
   # ==> Warden configuration
   # If you want to use other strategies, that are not supported by Devise, or
   # change the failure app, you can configure them inside the config.warden block.

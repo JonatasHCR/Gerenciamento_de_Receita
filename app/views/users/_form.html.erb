@@ -33,17 +33,21 @@
       </div>
     <% end %>
 
-    <div>
-      <%= password_field_with_toggle f, :password,
-            (user.persisted? ? (is_profile ? "Nova senha" : "Senha") : req("Senha")),
-            autocomplete: "new-password" %>
-      <% if user.persisted? %>
-        <p class="mt-1 text-xs text-gray-400">Deixe em branco para manter a senha atual.</p>
-      <% end %>
-    </div>
-
-    <div>
-      <%= password_field_with_toggle f, :password_confirmation, "Confirmar senha", autocomplete: "new-password" %>
+<%#
+      Os campos de senha saíram: este sistema não guarda mais credencial. A
+      senha é a mesma dos três sistemas e vive no Keycloak. Deixar os campos
+      apenas para encaminhar seria pior — sugeriria que ainda há uma senha aqui.
+%>
+    <div class="sm:col-span-2 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
+      <p class="text-sm font-medium text-gray-700">Senha</p>
+      <p class="mt-1 text-xs text-gray-500">
+        Gerenciada em um só lugar e válida para os três sistemas.
+        <% if is_profile %>
+          <a href="<%= keycloak_account_url %>" class="underline underline-offset-2">Alterar minha senha</a>.
+        <% else %>
+          O acesso é liberado pelo administrador no Keycloak.
+        <% end %>
+      </p>
     </div>
 
     <% if current_user.admin? && (user.new_record? || user.coordenador?) %>

@@ -28,7 +28,7 @@ class UsersController < ApplicationController
 
   def update
     authorize @user
-    if @user.update(build_update_params)
+    if @user.update(user_params)
       apply_cost_center_ids(@user)
       redirect_to users_path, notice: "Usuário atualizado."
     else
@@ -53,7 +53,7 @@ class UsersController < ApplicationController
     @user = current_user
     @is_profile = true
     authorize @user, :update?
-    if @user.update(build_update_params)
+    if @user.update(user_params)
       redirect_to edit_profile_path, notice: "Perfil atualizado com sucesso."
     else
       render :edit, status: :unprocessable_entity
@@ -69,14 +69,14 @@ class UsersController < ApplicationController
   def user_params
     # :role só é permitido para admin — evita escalonamento de privilégio via
     # mass assignment (um não-admin nunca consegue alterar o próprio papel).
-    permitted = [:name, :email, :password, :password_confirmation]
+    #
+    # :password e :password_confirmation saíram: este sistema não guarda mais
+    # senha. Trocar a senha é no Account Console do Keycloak, e ela vale para os
+    # três sistemas. O `build_update_params`, que existia só para descartar a
+    # senha em branco no update, foi junto.
+    permitted = [:name, :email]
     permitted << :role if current_user.admin?
     params.require(:user).permit(*permitted)
-  end
-
-  def build_update_params
-    p = user_params
-    p[:password].blank? ? p.except(:password, :password_confirmation) : p
   end
 
   # Só admin gerencia vínculos, e só para coordenadores (demais papéis veem tudo).

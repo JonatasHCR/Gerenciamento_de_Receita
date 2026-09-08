@@ -5,6 +5,7 @@ pt-BR:
       send_instructions: "Em breve você receberá um e-mail com instruções para confirmar sua conta."
       send_paranoid_instructions: "Se o e-mail existir em nosso banco de dados, você receberá as instruções em breve."
     failure:
+      nao_tem_acesso: \"Você não tem mais acesso ao sistema de receitas. Peça a liberação ao administrador.\"
       already_authenticated: "Você já está autenticado."
       inactive: "Sua conta ainda não foi ativada."
       invalid: "E-mail ou senha inválidos."

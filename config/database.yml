@@ -11,6 +11,10 @@ development:
 test:
   <<: *default
   database: receita_test
+  # `url` explícita porque a DATABASE_URL do ambiente aponta para o banco de
+  # desenvolvimento e venceria o `database:` acima — a suíte passaria a rodar
+  # sobre dados reais, falhando conforme o que houvesse neles.
+  url: <%= ENV.fetch("TEST_DATABASE_URL", "postgres://receita:receita@db/receita_test") %>
 
 production:
   <<: *default

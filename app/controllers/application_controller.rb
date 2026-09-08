@@ -52,4 +52,36 @@ class ApplicationController < ActionController::Base
     flash[:alert] = "Você não tem permissão para realizar esta ação."
     redirect_back_or_to root_path
   end
+
+  # URLs do SSO. Ficam aqui, e nao num helper, porque os controllers tambem
+  # precisam delas (o callback redireciona ao portal, o logout ao Keycloak) —
+  # e `helpers.x` a partir de um controller nao alcanca metodos de helper.
+  helper_method :portal_url, :keycloak_account_url
+
+  def portal_url
+    "http://#{ENV.fetch('HOST_IP', 'localhost')}:#{ENV.fetch('PORTAL_PORT', '3080')}"
+  end
+
+  def keycloak_account_url
+    host = ENV.fetch("HOST_IP", "localhost")
+    "http://#{host}:#{ENV.fetch('KEYCLOAK_PORT', '8080')}/realms/ufc/account"
+  end
+
+  # Para onde mais esta pessoa pode ir. Alimenta o seletor "Sistemas" no menu.
+  #
+  # Com SSO ela entra uma vez e circula entre tres aplicacoes — mas cada uma e um
+  # deploy separado. Sem isto, sair daqui para outra exige lembrar a porta.
+  helper_method :outros_sistemas
+
+  def outros_sistemas
+    host = "http://#{ENV.fetch('HOST_IP', 'localhost')}"
+    grupos = Array(session[:grupos])
+
+    [
+      { grupo: "/apps/inventario", nome: "Inventario",
+        url: "#{host}:#{ENV.fetch('INVENTARIO_PORT', '3030')}" },
+      { grupo: "/apps/despesa", nome: "Despesas",
+        url: "#{host}:#{ENV.fetch('DESPESA_PORT', '3010')}" }
+    ].select { |s| grupos.include?(s[:grupo]) }
+  end
 end

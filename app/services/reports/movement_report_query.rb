@@ -26,9 +26,23 @@ module Reports
     end
 
     def call
+      # Em `ambos` sai UMA seção só, a de faturamento.
+      #
+      # Ela já carrega o recebimento: as colunas trazem Faturado / Recebido /
+      # Em aberto, os blocos separam o que teve baixa do que falta receber, e o
+      # título vira "Faturamento e recebimentos". A seção de recebimento
+      # repetia as mesmas notas sob outro recorte de data, e a divisão só dava
+      # a impressão de dois relatórios grudados.
+      #
+      # `recebimento` sozinho continua existindo — aí é o único conteúdo.
       sections = []
       sections << faturamento_section if @tipo.in?(%i[faturamento ambos])
-      sections << recebimento_section if @tipo.in?(%i[recebimento ambos])
+      sections << recebimento_section if @tipo == :recebimento
+
+      # O recebimento CONTINUA sendo calculado em `ambos`, só não é renderizado:
+      # é dele que saem o total recebido no período e a contagem de baixas do
+      # rodapé. Sem isto, tirar a seção levaria junto dois números do resumo.
+      para_resumo = @tipo == :ambos ? sections + [recebimento_section] : sections
 
       {
         tipo:         @tipo,
@@ -38,7 +52,7 @@ module Reports
         period_end:   @period_end,
         only_open:    @only_open,
         sections:     sections,
-        summary:      summary(sections)
+        summary:      summary(para_resumo)
       }
     end
 

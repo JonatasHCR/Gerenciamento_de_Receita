@@ -40,7 +40,8 @@ module Imports
         sheet.add_row ["USUARIOS"]
         sheet.add_row []
         sheet.add_row []
-        sheet.add_row ["NOME", "EMAIL", "PAPEL", "SENHA"]
+        # Sem SENHA: quem guarda credencial e o Keycloak.
+        sheet.add_row ["NOME", "EMAIL", "PAPEL"]
         sheet.add_row ["Carlos Almeida", "carlos@ufc.com.br", "coordenador", "senha123456"]
       end
     end

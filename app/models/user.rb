@@ -1,9 +1,22 @@
 class User < ApplicationRecord
-  devise :database_authenticatable, :argon2,
-         :validatable, :lockable, :timeoutable
+  # Autenticação é do Keycloak. Saíram:
+  #   :database_authenticatable — não há senha local para verificar
+  #   :argon2                   — não há hash para calcular
+  #   :lockable                 — bloqueio por tentativas virou bruteForceProtected
+  #                               no realm; failed_attempts/locked_at/unlock_token
+  #                               ficaram como colunas mortas
+  #   :validatable              — ele valida `password` (`validates_length_of
+  #                               :password, allow_blank: true`), e sem o
+  #                               :database_authenticatable esse atributo não
+  #                               existe: NoMethodError em todo save. As
+  #                               validações de email que ele dava estão
+  #                               explícitas abaixo.
+  # :timeoutable fica, pela expiração de sessão ociosa.
+  devise :omniauthable, :timeoutable, omniauth_providers: [:keycloak]
 
-  # skip: o hash de senha (argon2) nunca é serializado nas versions — não vaza
-  # na auditoria nem fica armazenado no histórico.
+  # skip: o hash de senha nunca foi serializado nas versions — não vaza na
+  # auditoria nem fica no histórico. A coluna continua existindo (sem uso) para
+  # não reescrever linhas antigas.
   has_paper_trail skip: [:encrypted_password]
 
   enum :role, { coordenador: 0, gestor: 1, financeiro: 2, admin: 3 }
@@ -13,10 +26,33 @@ class User < ApplicationRecord
 
   validates :name, presence: true
   validates :role, presence: true
+  # O que o :validatable garantia, agora explícito.
+  validates :email, presence: true,
+                    uniqueness: { case_sensitive: false },
+                    format: { with: URI::MailTo::EMAIL_REGEXP, allow_blank: true }
+
+  # O `sub` do Keycloak (UUID). É o vínculo estável entre a conta local e a
+  # identidade: no primeiro login o usuário é achado por email e este campo é
+  # gravado; daí em diante o casamento é por aqui. Preserva o id, e com ele o
+  # PaperTrail e os user_cost_centers.
+  validates :external_id, uniqueness: true, allow_nil: true
 
   # Mantém user_cost_centers em dia com o texto `coordinator` dos CCs: fluxo
   # "CC primeiro, usuário depois" e rename do coordenador sem perder o vínculo.
   after_save :sync_coordinated_cost_centers!, if: :should_sync_cost_centers?
+
+  # Devise chama isto em TODA requisição, não só no login: quem for desativado
+  # perde a sessão em aberto na requisição seguinte, sem precisar deslogar.
+  #
+  # `ativo` espelha o grupo `/apps/receita` do Keycloak. É a defesa para o caso
+  # de alguém tentar acessar direto, com uma sessão que ainda não expirou.
+  def active_for_authentication?
+    super && ativo?
+  end
+
+  def inactive_message
+    ativo? ? super : :nao_tem_acesso
+  end
 
   def admin_or_financeiro?
     admin? || financeiro?

@@ -9,7 +9,31 @@
     </p>
   </div>
 
-  <%# ── Backup (sem confirmação de senha, auditado) ─────────────────────────── %>
+  <%#
+    Identidade recente. Substitui o campo "senha do admin" que existia nas
+    operacoes destrutivas: nao ha mais senha local, e a reautenticacao no
+    Keycloak (prompt=login) e mais forte — quem senta numa maquina destravada
+    nao passa sem saber a senha.
+  %>
+  <% if @identidade_confirmada %>
+    <div class="rounded-xl border border-emerald-200 bg-emerald-50 px-5 py-3 text-sm text-emerald-900">
+      Identidade confirmada. Limpeza e restauração liberadas por
+      <%= distance_of_time_in_words(MaintenanceController::JANELA_REAUTENTICACAO) %>.
+    </div>
+  <% else %>
+    <div class="rounded-xl border border-amber-200 bg-amber-50 px-5 py-4">
+      <p class="text-sm text-amber-900">
+        <strong>Limpeza e restauração exigem confirmação de identidade.</strong>
+        Você vai digitar sua senha no Keycloak e voltar para cá.
+      </p>
+      <%= button_to "Confirmar identidade",
+            user_keycloak_omniauth_authorize_path(prompt: "login"),
+            form: { data: { turbo: false } },
+            class: "mt-3 rounded-lg bg-amber-600 px-5 py-2 text-sm font-medium text-white hover:bg-amber-700 cursor-pointer" %>
+    </div>
+  <% end %>
+
+  <%# ── Backup (sem reconfirmação, auditado) ────────────────────────────────── %>
   <div class="bg-white rounded-xl border border-gray-200 p-5">
     <h2 class="font-semibold text-gray-800 text-sm">Backup do banco de dados</h2>
     <p class="mt-1 text-sm text-gray-500">
@@ -56,12 +80,12 @@
     <% end %>
   </div>
 
-  <%# ── Restauração (senha + confirmação) ───────────────────────────────────── %>
+  <%# ── Restauração (identidade confirmada + confirmação) ───────────────────── %>
   <div class="bg-white rounded-xl border border-amber-300 p-5">
     <h2 class="font-semibold text-amber-700 text-sm">Restaurar backup</h2>
     <p class="mt-1 text-sm text-gray-500">
       <strong>Substitui todos os dados atuais</strong> pelos do backup escolhido
-      (<code>pg_restore --clean</code>). Irreversível. Exige sua senha.
+      (<code>pg_restore --clean</code>). Irreversível. Exige identidade confirmada.
     </p>
     <% if @backups.any? %>
       <%= form_with url: maintenance_restore_path, method: :post,
@@ -71,8 +95,6 @@
               options_for_select(@backups.map { |b| ["#{b[:name]} — #{b[:mtime].in_time_zone.strftime('%d/%m/%Y %H:%M')}", b[:name]] }),
               class: "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500" %>
         <div class="flex flex-col sm:flex-row gap-2 sm:items-center">
-          <%= password_field_tag :password, nil, autocomplete: "off", placeholder: "Senha do admin", required: true,
-                class: "flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-amber-500" %>
           <%= submit_tag "Restaurar",
                 class: "rounded-lg bg-amber-600 px-5 py-2 text-sm font-medium text-white hover:bg-amber-700 cursor-pointer whitespace-nowrap" %>
         </div>
@@ -82,7 +104,7 @@
     <% end %>
   </div>
 
-  <%# ── Limpezas (alvo + filtros + senha + confirmação) ─────────────────────── %>
+  <%# ── Limpezas (alvo + filtros + identidade confirmada) ───────────────────── %>
   <div class="bg-white rounded-xl border border-red-200 p-5">
     <h2 class="font-semibold text-red-700 text-sm">Limpeza de dados</h2>
     <p class="mt-1 text-sm text-gray-500">
@@ -124,8 +146,6 @@
         Não se aplica a Centros de Custo nem a "Tudo".
       </p>
       <div class="flex flex-col sm:flex-row gap-2 sm:items-center">
-        <%= password_field_tag :password, nil, autocomplete: "off", placeholder: "Senha do admin", required: true,
-              class: "flex-1 rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-red-500" %>
         <%= submit_tag "Limpar",
               class: "rounded-lg bg-red-700 px-5 py-2 text-sm font-medium text-white hover:bg-red-800 cursor-pointer whitespace-nowrap" %>
       </div>
