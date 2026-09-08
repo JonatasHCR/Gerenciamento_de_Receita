@@ -129,22 +129,22 @@ docker compose exec web bundle exec brakeman     # análise de segurança
   ./scripts/backup.sh                 # gera um dump
   ./scripts/restore.sh [arquivo]      # restaura (pede confirmação)
   ```
-- **Pré-deploy:** o pipeline faz backup do banco antes de cada deploy.
+- **Pré-deploy:** faça o backup do banco antes de cada deploy.
 
 ---
 
-## Produção e CI/CD
+## Produção e CI
 
-Cenário de **servidor único** (Gitea + runner + produção na mesma máquina) — a imagem
-é **construída localmente no servidor, sem registry**.
+Cenário de **servidor único** — a imagem é **construída localmente no servidor, sem
+registry**.
 
 - **Produção:** `docker-compose.prod.yml` (builda a imagem local) + `.env`
   (modelo em `.env.production.example`). Fica em `/opt/gerencimento_receita` (um clone git).
-- **CI/CD (Gitea Actions):** `.gitea/workflows/` — `ci.yml` (testes + segurança a cada push)
-  e `deploy.yml` (na `main`/`master`: backup → `git reset` no commit → `up -d --build` →
-  migração → healthcheck `/up` → **rollback automático** para o commit anterior se falhar).
-- **Runner:** instruções e arquivos em `runner/` (act_runner). Único secret necessário:
-  `DEPLOY_PATH`.
+- **CI:** `.github/workflows/ci.yml` — testes (RSpec), Brakeman e bundler-audit a cada
+  push/PR.
+- **Deploy:** manual, no servidor:
+  `git pull && docker compose -f docker-compose.prod.yml up -d --build`.
+  Faça o backup do banco antes (ver seção de backup).
 
 ### Admin inicial (produção)
 

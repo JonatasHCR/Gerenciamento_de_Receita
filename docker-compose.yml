@@ -13,7 +13,7 @@ services:
       timeout: 5s
       retries: 5
 
-  # Backup diário automático (sidecar) — gera dump em ./backups no horário BACKUP_HOUR.
+  # Sidecar de backup: dump em ./backups a cada BACKUP_INTERVAL_HOURS.
   backup:
     image: postgres:16
     restart: unless-stopped
@@ -39,7 +39,9 @@ services:
     init: true
     command: bash -c "bundle check || bundle install; bin/rails db:prepare; (while true; do bin/rails tailwindcss:watch; echo '[css] watcher caiu, reiniciando em 1s'; sleep 1; done) & exec bin/rails server -b 0.0.0.0 -p 3000"
     ports:
-      - "0.0.0.0:3040:3000"
+      # A porta entra no redirect URI do realm; vem do .env para os dois lados
+      # nao divergirem.
+      - "0.0.0.0:${RECEITA_PORT:-3040}:3000"
     depends_on:
       db:
         condition: service_healthy

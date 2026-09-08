@@ -76,9 +76,6 @@ Thumbs.db
 ehthumbs.db
 Desktop.ini
 
-# Gitea act_runner (dados e segredos locais)
-/runner/data/
-/runner/runner.env
 
 # Arquivos temporários/lock do Word
 ~$*

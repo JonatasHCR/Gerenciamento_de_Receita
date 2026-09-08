@@ -1,21 +1,16 @@
 # syntax=docker/dockerfile:1
 # check=error=true
 
-# This Dockerfile is designed for production, not development. Use with Kamal or build'n'run by hand:
-# docker build -t app .
-# docker run -d -p 80:80 -e RAILS_MASTER_KEY=<value from config/master.key> --name app app
+# Imagem de PRODUCAO. Para desenvolvimento use o Dockerfile.dev.
 
-# For a containerized dev environment, see Dev Containers: https://guides.rubyonrails.org/getting_started_with_devcontainer.html
-
-# Make sure RUBY_VERSION matches the Ruby version in .ruby-version
+# RUBY_VERSION precisa bater com o .ruby-version.
 ARG RUBY_VERSION=3.3.11
 FROM docker.io/library/ruby:$RUBY_VERSION-slim AS base
 
-# Rails app lives here
 WORKDIR /rails
 
-# Install base packages (runtime libs only — no build tools)
-# postgresql-client: necessário para o botão "Fazer backup" (pg_dump) da tela de Administração.
+# Libs de runtime. postgresql-client: pg_dump do botão "Fazer backup" da tela
+# de Administração.
 RUN apt-get update -qq && \
     apt-get install --no-install-recommends -y \
       curl \
@@ -29,18 +24,17 @@ RUN apt-get update -qq && \
     ln -s /usr/lib/$(uname -m)-linux-gnu/libjemalloc.so.2 /usr/local/lib/libjemalloc.so && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
-# Set production environment variables and enable jemalloc for reduced memory usage and latency.
+# jemalloc reduz uso de memória e latência.
 ENV RAILS_ENV="production" \
     BUNDLE_DEPLOYMENT="1" \
     BUNDLE_PATH="/usr/local/bundle" \
     BUNDLE_WITHOUT="development" \
     LD_PRELOAD="/usr/local/lib/libjemalloc.so"
 
-# Throw-away build stage to reduce size of final image
 FROM base AS build
 
-# Install packages needed to build gems (compile-time only — stays in build stage).
-# libvips NÃO entra aqui: já está na base (runtime) e ruby-vips usa FFI (sem headers).
+# Só para compilar as gems; fica no estágio de build.
+# libvips NÃO entra aqui: já está na base e ruby-vips usa FFI (sem headers).
 RUN apt-get update -qq && \
     apt-get install --no-install-recommends -y \
       build-essential \
@@ -51,48 +45,37 @@ RUN apt-get update -qq && \
       pkg-config && \
     rm -rf /var/lib/apt/lists /var/cache/apt/archives
 
-# Install application gems
 COPY vendor/* ./vendor/
 COPY Gemfile Gemfile.lock ./
 
 RUN bundle install && \
     rm -rf ~/.bundle/ "${BUNDLE_PATH}"/ruby/*/cache "${BUNDLE_PATH}"/ruby/*/bundler/gems/*/.git && \
-    # -j 1 disable parallel compilation to avoid a QEMU bug: https://github.com/rails/bootsnap/issues/495
     bundle exec bootsnap precompile -j 1 --gemfile
 
-# Copy application code
 COPY . .
 
-# Defesa contra CRLF: se o código foi check-out no Windows (core.autocrlf), os
-# scripts em bin/ chegam com \r e o shebang vira "ruby\r" — quebrando o build
-# (env: 'ruby\r': No such file or directory). Normaliza para LF e garante +x.
+# Defesa contra CRLF: um checkout no Windows deixa os scripts de bin/ com CR,
+# o shebang vira "ruby<CR>" e o build quebra.
 RUN sed -i 's/\r$//' bin/* && chmod +x bin/*
 
-# Precompile bootsnap code for faster boot times.
-# -j 1 disable parallel compilation to avoid a QEMU bug: https://github.com/rails/bootsnap/issues/495
+# -j 1: evita um bug do QEMU — https://github.com/rails/bootsnap/issues/495
 RUN bundle exec bootsnap precompile -j 1 app/ lib/
 
-# Precompiling assets for production without requiring secret RAILS_MASTER_KEY
+# SECRET_KEY_BASE_DUMMY: precompila sem precisar do RAILS_MASTER_KEY.
 RUN SECRET_KEY_BASE_DUMMY=1 ./bin/rails assets:precompile
 
-
-
-
-# Final stage for app image
 FROM base
 
-# Run and own only the runtime files as a non-root user for security
+# Usuário sem privilégios.
 RUN groupadd --system --gid 1000 rails && \
     useradd rails --uid 1000 --gid 1000 --create-home --shell /bin/bash
 USER 1000:1000
 
-# Copy built artifacts: gems, application
 COPY --chown=rails:rails --from=build "${BUNDLE_PATH}" "${BUNDLE_PATH}"
 COPY --chown=rails:rails --from=build /rails /rails
 
-# Entrypoint prepares the database.
+# O entrypoint prepara o banco.
 ENTRYPOINT ["/rails/bin/docker-entrypoint"]
 
-# Start server via Thruster by default, this can be overwritten at runtime
 EXPOSE 80
 CMD ["./bin/thrust", "./bin/rails", "server"]

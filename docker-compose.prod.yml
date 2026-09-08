@@ -1,7 +1,6 @@
-# Compose de PRODUÇÃO (fica no servidor, em DEPLOY_PATH).
-# A imagem é CONSTRUÍDA localmente no próprio servidor (sem registry) — o repo é
-# clonado/atualizado em DEPLOY_PATH e o deploy faz `up -d --build`.
-# Variáveis sensíveis vêm de um arquivo .env (não versionado) ao lado deste.
+# Compose de PRODUÇÃO: fica no servidor, num clone do repo. A imagem é construída
+# localmente (sem registry): o deploy é `git pull && up -d --build`.
+# Variáveis sensíveis vêm de um .env (não versionado) ao lado deste arquivo.
 services:
   db:
     image: postgres:16
@@ -18,7 +17,7 @@ services:
       timeout: 5s
       retries: 5
 
-  # Backup diário automático (sidecar): gera dump via pg_dump no horário BACKUP_HOUR.
+  # Sidecar de backup: dump em ./backups a cada BACKUP_INTERVAL_HOURS.
   backup:
     image: postgres:16
     restart: always
@@ -43,7 +42,7 @@ services:
     build:
       context: .
       dockerfile: Dockerfile
-    image: gerencimento_receita:latest   # tag local da imagem construída
+    image: gerencimento_receita:latest
     restart: always
     depends_on:
       db:
@@ -53,21 +52,43 @@ services:
       DATABASE_URL: ${DATABASE_URL:?defina no .env}
       RAILS_MASTER_KEY: ${RAILS_MASTER_KEY:?defina no .env}
       RAILS_MAX_THREADS: ${RAILS_MAX_THREADS:-5}
-      # Admin inicial criado pelo seed (db:prepare no 1º boot). Sem senha = sem admin.
+      # Admin inicial: a task `admin:create` so concede o PAPEL local; quem
+      # guarda credencial e o Keycloak.
       ADMIN_EMAIL: ${ADMIN_EMAIL:-}
-      ADMIN_PASSWORD: ${ADMIN_PASSWORD:-}
+
+      # --- SSO --- (sem estas o initializer do Devise estoura no boot)
+      HOST_IP: ${HOST_IP:?defina HOST_IP no .env}
+      KEYCLOAK_PORT: ${KEYCLOAK_PORT:-8080}
+      OIDC_CLIENT_ID: ${OIDC_CLIENT_ID:-receita-web}
+      OIDC_CLIENT_SECRET: ${OIDC_CLIENT_SECRET:?defina OIDC_CLIENT_SECRET no .env}
+      # A porta publicada entra no redirect URI do realm: os dois lados
+      # precisam concordar, senao o Keycloak recusa com "Invalid parameter".
+      RECEITA_PORT: ${RECEITA_PORT:?defina RECEITA_PORT no .env}
+      PORTAL_PORT: ${PORTAL_PORT:-3080}
+      # Portas dos demais sistemas, para o seletor "Sistemas" no menu.
+      INVENTARIO_PORT: ${INVENTARIO_PORT:-3030}
+      DESPESA_PORT: ${DESPESA_PORT:-3010}
+      # Token da API que o inventario usa para ler os centros de custo.
+      SYNC_API_TOKEN: ${SYNC_API_TOKEN:?defina SYNC_API_TOKEN no .env}
+      # A conta mestra: UM email, o mesmo nos tres sistemas, que entra como
+      # admin aqui sem depender de grupo nem de `rails admin:create`.
+      ADMIN_MESTRE_EMAIL: ${ADMIN_MESTRE_EMAIL:-}
     volumes:
-      # Backups manuais (botão da tela de Administração) caem na MESMA pasta do sidecar.
+      # Backups manuais (botão da Administração) caem na mesma pasta do sidecar.
       - ./backups:/rails/backups
     ports:
-      - "${WEB_PORT:-80}:80"   # Thruster expõe 80 dentro do container
+      # RECEITA_PORT, e nao WEB_PORT: e a MESMA porta que entra no redirect URI
+      # do realm. Duas variaveis para o mesmo valor divergiriam, e o sintoma
+      # seria um "Invalid parameter: redirect_uri" que nao explica nada.
+      # O Thruster expoe a 80 dentro do container.
+      - "${RECEITA_PORT:?defina RECEITA_PORT no .env}:80"
     healthcheck:
-      # curl já vem na imagem de produção; /up é o endpoint de saúde do Rails.
+      # /up é o endpoint de saúde do Rails.
       test: ["CMD-SHELL", "curl -fsS http://localhost:80/up || exit 1"]
       interval: 30s
       timeout: 5s
       retries: 3
-      start_period: 40s   # tempo de boot (db:prepare + Thruster) antes de contar falhas
+      start_period: 40s
 
 volumes:
   postgres_data:
