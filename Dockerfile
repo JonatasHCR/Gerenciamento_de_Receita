@@ -61,8 +61,14 @@ RUN sed -i 's/\r$//' bin/* && chmod +x bin/*
 # -j 1: evita um bug do QEMU — https://github.com/rails/bootsnap/issues/495
 RUN bundle exec bootsnap precompile -j 1 app/ lib/
 
-# SECRET_KEY_BASE_DUMMY: precompila sem precisar do RAILS_MASTER_KEY.
-RUN SECRET_KEY_BASE_DUMMY=1 ./bin/rails assets:precompile
+# O assets:precompile depende da task `environment`, entao carrega a aplicacao
+# inteira — e o initializer do Devise faz ENV.fetch("HOST_IP") e
+# ENV.fetch("OIDC_CLIENT_SECRET") sem valor padrao. Em runtime as duas vem do
+# compose; no build nao existem, e o precompile aborta com KeyError.
+# Os valores abaixo sao descartaveis: a descoberta OIDC (discovery: true) so
+# acontece no primeiro login, nunca aqui. SECRET_KEY_BASE_DUMMY faz o mesmo
+# pelo RAILS_MASTER_KEY.
+RUN SECRET_KEY_BASE_DUMMY=1 HOST_IP=127.0.0.1 OIDC_CLIENT_SECRET=dummy ./bin/rails assets:precompile
 
 FROM base
 
