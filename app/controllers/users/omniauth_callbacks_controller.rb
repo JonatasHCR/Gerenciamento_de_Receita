@@ -40,6 +40,11 @@ class Users::OmniauthCallbacksController < Devise::OmniauthCallbacksController
       # Para o seletor "Sistemas" saber o que oferecer.
       session[:grupos] = Array(auth.dig(:extra, :raw_info, :groups))
 
+      # O access token não é guardado: 1,4 KB contra os 660 B do refresh.
+      session[:refresh_token] = auth.dig(:credentials, :refresh_token)
+      session[:token_expira_em] =
+        auth.dig(:credentials, :expires_at) || (Time.current.to_i + 300)
+
       destino = session.delete(:apos_reautenticacao)
       if destino.present?
         sign_in(user, event: :authentication)

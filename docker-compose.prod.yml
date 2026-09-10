@@ -68,6 +68,7 @@ services:
       # Portas dos demais sistemas, para o seletor "Sistemas" no menu.
       INVENTARIO_PORT: ${INVENTARIO_PORT:-3030}
       DESPESA_PORT: ${DESPESA_PORT:-3010}
+      CONTROLE_DESPESA_PORT: ${CONTROLE_DESPESA_PORT:-3050}
       # Token da API que o inventario usa para ler os centros de custo.
       SYNC_API_TOKEN: ${SYNC_API_TOKEN:?defina SYNC_API_TOKEN no .env}
       # A conta mestra: UM email, o mesmo nos tres sistemas, que entra como

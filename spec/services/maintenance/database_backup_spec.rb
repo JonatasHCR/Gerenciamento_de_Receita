@@ -24,18 +24,19 @@ RSpec.describe Maintenance::DatabaseBackup do
     }.to change { PaperTrail::Version.where(item_type: "Manutenção", event: "backup").count }.by(1)
 
     expect(File.exist?(path)).to be(true)
-    expect(File.basename(path)).to match(/\Amanual_\d{8}_\d{6}\.dump\z/)
+    expect(File.basename(path)).to match(/\Amanual_\d{8}_\d{6}\.sql\z/)
     expect(PaperTrail::Version.where(item_type: "Manutenção", event: "backup").last.whodunnit).to eq(user.id.to_s)
   ensure
     f = grab.call && grab.call[grab.call.index("-f") + 1]
     FileUtils.rm_f(f) if f
   end
 
-  it "monta o comando pg_dump -Fc com os dados de conexão" do
+  it "monta o comando pg_dump --clean com os dados de conexão" do
     grab = fake_pg_dump
     service.call
     args = grab.call
-    expect(args.first(2)).to eq(["pg_dump", "-Fc"])
+    expect(args.first(2)).to eq(["pg_dump", "--clean"])
+    expect(args).to include("--if-exists")
     %w[-h -p -U -d -f].each { |flag| expect(args).to include(flag) }
   ensure
     f = grab.call && grab.call[grab.call.index("-f") + 1]

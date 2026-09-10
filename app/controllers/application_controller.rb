@@ -6,6 +6,7 @@ class ApplicationController < ActionController::Base
   stale_when_importmap_changes
 
   before_action :authenticate_user!
+  before_action :reconferir_grupo
   before_action :set_paper_trail_whodunnit
 
   rescue_from Pundit::NotAuthorizedError, with: :user_not_authorized
@@ -48,6 +49,50 @@ class ApplicationController < ActionController::Base
     PaperTrail.request.whodunnit = current_user&.id&.to_s
   end
 
+  GRUPO_EXIGIDO = "/apps/receita".freeze
+
+  # Sem isto, tirar alguém do grupo só valeria no próximo login.
+  def reconferir_grupo
+    return unless user_signed_in?
+    return unless token_perto_de_vencer?
+
+    resultado = Keycloak::Revalidacao.renovar(session[:refresh_token])
+
+    unless resultado.ok
+      # Sem resposta do Keycloak não dá para afirmar que ela ainda tem acesso.
+      encerrar_sessao("Sua sessão expirou. Entre de novo.")
+      return
+    end
+
+    session[:grupos] = resultado.grupos
+    session[:refresh_token] = resultado.refresh_token
+    session[:token_expira_em] = resultado.expira_em
+
+    return if conta_mestra? || resultado.grupos.include?(GRUPO_EXIGIDO)
+
+    # Nunca apaga: user_cost_centers e PaperTrail apontam para a conta.
+    current_user.update_column(:ativo, false)
+    encerrar_sessao("Seu acesso ao sistema de receitas foi removido.")
+  end
+
+  def token_perto_de_vencer?
+    vencimento = session[:token_expira_em]
+    return false if vencimento.blank?
+
+    vencimento.to_i - Keycloak::Revalidacao::MARGEM <= Time.current.to_i
+  end
+
+  def conta_mestra?
+    mestre = ENV["ADMIN_MESTRE_EMAIL"].to_s.strip.downcase
+    mestre.present? && current_user.email.to_s.strip.downcase == mestre
+  end
+
+  def encerrar_sessao(mensagem)
+    sign_out(current_user)
+    reset_session
+    redirect_to new_user_session_path, alert: mensagem
+  end
+
   def user_not_authorized
     flash[:alert] = "Você não tem permissão para realizar esta ação."
     redirect_back_or_to root_path
@@ -80,8 +125,10 @@ class ApplicationController < ActionController::Base
     [
       { grupo: "/apps/inventario", nome: "Inventario",
         url: "#{host}:#{ENV.fetch('INVENTARIO_PORT', '3030')}" },
-      { grupo: "/apps/despesa", nome: "Despesas",
-        url: "#{host}:#{ENV.fetch('DESPESA_PORT', '3010')}" }
+      { grupo: "/apps/despesa", nome: "Radar",
+        url: "#{host}:#{ENV.fetch('DESPESA_PORT', '3010')}" },
+      { grupo: "/apps/controle-despesa", nome: "Controle de Despesa",
+        url: "#{host}:#{ENV.fetch('CONTROLE_DESPESA_PORT', '3050')}" }
     ].select { |s| grupos.include?(s[:grupo]) }
   end
 end
