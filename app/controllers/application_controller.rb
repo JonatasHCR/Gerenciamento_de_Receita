@@ -109,7 +109,15 @@ class ApplicationController < ActionController::Base
 
   def keycloak_account_url
     host = ENV.fetch("HOST_IP", "localhost")
-    "http://#{host}:#{ENV.fetch('KEYCLOAK_PORT', '8080')}/realms/ufc/account"
+    # referrer/referrer_uri: sem eles o Account Console nao oferece volta. O
+    # referrer_uri precisa estar nos redirectUris do client, ou vem ignorado.
+    params = { referrer: ENV.fetch("OIDC_CLIENT_ID", "receita-web"),
+               referrer_uri: "#{receita_url}/" }
+    "http://#{host}:#{ENV.fetch('KEYCLOAK_PORT', '8080')}/realms/ufc/account?#{params.to_query}"
+  end
+
+  def receita_url
+    "http://#{ENV.fetch('HOST_IP', 'localhost')}:#{ENV.fetch('RECEITA_PORT', '3040')}"
   end
 
   # Para onde mais esta pessoa pode ir. Alimenta o seletor "Sistemas" no menu.

@@ -70,13 +70,15 @@ class UsersController < ApplicationController
     # :role só é permitido para admin — evita escalonamento de privilégio via
     # mass assignment (um não-admin nunca consegue alterar o próprio papel).
     #
-    # :password e :password_confirmation saíram: este sistema não guarda mais
-    # senha. Trocar a senha é no Account Console do Keycloak, e ela vale para os
-    # três sistemas. O `build_update_params`, que existia só para descartar a
-    # senha em branco no update, foi junto.
-    permitted = [:name, :email]
+    # :name e :email só na criação. Depois disso quem manda é o Keycloak, e o
+    # callback de login não reescreve esses campos — editar aqui divergiria em
+    # silêncio, para sempre.
+    permitted = []
+    permitted += [:name, :email] if action_name == "create"
     permitted << :role if current_user.admin?
-    params.require(:user).permit(*permitted)
+    # fetch, e nao require: para quem nao e admin sobra zero campo editavel, e o
+    # require levantaria ParameterMissing num submit vazio.
+    params.fetch(:user, ActionController::Parameters.new).permit(*permitted)
   end
 
   # Só admin gerencia vínculos, e só para coordenadores (demais papéis veem tudo).

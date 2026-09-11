@@ -12,16 +12,31 @@
   <% end %>
 
   <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
-    <div class="sm:col-span-2">
-      <%= f.label :name, req("Nome completo"), class: "block text-sm font-medium text-gray-700 mb-1" %>
-      <%= f.text_field :name, class: "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-red-500" %>
-    </div>
+    <% if user.new_record? %>
+      <div class="sm:col-span-2">
+        <%= f.label :name, req("Nome completo"), class: "block text-sm font-medium text-gray-700 mb-1" %>
+        <%= f.text_field :name, class: "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-red-500" %>
+      </div>
 
-    <div>
-      <%= f.label :email, req("E-mail"), class: "block text-sm font-medium text-gray-700 mb-1" %>
-      <%= f.email_field :email, autocomplete: "off",
-            class: "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-red-500" %>
-    </div>
+      <div>
+        <%= f.label :email, req("E-mail"), class: "block text-sm font-medium text-gray-700 mb-1" %>
+        <%= f.email_field :email, autocomplete: "off",
+              class: "w-full rounded-lg border border-gray-300 px-3 py-2 text-sm focus:ring-2 focus:ring-red-500" %>
+      </div>
+    <% else %>
+      <div class="sm:col-span-2 rounded-lg border border-gray-200 bg-gray-50 px-4 py-3">
+        <p class="text-sm font-medium text-gray-700">Nome e e-mail</p>
+        <p class="mt-1 text-sm text-gray-600"><%= user.name %> &middot; <%= user.email %></p>
+        <p class="mt-1 text-xs text-gray-500">
+          Vêm do Keycloak e valem para todos os sistemas.
+          <% if is_profile %>
+            <a href="<%= keycloak_account_url %>" class="underline underline-offset-2">Alterar meus dados</a>.
+          <% else %>
+            Alterá-los é no Keycloak, pelo administrador do realm.
+          <% end %>
+        </p>
+      </div>
+    <% end %>
 
     <% if current_user.admin? %>
       <div>
@@ -69,14 +84,12 @@
   </div>
 
   <div class="flex gap-3 pt-2">
-    <%= f.submit is_profile ? "Salvar perfil" : nil,
-          class: "rounded-lg bg-red-700 px-5 py-2 text-sm font-medium text-white hover:bg-red-800 cursor-pointer" %>
-    <% if is_profile %>
-      <%= link_to "Cancelar", edit_profile_path,
-            class: "rounded-lg border border-gray-300 px-5 py-2 text-sm text-gray-700 hover:bg-gray-50" %>
-    <% else %>
-      <%= link_to "Cancelar", users_path,
-            class: "rounded-lg border border-gray-300 px-5 py-2 text-sm text-gray-700 hover:bg-gray-50" %>
+    <% if user.new_record? || current_user.admin? %>
+      <%= f.submit is_profile ? "Salvar perfil" : nil,
+            class: "rounded-lg bg-red-700 px-5 py-2 text-sm font-medium text-white hover:bg-red-800 cursor-pointer" %>
     <% end %>
+    <%= link_to(user.new_record? || current_user.admin? ? "Cancelar" : "Voltar",
+          is_profile ? root_path : users_path,
+          class: "rounded-lg border border-gray-300 px-5 py-2 text-sm text-gray-700 hover:bg-gray-50") %>
   </div>
 <% end %>
