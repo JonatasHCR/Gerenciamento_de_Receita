@@ -77,22 +77,33 @@ RSpec.describe "Users", type: :request do
 
   # ── PATCH /users/:id ──────────────────────────────────────────────────────
   describe "PATCH /users/:id" do
-    it "admin can update any user" do
+    it "admin can update a user's role" do
       sign_in admin
-      patch user_path(other_user), params: { user: { name: "Atualizado" } }
+      patch user_path(other_user), params: { user: { role: "gestor" } }
       expect(response).to redirect_to users_path
+      expect(other_user.reload.role).to eq("gestor")
     end
 
     it "non-admin cannot update other users" do
       sign_in financeiro
-      patch user_path(other_user), params: { user: { name: "X" } }
+      patch user_path(other_user), params: { user: { role: "admin" } }
       expect(response).to redirect_to root_path
     end
 
-    it "user can update themselves (non-admin, own profile via users route)" do
-      sign_in financeiro
-      patch user_path(financeiro), params: { user: { name: "Meu Nome" } }
+    it "recusa nome e email em vez de descartar em silêncio" do
+      sign_in admin
+      antes = other_user.name
+      patch user_path(other_user), params: { user: { name: "Atualizado" } }
+
       expect(response).to redirect_to users_path
+      expect(flash[:alert]).to match(/Keycloak/)
+      expect(other_user.reload.name).to eq(antes)
+    end
+
+    it "a negação do Pundit vem antes da recusa do campo" do
+      sign_in financeiro
+      patch user_path(other_user), params: { user: { name: "X" } }
+      expect(response).to redirect_to root_path
     end
   end
 
@@ -131,16 +142,19 @@ RSpec.describe "Users", type: :request do
 
   # ── PATCH /profile ────────────────────────────────────────────────────────
   describe "PATCH /profile" do
-    it "updates profile and redirects back to profile" do
+    it "recusa o próprio nome, em vez de dizer que salvou" do
       sign_in financeiro
+      antes = financeiro.name
       patch profile_path, params: { user: { name: "Novo Nome" } }
+
       expect(response).to redirect_to edit_profile_path
-      expect(flash[:notice]).to be_present
+      expect(flash[:alert]).to match(/Keycloak/)
+      expect(financeiro.reload.name).to eq(antes)
     end
 
     it "non-admin cannot change their own role via profile" do
       sign_in financeiro
-      patch profile_path, params: { user: { name: "Nome", role: "admin" } }
+      patch profile_path, params: { user: { role: "admin" } }
       expect(response).to redirect_to edit_profile_path
       financeiro.reload
       expect(financeiro.role).to eq("financeiro")

@@ -1,6 +1,9 @@
 class UsersController < ApplicationController
   before_action :set_user, only: [:edit, :update, :destroy]
 
+  # Campos que vivem no Keycloak. Só podem ser escritos na criação.
+  DO_KEYCLOAK = %w[name email].freeze
+
   def index
     authorize User
     @users = policy_scope(User).order(:name)
@@ -28,6 +31,8 @@ class UsersController < ApplicationController
 
   def update
     authorize @user
+    return if recusar_dados_do_keycloak(users_path)
+
     if @user.update(user_params)
       apply_cost_center_ids(@user)
       redirect_to users_path, notice: "Usuário atualizado."
@@ -53,6 +58,8 @@ class UsersController < ApplicationController
     @user = current_user
     @is_profile = true
     authorize @user, :update?
+    return if recusar_dados_do_keycloak(edit_profile_path)
+
     if @user.update(user_params)
       redirect_to edit_profile_path, notice: "Perfil atualizado com sucesso."
     else
@@ -64,6 +71,18 @@ class UsersController < ApplicationController
 
   def set_user
     @user = User.find(params[:id])
+  end
+
+  # Recusa, e não descarta em silêncio: o strong params dropa sem avisar, e a
+  # tela diria "atualizado com sucesso" sem ter mudado nada. Roda depois do
+  # authorize, senão responderia antes da negação do Pundit.
+  def recusar_dados_do_keycloak(destino)
+    return false if (DO_KEYCLOAK & params.fetch(:user, {}).keys.map(&:to_s)).empty?
+
+    redirect_to destino,
+                alert: "Nome e e-mail vêm do Keycloak e não podem ser alterados aqui.",
+                status: :see_other
+    true
   end
 
   def user_params
