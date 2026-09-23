@@ -7,30 +7,30 @@ RSpec.describe CostCenters::ContractSheetPdf do
                          description: "Manutenção Elétrica", object_text: "Serviços de instalação")
   end
 
-  # Captura o conteúdo das tabelas: o texto dentro do PDF sai codificado.
-  def rendered_tables(cost_center)
-    tables = []
-    allow_any_instance_of(Prawn::Document).to receive(:table).and_wrap_original do |m, data, *args, **opts, &blk|
-      tables << data
-      m.call(data, *args, **opts, &blk)
+  # Captura o texto escrito: dentro do PDF ele sai codificado.
+  def rendered(cost_center)
+    texts = []
+    allow_any_instance_of(Prawn::Document).to receive(:text).and_wrap_original do |m, str, *args, **opts|
+      texts << str.to_s
+      m.call(str, *args, **opts)
     end
     pdf = described_class.new(cost_center, generated_by: "Fulano").render
-    [pdf, tables.flatten.map(&:to_s)]
+    [pdf, texts.join("\n")]
   end
 
   it "gera o PDF com os dados do contrato acentuados" do
-    pdf, cells = rendered_tables(cc)
+    pdf, text = rendered(cc)
     expect(pdf[0, 4]).to eq("%PDF")
-    expect(cells).to include("Secretaria de Educação", "Serviços de instalação", "Participação UFC", "50%")
-    expect(cells).to include("Saldo total do contrato")
+    expect(text).to include("Manutenção Elétrica", "Secretaria de Educação", "Serviços de instalação",
+                            "PARTICIPAÇÃO UFC", "50%", "Saldo total do contrato")
   end
 
   it "lista os reajustes sem a observação e sem notas fiscais" do
     create(:adjustment, cost_center: cc, amount: 10_000, note: "observação interna")
     create(:invoice, cost_center: cc, value: 1_000, number: "NF-777")
-    _pdf, cells = rendered_tables(cc.reload)
-    expect(cells).to include("Valor", "R$ 60.000,00")
-    expect(cells.join(" ")).not_to include("observação interna")
-    expect(cells.join(" ")).not_to include("NF-777")
+    _pdf, text = rendered(cc.reload)
+    expect(text).to include("R$ 60.000,00")
+    expect(text).not_to include("observação interna")
+    expect(text).not_to include("NF-777")
   end
 end
