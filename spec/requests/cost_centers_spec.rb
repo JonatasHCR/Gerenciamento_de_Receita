@@ -56,6 +56,23 @@ RSpec.describe "CostCenters", type: :request do
     end
   end
 
+  # ── GET /cost_centers/:id/sheet (ficha em PDF) ────────────────────────────
+  describe "GET /cost_centers/:id/sheet" do
+    it "gera a ficha do contrato em PDF" do
+      sign_in financeiro
+      get sheet_cost_center_path(cost_center)
+      expect(response).to have_http_status(:ok)
+      expect(response.media_type).to eq("application/pdf")
+      expect(response.body[0, 4]).to eq("%PDF")
+    end
+
+    it "bloqueia coordenador sem vínculo" do
+      sign_in coordenador
+      get sheet_cost_center_path(cost_center)
+      expect(response).to redirect_to(root_path)
+    end
+  end
+
   # ── GET /cost_centers/report (Excel / PDF) ────────────────────────────────
   describe "GET /cost_centers/report" do
     it "gera um Excel para admin (padrão)" do

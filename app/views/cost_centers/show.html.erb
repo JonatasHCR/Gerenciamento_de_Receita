@@ -6,6 +6,8 @@
     <h1 class="text-xl font-semibold text-gray-900">
       <%= @cost_center.cr_code %> — <%= @cost_center.description %>
     </h1>
+    <%= link_to "Ficha em PDF", sheet_cost_center_path(@cost_center), target: "_blank", rel: "noopener",
+          class: "ml-auto rounded-lg border border-gray-300 px-3 py-1.5 text-sm text-gray-700 hover:bg-gray-50" %>
   </div>
 
   <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">

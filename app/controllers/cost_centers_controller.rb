@@ -1,5 +1,5 @@
 class CostCentersController < ApplicationController
-  before_action :set_cost_center, only: [:show, :edit, :update, :destroy]
+  before_action :set_cost_center, only: [:show, :sheet, :edit, :update, :destroy]
   before_action :set_coordinator_options, only: [:new, :create, :edit, :update]
 
   def index
@@ -16,6 +16,13 @@ class CostCentersController < ApplicationController
     authorize @cost_center
     @adjustments = @cost_center.adjustments.recent
     @adjustment  = @cost_center.adjustments.new
+  end
+
+  def sheet
+    authorize @cost_center, :show?
+    send_data CostCenters::ContractSheetPdf.new(@cost_center, generated_by: current_user.name).render,
+      filename: "ficha_contrato_#{@cost_center.cr_code.to_s.parameterize}.pdf",
+      type: "application/pdf", disposition: "inline"
   end
 
   def report
