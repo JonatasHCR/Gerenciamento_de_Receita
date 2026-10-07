@@ -59,7 +59,7 @@ class Adjustment < ApplicationRecord
     write_cost_center(value: cost_center.reload.value.to_d + diff)
     siblings.valor
             .where("(adjustments.created_at, adjustments.id) > (?, ?)", created_at, id)
-            .update_all(["previous_value = previous_value + ?, new_value = new_value + ?", diff, diff])
+            .update_all(["previous_value = previous_value + ?, new_value = new_value + ?, updated_at = ?", diff, diff, Time.current])
   end
 
   def resync_end_date

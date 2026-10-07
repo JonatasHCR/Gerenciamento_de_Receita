@@ -79,6 +79,7 @@ module Api
       #     `invoices` e virariam N+1 num índice de centenas de linhas.
       def serializar(cc)
         {
+          id: cc.id,
           cr_code: cc.cr_code,
           description: cc.description,
           contract_number: cc.contract_number,
@@ -86,6 +87,10 @@ module Api
           coordinator_list: cc.coordinator_list,
           start_date: cc.start_date,
           end_date: cc.end_date,
+          value: cc.value,
+          participation: cc.participation,
+          object_text: cc.object_text,
+          client_id: cc.client_id,
           client: {
             name: cc.client&.name,
             full_name: cc.client&.full_name

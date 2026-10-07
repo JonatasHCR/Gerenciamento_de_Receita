@@ -79,6 +79,15 @@ Rails.application.routes.draw do
           get :deletions
         end
       end
+
+      # Sistema de Controle Financeiro: espelho incremental das tabelas financeiras.
+      resources :clients, only: [:index]
+      resources :invoices, only: [:index]
+      resources :receipts, only: [:index]
+      resources :adjustments, only: [:index]
+      resources :forecast_entries, only: [:index]
+      resources :deletions, only: [:index]
+      resource :status, only: [:show], controller: "status"
     end
   end
 

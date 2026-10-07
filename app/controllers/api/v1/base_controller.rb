@@ -50,6 +50,35 @@ module Api
       rescue ArgumentError
         nil
       end
+
+      LIMITE_PADRAO = 1000
+      LIMITE_MAXIMO = 5000
+
+      def limite_pagina
+        valor = params[:limit].to_i
+        valor <= 0 ? LIMITE_PADRAO : [valor, LIMITE_MAXIMO].min
+      end
+
+      def offset_pagina
+        [params[:offset].to_i, 0].max
+      end
+
+      # Listagem incremental usada pelo Controle Financeiro: ordena por
+      # (updated_at, id), filtra por `updated_since` e devolve a marca d'água.
+      def render_incremental(chave, escopo)
+        tabela = escopo.klass.table_name
+        escopo = escopo.order("#{tabela}.updated_at", "#{tabela}.id")
+        marca = desde(:updated_since)
+        escopo = escopo.where("#{tabela}.updated_at > ?", marca) if marca
+
+        registros = escopo.limit(limite_pagina).offset(offset_pagina).to_a
+        render json: {
+          chave => registros.map { |r| yield r },
+          watermark: registros.last&.updated_at&.iso8601(6),
+          count: registros.size,
+          has_more: registros.size == limite_pagina
+        }
+      end
     end
   end
 end
