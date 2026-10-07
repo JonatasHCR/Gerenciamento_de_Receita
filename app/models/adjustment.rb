@@ -1,5 +1,6 @@
 class Adjustment < ApplicationRecord
   has_paper_trail
+  include ExigeContratoAtivo
 
   belongs_to :cost_center
 

@@ -97,6 +97,43 @@ RSpec.describe "API v1 — espelho para o Controle Financeiro", type: :request d
     end
   end
 
+  describe "paginação pela última linha lida" do
+    # Lê como o Controle Financeiro: segue watermark + last_id até has_more=false.
+    def ler_tudo(rota, chave, marca, limite, extra = {})
+      vistos = []
+      consulta = { limit: limite }.merge(extra)
+      50.times do
+        get rota, params: consulta, headers: headers
+        corpo = response.parsed_body
+        vistos += corpo[chave].map { |x| x["id"] || x["item_id"] }
+        return vistos unless corpo["has_more"]
+
+        consulta = { limit: limite, marca => corpo["watermark"], after_id: corpo["last_id"] }.merge(extra)
+      end
+      raise "a paginação não terminou"
+    end
+
+    it "cobre todas as NFs mesmo com o mesmo updated_at (o id desempata)" do
+      nfs = create_list(:invoice, 5)
+      Invoice.update_all(updated_at: Time.zone.parse("2026-01-10 10:00:00.123456"))
+
+      vistos = ler_tudo("/api/v1/invoices", "invoices", :updated_since, 2)
+      expect(vistos).to eq(nfs.map(&:id).sort)
+    end
+
+    it "pagina as exclusões além do limite, que antes voltavam sempre na primeira página" do
+      ids = create_list(:invoice, 5).map(&:id)
+      Invoice.find_each(&:destroy!)
+
+      vistos = ler_tudo("/api/v1/deletions", "deletions", :since, 2, { types: "Invoice" })
+      expect(vistos).to match_array(ids)
+
+      get "/api/v1/deletions", params: { types: "Invoice", limit: 2, offset: 2 }, headers: headers
+      segunda = response.parsed_body["deletions"].map { |x| x["item_id"] }
+      expect(segunda).to eq(ids.sort[2, 2])
+    end
+  end
+
   describe "GET /api/v1/status" do
     it "dá contagem e soma de cada tabela para a reconciliação" do
       create(:invoice, value: 10)
@@ -120,5 +157,11 @@ RSpec.describe "API v1 — espelho para o Controle Financeiro", type: :request d
   it "rota inexistente dentro de /api/v1 continua caindo no 404" do
     get "/api/v1/nao_existe", headers: headers
     expect(response).to have_http_status(:not_found)
+  end
+
+  it "informa se o contrato está ativo" do
+    create(:cost_center, cr_code: "7001").update!(active: false)
+    get "/api/v1/cost_centers", headers: headers
+    expect(response.parsed_body["cost_centers"].first).to include("cr_code" => "7001", "active" => false)
   end
 end

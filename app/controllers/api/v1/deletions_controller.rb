@@ -10,13 +10,13 @@ module Api
         tipos = TIPOS if tipos.empty?
 
         escopo = PaperTrail::Version.where(item_type: tipos, event: "destroy").order(:created_at, :id)
-        marca = desde(:since)
-        escopo = escopo.where("versions.created_at > ?", marca) if marca
+        escopo = depois_de(escopo, "versions.created_at", "versions.id", :since)
 
-        registros = escopo.limit(limite_pagina).to_a
+        registros = escopo.limit(limite_pagina).offset(offset_pagina).to_a
         render json: {
           deletions: registros.map { |v| { item_type: v.item_type, item_id: v.item_id, deleted_at: v.created_at.iso8601(6) } },
           watermark: registros.last&.created_at&.iso8601(6),
+          last_id: registros.last&.id,
           count: registros.size,
           has_more: registros.size == limite_pagina
         }

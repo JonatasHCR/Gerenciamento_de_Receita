@@ -63,18 +63,32 @@ module Api
         [params[:offset].to_i, 0].max
       end
 
+      # Pagina pela última linha lida (marca maior, ou marca igual e id maior).
+      # Com offset, um registro alterado no meio da leitura muda de posição e
+      # outro fica de fora.
+      def depois_de(escopo, coluna_marca, coluna_id, param_marca)
+        marca = desde(param_marca)
+        return escopo unless marca
+
+        depois_do_id = params[:after_id].presence&.to_i
+        return escopo.where("#{coluna_marca} > ?", marca) unless depois_do_id
+
+        escopo.where("#{coluna_marca} > :m OR (#{coluna_marca} = :m AND #{coluna_id} > :id)",
+                     m: marca, id: depois_do_id)
+      end
+
       # Listagem incremental usada pelo Controle Financeiro: ordena por
       # (updated_at, id), filtra por `updated_since` e devolve a marca d'água.
       def render_incremental(chave, escopo)
         tabela = escopo.klass.table_name
         escopo = escopo.order("#{tabela}.updated_at", "#{tabela}.id")
-        marca = desde(:updated_since)
-        escopo = escopo.where("#{tabela}.updated_at > ?", marca) if marca
+        escopo = depois_de(escopo, "#{tabela}.updated_at", "#{tabela}.id", :updated_since)
 
         registros = escopo.limit(limite_pagina).offset(offset_pagina).to_a
         render json: {
           chave => registros.map { |r| yield r },
           watermark: registros.last&.updated_at&.iso8601(6),
+          last_id: registros.last&.id,
           count: registros.size,
           has_more: registros.size == limite_pagina
         }
