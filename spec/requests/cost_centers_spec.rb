@@ -237,4 +237,31 @@ RSpec.describe "CostCenters", type: :request do
       expect(flash[:alert]).to be_present
     end
   end
+
+  # ── Desativar / reativar ──────────────────────────────────────────────────
+  describe "PATCH /cost_centers/:id/toggle_active" do
+    it "financeiro desativa e reativa; o contrato continua existindo" do
+      sign_in financeiro
+      patch toggle_active_cost_center_path(cost_center)
+      expect(cost_center.reload).not_to be_active
+      expect(response).to redirect_to(cost_center_path(cost_center))
+
+      patch toggle_active_cost_center_path(cost_center)
+      expect(cost_center.reload).to be_active
+    end
+
+    it "coordenador não desativa" do
+      cost_center.update!(coordinator: coordenador.name)
+      sign_in coordenador
+      patch toggle_active_cost_center_path(cost_center)
+      expect(cost_center.reload).to be_active
+    end
+
+    it "a tela do contrato desativado mostra o selo e esconde os reajustes" do
+      cost_center.update!(active: false)
+      sign_in admin
+      get cost_center_path(cost_center)
+      expect(response.body).to include("Desativado", "Reativar contrato", "não aceita reajustes")
+    end
+  end
 end

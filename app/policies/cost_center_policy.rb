@@ -19,6 +19,9 @@ class CostCenterPolicy < ApplicationPolicy
 
   def destroy? = admin?
 
+  # Coordenador não desativa: é decisão de quem fecha o contrato.
+  def toggle_active? = admin? || financeiro? || gestor?
+
   class Scope < ApplicationPolicy::Scope
     def resolve
       return scope.all unless user.coordenador?

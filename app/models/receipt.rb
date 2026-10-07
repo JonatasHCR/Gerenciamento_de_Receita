@@ -1,5 +1,6 @@
 class Receipt < ApplicationRecord
   has_paper_trail
+  include ExigeContratoAtivo
 
   belongs_to :invoice
 
@@ -14,6 +15,10 @@ class Receipt < ApplicationRecord
   delegate :cost_center, to: :invoice
 
   private
+
+  def contrato_do_lancamento
+    invoice&.cost_center
+  end
 
   def payment_date_not_before_invoice_issued_at
     return unless invoice&.issued_at && payment_date

@@ -1,5 +1,5 @@
 class CostCentersController < ApplicationController
-  before_action :set_cost_center, only: [:show, :sheet, :edit, :update, :destroy]
+  before_action :set_cost_center, only: [:show, :sheet, :edit, :update, :destroy, :toggle_active]
   before_action :set_coordinator_options, only: [:new, :create, :edit, :update]
 
   def index
@@ -74,6 +74,15 @@ class CostCentersController < ApplicationController
     else
       render :edit, status: :unprocessable_entity
     end
+  end
+
+  # Desativar não apaga: o contrato segue nos relatórios e no Controle
+  # Financeiro, mas para de aceitar NF, recebimento, previsão e reajuste.
+  def toggle_active
+    authorize @cost_center
+    @cost_center.update!(active: !@cost_center.active?)
+    aviso = @cost_center.active? ? "Contrato reativado." : "Contrato desativado. Ele não aceita mais lançamentos."
+    redirect_to @cost_center, notice: aviso
   end
 
   def destroy

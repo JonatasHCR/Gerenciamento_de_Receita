@@ -10,7 +10,7 @@
 #
 # It's strongly recommended that you check this file into your version control system.
 
-ActiveRecord::Schema[8.1].define(version: 2026_09_04_020000) do
+ActiveRecord::Schema[8.1].define(version: 2026_10_07_120000) do
   # These are extensions that must be enabled in order to support this database
   enable_extension "pg_catalog.plpgsql"
   enable_extension "pg_trgm"
@@ -38,6 +38,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_04_020000) do
   end
 
   create_table "cost_centers", force: :cascade do |t|
+    t.boolean "active", default: true, null: false
     t.bigint "client_id", null: false
     t.string "contract_number"
     t.string "coordinator"
@@ -50,6 +51,7 @@ ActiveRecord::Schema[8.1].define(version: 2026_09_04_020000) do
     t.date "start_date"
     t.datetime "updated_at", null: false
     t.decimal "value", precision: 15, scale: 2, default: "0.0"
+    t.index ["active"], name: "index_cost_centers_on_active"
     t.index ["client_id"], name: "index_cost_centers_on_client_id"
     t.index ["coordinator"], name: "idx_cost_centers_coordinator_trgm", opclass: :gin_trgm_ops, using: :gin
     t.index ["cr_code"], name: "idx_cost_centers_cr_code_trgm", opclass: :gin_trgm_ops, using: :gin

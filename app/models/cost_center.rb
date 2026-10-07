@@ -24,6 +24,11 @@ class CostCenter < ApplicationRecord
   validate :end_date_not_before_start_date
 
   scope :ordered, -> { order(:cr_code) }
+  scope :active, -> { where(active: true) }
+  # Para os combos dos formulários: os ativos e, na edição, o já escolhido.
+  scope :selecionaveis, ->(atual_id = nil) { where(active: true).or(where(id: atual_id)) }
+
+  def inactive? = !active?
 
   # Filtra pelos NOMES de coordenador presentes no texto `coordinator`
   # ("Nome A / Nome B"). Casamento EXATO por item da lista — ILIKE '%Ana%'

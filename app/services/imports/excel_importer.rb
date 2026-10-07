@@ -75,6 +75,7 @@ module Imports
         description = val(row, idx[:description])
         client_name = val(row, idx[:client])
         next if description.blank? && client_name.blank? # linha de seção
+        next if contrato_desativado?(CostCenter.find_by(cr_code: cr), "Centro de Custo", line, "CR #{cr}")
 
         upsert_cost_center(cr, line: line,
           participation: participation(val(row, idx[:participation])),
@@ -114,6 +115,7 @@ module Imports
           @errors << "Previsão — linha #{line} (CR #{cr}): centro de custo não encontrado (cadastre-o na aba CADASTRO)."
           next
         end
+        next if contrato_desativado?(cc, "Previsão", line, "CR #{cr}")
 
         fe = ForecastEntry.find_or_initialize_by(cost_center: cc, month_year: month_year)
         was_new = fe.new_record?
@@ -143,6 +145,7 @@ module Imports
           @errors << "Faturamento — linha #{line} (NF #{nf}): centro de custo #{cr} não encontrado."
           next
         end
+        next if contrato_desativado?(cc, "Faturamento", line, "NF #{nf}")
         issued_at = parse_date(raw(row, idx[:issued_at]))
         if issued_at.nil?
           @errors << "Faturamento — linha #{line} (NF #{nf}): data de emissão inválida ou vazia."
@@ -182,6 +185,7 @@ module Imports
           @errors << "Recebimento — linha #{line} (NF #{nf}): nota fiscal não encontrada para o CR #{cr}."
           next
         end
+        next if contrato_desativado?(cc, "Recebimento", line, "NF #{nf}")
         payment_date = parse_date(raw(row, idx[:payment_date]))
         if payment_date.nil?
           @errors << "Recebimento — linha #{line} (NF #{nf}): data de baixa inválida ou vazia."
@@ -301,6 +305,13 @@ module Imports
     end
 
     # ── Upsert / persistência ───────────────────────────────────────────────────
+    def contrato_desativado?(cc, aba, line, alvo)
+      return false unless cc&.inactive?
+
+      @errors << "#{aba} — linha #{line} (#{alvo}): o contrato #{cc.cr_code} está desativado; linha ignorada."
+      true
+    end
+
     def upsert_cost_center(cr_code, line:, participation: nil, description: nil,
                            client_name: nil, object_text: nil, end_date: nil, coordinator: nil,
                            contract_number: nil, start_date: nil, value: nil)

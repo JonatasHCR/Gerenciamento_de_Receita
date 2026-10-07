@@ -39,6 +39,7 @@ Rails.application.routes.draw do
     member do
       get :letter, to: "letters#generate"   # gera a carta (docx/pdf/preview)
       get :sheet                             # ficha do contrato em PDF
+      patch :toggle_active                   # desativa / reativa o contrato
     end
     collection do
       get :report                            # relatório Excel (RELAÇÃO DE COMPROMISSOS)

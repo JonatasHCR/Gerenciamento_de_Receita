@@ -48,7 +48,7 @@ module Api
         marca = desde(:since)
         escopo = escopo.where("versions.created_at > ?", marca) if marca
 
-        registros = escopo.limit(limite)
+        registros = escopo.limit(limite).offset(offset)
 
         render json: {
           deletions: registros.map { |v| serializar_exclusao(v) },
@@ -91,6 +91,7 @@ module Api
           participation: cc.participation,
           object_text: cc.object_text,
           client_id: cc.client_id,
+          active: cc.active,
           client: {
             name: cc.client&.name,
             full_name: cc.client&.full_name

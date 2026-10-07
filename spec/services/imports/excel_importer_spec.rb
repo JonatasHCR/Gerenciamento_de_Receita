@@ -170,4 +170,18 @@ RSpec.describe Imports::ExcelImporter do
     expect(result.success?).to be(false)
     expect(result.fatal_error).to be_present
   end
+
+  it "contrato desativado não recebe nada da importação, nem o próprio cadastro" do
+    cc = create(:cost_center, cr_code: "CR-OFF", description: "ANTES")
+    cc.update!(active: false)
+    path = build_xlsx(
+      cost_center_rows: [cc_row(cr: "CR-OFF", desc: "DEPOIS")],
+      invoice_rows:     [inv_row(nf: "NF-OFF", cr: "CR-OFF", value: 1_000)]
+    )
+    resultado = described_class.new(path).call
+
+    expect(cc.reload.description).to eq("ANTES")
+    expect(Invoice.find_by(number: "NF-OFF")).to be_nil
+    expect(resultado.errors.join("\n")).to include("CR-OFF está desativado")
+  end
 end
