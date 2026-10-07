@@ -136,7 +136,9 @@ class ApplicationController < ActionController::Base
       { grupo: "/apps/despesa", nome: "Radar",
         url: "#{host}:#{ENV.fetch('DESPESA_PORT', '3010')}" },
       { grupo: "/apps/controle-despesa", nome: "Controle de Despesa",
-        url: "#{host}:#{ENV.fetch('CONTROLE_DESPESA_PORT', '3050')}" }
+        url: "#{host}:#{ENV.fetch('CONTROLE_DESPESA_PORT', '3050')}" },
+      { grupo: "/apps/controle-financeiro", nome: "Controle Financeiro",
+        url: "#{host}:#{ENV.fetch('CONTROLE_FINANCEIRO_PORT', '3060')}" }
     ].select { |s| grupos.include?(s[:grupo]) }
   end
 end
